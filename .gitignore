@@ -1,0 +1,75 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------- Virtual environments ----------
+.venv/
+venv/
+env/
+
+# ---------- Jupyter ----------
+.ipynb_checkpoints/
+
+# ---------- OS / Editor ----------
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
+
+# ---------- 数据与大文件（不入库）/ Data & large files (not tracked) ----------
+# 命题提供的 246MB xlsx、提取出的图片等原始数据一律不入库
+*.xlsx
+*.xls
+data/images/
+data/raw/
+data/extracted/
+data/interim/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tif
+*.tiff
+*.webp
+*.gif
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# 文档类静态资源白名单（README/文档配图放在 assets/，允许入库）
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.jpeg
+!assets/**/*.gif
+!assets/**/*.webp
+
+# ---------- 模型权重（不入库；如需共享请使用 Git LFS 或外部分发） ----------
+# 推荐：git lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
+models/*
+!models/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.bin
+*.safetensors
+*.h5
+*.pkl
+*.joblib
+
+# ---------- 运行产物 ----------
+reports/*
+!reports/.gitkeep
+*.log
+outputs/
+runs/
+wandb/

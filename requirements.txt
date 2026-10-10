@@ -1,0 +1,30 @@
+# OPEN-SZ-01 AI 生成材料反欺诈风控检测 — Python 依赖
+# 建议 Python >= 3.10
+
+# ---- 数值与科学计算 ----
+numpy
+scipy
+scikit-learn
+
+# ---- 图像处理与取证特征 ----
+pillow
+opencv-python-headless
+imageio
+imagehash
+
+# ---- 表格与数据读取 ----
+openpyxl
+
+# ---- 可视化 ----
+matplotlib
+
+# ---- 网络与工具 ----
+requests
+tqdm
+
+# ---- 深度学习（L2 主检测） ----
+# torch 不随本文件自动安装：请按本机 CUDA 版本从官方源单独安装，例如：
+#   CUDA 12.1: pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   CPU only : pip install torch --index-url https://download.pytorch.org/whl/cpu
+# 安装后再执行: pip install -r requirements.txt
+# torch
