@@ -19,8 +19,20 @@
 - **现象**：`git -c http.sslVerify=false push -u origin main` 失败，
   报错 `fatal: could not read Username for 'https://github.com': terminal prompts disabled`。
   本环境未配置任何凭据（`credential.helper` 为空，未安装 `gh` CLI），沙箱内无法交互登录，故无法代为推送。
-- **当前状态**：本地 `main` 领先远端 1 个提交（`f6f7779 docs: bootstrap project skeleton for OPEN-SZ-01`），
+- **当前状态**：本地 `main` 领先远端 2 个提交（`f6f7779` 骨架、`f1112ad` 本笔记），
   工作区干净，随时可推。
+
+- **追加记录（2026-10-11，用户指示"提权提交"后重试）**：
+  1. 凭据排查：系统级 gitconfig 存在 `credential.helper=manager`（Git Credential Manager），
+     但无 `GH_TOKEN`/`GITHUB_TOKEN` 环境变量、无 SSH 私钥（`~/.ssh` 仅 known_hosts）、未安装 `gh` CLI。
+  2. 申请提权至 `danger-full-access` 执行 push —— **被会话策略自动拒绝**（本次会话禁用审批弹窗，
+     子代理权限范围固定，无法在会话内提权）。
+  3. 当前权限下放开 askpass 交互重试 push —— 失败：沙箱阻断命名管道，
+     sh/bash/GCM 凭据助手链无法启动（`couldn't create signal pipe, Win32 error 5`，
+     `could not read Username for 'https://github.com'`）。
+  - **结论**：push 必须在本代理会话之外的普通终端执行（见下方指引），
+    或由用户在会话外配置好凭据（如 `git config --global credential.helper manager` + 一次手动登录）
+    后再由代理重试。
 
 ### 用户手动推送指引（在 `repo/` 目录下执行）
 
