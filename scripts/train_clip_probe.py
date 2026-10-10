@@ -14,6 +14,9 @@ import os
 import sys
 from pathlib import Path
 
+import io
+
+import cv2
 import numpy as np
 import pandas as pd
 import torch
@@ -32,28 +35,57 @@ from l2_clip import CLIPFeatureExtractor, LinearProbe  # noqa: E402
 CACHE_DIR = Path(__file__).parent.parent / "models" / "hf_cache"
 
 
-def load_shard(path: Path, max_per_shard: int | None = None):
-    df = pd.read_parquet(path)
-    images, labels = [], []
-    for _, row in df.iterrows():
+def stream_shard(path: Path, extractor, batch_size: int = 24, max_per_shard: int | None = None,
+                 reencode_q: int = 0):
+    """Stream a parquet shard: decode + extract features batch by batch.
+
+    Keeps memory bounded (only raw parquet bytes + 1024-d features), instead of
+    holding thousands of decoded RGB arrays.
+
+    reencode_q > 0 applies a COMMON codec to every sample (decode -> JPEG(q) ->
+    decode) so the probe cannot exploit the dataset shortcut "real=JPEG,
+    fake=PNG" (measured: real 59% JPEG vs fake 94% PNG in the benchmark shards).
+    """
+    df = pd.read_parquet(path, columns=["image", "label"])
+    n = len(df) if not max_per_shard else min(len(df), max_per_shard)
+    # column-level numpy access: per-row df.iloc[i] is orders of magnitude slower
+    raw_col = df["image"].to_numpy()
+    lab_col = df["label"].to_numpy()
+    feats, labels = [], []
+    buf_imgs, buf_labs = [], []
+
+    def flush():
+        if not buf_imgs:
+            return
+        batch_bgr = [cv2.cvtColor(im, cv2.COLOR_RGB2BGR) for im in buf_imgs]
+        feats.append(extractor.batch(batch_bgr, batch_size=len(batch_bgr)))
+        labels.extend(buf_labs)
+        buf_imgs.clear()
+        buf_labs.clear()
+
+    for i in tqdm(range(n), desc=f"extract {path.name}", mininterval=5):
         try:
-            img = Image.open(io.BytesIO(row["image"]["bytes"])).convert("RGB")
-            images.append(np.array(img))
-            labels.append(int(row["label"]))
+            raw = raw_col[i]["bytes"]
         except Exception:
             continue
-        if max_per_shard and len(images) >= max_per_shard:
-            break
-    return images, np.array(labels, dtype=np.int64)
-
-
-def extract_features(extractor, images: list[np.ndarray], batch_size: int = 32) -> np.ndarray:
-    feats = []
-    for i in tqdm(range(0, len(images), batch_size), desc="extract"):
-        batch = [cv2.cvtColor(im, cv2.COLOR_RGB2BGR) for im in images[i:i + batch_size]]
-        f = extractor.batch(batch, batch_size=batch_size)
-        feats.append(f)
-    return np.concatenate(feats, axis=0)
+        lab = int(lab_col[i])
+        try:
+            img = np.array(Image.open(io.BytesIO(raw)).convert("RGB"))
+        except Exception:
+            continue
+        if reencode_q > 0:
+            bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            ok, enc = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, int(reencode_q)])
+            if ok:
+                dec = cv2.imdecode(enc, cv2.IMREAD_COLOR)
+                if dec is not None:
+                    img = cv2.cvtColor(dec, cv2.COLOR_BGR2RGB)
+        buf_imgs.append(img)
+        buf_labs.append(lab)
+        if len(buf_imgs) >= batch_size:
+            flush()
+    flush()
+    return np.concatenate(feats, axis=0), np.array(labels, dtype=np.int64)
 
 
 def train_one_split(X_tr: np.ndarray, y_tr: np.ndarray, X_val: np.ndarray, y_val: np.ndarray,
@@ -98,6 +130,31 @@ def _auc(logits: np.ndarray, y: np.ndarray) -> float:
     return roc_auc_score(y, logits)
 
 
+def resolve_clip_model(name_or_path: str) -> str:
+    """Prefer a locally cached snapshot over a hub repo id (offline-friendly).
+
+    Searches every plausible cache root: <repo>/models/hf_cache,
+    <workspace>/models/hf_cache (repo's parent), and the HF default cache.
+    """
+    p = Path(name_or_path)
+    if p.is_dir():
+        return str(p)
+    sub = "models--" + name_or_path.replace("/", "--")
+    here = Path(__file__).resolve().parent          # repo/scripts
+    roots = [
+        here.parent / "models" / "hf_cache",        # repo/models/hf_cache
+        here.parent.parent / "models" / "hf_cache",  # workspace/models/hf_cache
+        Path.home() / ".cache" / "huggingface" / "hub",
+    ]
+    for root in roots:
+        snaps = root / sub / "snapshots"
+        if snaps.is_dir():
+            for d in sorted(snaps.iterdir(), reverse=True):
+                if (d / "config.json").is_file():
+                    return str(d)
+    return name_or_path
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--shards", nargs="+", default=None,
@@ -109,33 +166,38 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-2)
     ap.add_argument("--out", default="models/clip_probe.pt")
     ap.add_argument("--clip-model", default="openai/clip-vit-large-patch14")
+    ap.add_argument("--reencode-q", type=int, default=0,
+                    help="if >0, apply this JPEG quality to ALL samples before feature "
+                         "extraction (removes the real=JPEG / fake=PNG dataset shortcut)")
     args = ap.parse_args()
 
-    global cv2, io
-    import cv2
-    import io
-
     os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+    os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
     shards = args.shards or sorted((Path(__file__).parent.parent / "data" / "external").glob("*.parquet"))
     if not shards:
         raise SystemExit("No parquet shards found. Put AIGC-Detection-Benchmark shards in data/external/")
-    print(f"[data] {len(shards)} shards")
+    print(f"[data] {len(shards)} shards; common-codec re-encode: "
+          f"{'JPEG q=' + str(args.reencode_q) if args.reencode_q > 0 else 'OFF'}", flush=True)
 
-    extractor = CLIPFeatureExtractor(args.clip_model, device=args.device, input_size=224)
+    extractor = CLIPFeatureExtractor(resolve_clip_model(args.clip_model),
+                                     device=args.device, input_size=224)
 
-    all_images, all_labels = [], []
+    feat_list, label_list = [], []
     for p in shards:
-        print(f"[load] {p}")
-        imgs, labs = load_shard(Path(p), args.max_per_shard)
-        all_images.extend(imgs)
-        all_labels.append(labs)
-    all_labels = np.concatenate(all_labels)
-    print(f"[data] total {len(all_images)} images; real={sum(all_labels==0)} fake={sum(all_labels==1)}")
-
-    print("[feature] extracting CLIP features...")
-    feats = extract_features(extractor, all_images, batch_size=24)
-    print("[feature] shape", feats.shape)
+        p = Path(p)
+        print(f"[load] {p}", flush=True)
+        f, labs = stream_shard(p, extractor, batch_size=24,
+                               max_per_shard=args.max_per_shard,
+                               reencode_q=args.reencode_q)
+        feat_list.append(f)
+        label_list.append(labs)
+        print(f"[load] {p.name}: {f.shape[0]} samples", flush=True)
+    feats = np.concatenate(feat_list, axis=0)
+    all_labels = np.concatenate(label_list)
+    print(f"[data] total {len(all_labels)} images; real={int((all_labels==0).sum())} "
+          f"fake={int((all_labels==1).sum())}", flush=True)
+    print("[feature] shape", feats.shape, flush=True)
 
     # Cross-validate
     skf = StratifiedKFold(n_splits=args.n_folds, shuffle=True, random_state=42)
@@ -162,8 +224,18 @@ def main():
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_sd = model.state_dict()
+    # flatten keys to match detector.py expectation: weight, bias
+    flat_sd = {}
+    for k, v in raw_sd.items():
+        if k == "fc.weight":
+            flat_sd["weight"] = v
+        elif k == "fc.bias":
+            flat_sd["bias"] = v
+        else:
+            flat_sd[k] = v
     torch.save({
-        "state_dict": model.state_dict(),
+        "state_dict": flat_sd,
         "config": {"in_dim": feats.shape[1], "clip_model": args.clip_model},
         "scaler": {"mean": scaler.mean_.tolist(), "scale": scaler.scale_.tolist()},
         "cv_aucs": aucs,

@@ -69,6 +69,7 @@ models/*
 # ---------- 运行产物 ----------
 reports/*
 !reports/.gitkeep
+!reports/metrics.json
 *.log
 outputs/
 runs/

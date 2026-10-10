@@ -1,12 +1,16 @@
 """Video channel (manual ch.8.5) - Stage 1 minimal path.
 
-video -> 16 uniformly spaced frames -> per-frame image detection ->
+video -> uniformly spaced frames -> per-frame image detection ->
 aggregate (mean / median / P90 / std) -> video-level score + suspicious segments.
 
 Design rules:
   - sequential uniform sampling (predictable latency, reproducible)
   - complex temporal features (flicker / optical flow) only if Stage 1 shows gains
   - degradable: if frame extraction fails, fall back to first/middle/last frame
+  - frame budget: the Stage-1 design used 16 frames, but the measured end-to-end
+    cost exceeded the 5s budget on the reference machine, so the default is 10.
+    Manual ch.16.3 lists "限制抽帧" as the documented latency mitigation; the
+    count stays configurable per call.
 """
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-N_FRAMES = 16
+N_FRAMES = 10
 
 
 @dataclass

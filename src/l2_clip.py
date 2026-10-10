@@ -13,13 +13,28 @@ CLIP_MEAN = (0.48145466, 0.4578275, 0.40821073)
 CLIP_STD = (0.26862954, 0.26130258, 0.27577711)
 
 
+def default_cache_dir() -> str:
+    """Workspace-local HF cache so weights stay inside the reproducible package."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(os.path.dirname(here), "models", "hf_cache")
+
+
 class CLIPFeatureExtractor:
     """Frozen CLIP ViT feature extractor (image tower only)."""
 
-    def __init__(self, model_dir: str, device: str | None = None, input_size: int = 224):
+    def __init__(self, model_dir: str, device: str | None = None, input_size: int = 224,
+                 cache_dir: str | None = None):
         from transformers import CLIPVisionModel
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = CLIPVisionModel.from_pretrained(model_dir).to(self.device).eval()
+        cd = cache_dir or default_cache_dir()
+        try:
+            self.model = CLIPVisionModel.from_pretrained(
+                model_dir, cache_dir=cd).to(self.device).eval()
+        except Exception:
+            # offline fallback: use whatever is already in the cache
+            self.model = CLIPVisionModel.from_pretrained(
+                model_dir, cache_dir=cd, local_files_only=True).to(self.device).eval()
         self.input_size = input_size
         for p in self.model.parameters():
             p.requires_grad_(False)

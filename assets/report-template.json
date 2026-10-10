@@ -1,0 +1,192 @@
+{
+  "$schema_note": "OPEN-SZ-01 结构化检测报告模板（依据《项目规划与技术验证手册》9.2 节表 9-2）。本文件同时给出字段规范与一个填充示例（图片样本）；视频样本将 input.type 置为 video，以 duration_sec/frames_sampled 替代 width/height，并在 localization 中给出可疑片段。所有 *_hash、版本号与耗时字段构成可追溯链路，任何字段缺失必须显式置 null 并在 uncertainty.limitations 说明，不得省略键。",
+  "template_version": "0.1.0",
+  "report": {
+    "input": {
+      "_group": "输入标识",
+      "sha256": "<字符串：输入文件内容哈希，sha256，64 位十六进制>",
+      "phash": "<字符串：感知哈希（aHash），用于同源核对，可空>",
+      "type": "image | video",
+      "width": "<整数：像素宽；视频填帧宽>",
+      "height": "<整数：像素高；视频填帧高>",
+      "duration_sec": "<浮点：仅视频；图片为 null>",
+      "raw_bytes": "<整数：文件字节数>",
+      "l0_processing": {
+        "decoded_ok": "<布尔：L0 解码是否成功；false 时结论必须为 undecidable>",
+        "resize_scale": "<浮点：模型输入缩放比（最长边→512），容器特征用原始文件不受其影响>",
+        "png_chunks": "<数组：PNG 块序列 [(type,length),...]；非 PNG 为 null>",
+        "exif_present": "<布尔>",
+        "notes": "<字符串：L0 处理记录（如抽帧方式、损坏修复、降级为首中尾三帧等）>"
+      }
+    },
+    "conclusion": {
+      "_group": "结论",
+      "verdict": "normal | review | suspected | undecidable（正常 / 待复核 / 疑似生成或篡改 / 无法判定）",
+      "risk_level": "low | review | high | na",
+      "confidence_calibrated": "<浮点 0–1：校准后置信度；undecidable 时为 null>",
+      "calibration_method": "<字符串：如 temperature_scaling>",
+      "calibration_version": "<字符串：校准参数版本号>",
+      "statement": "<字符串：对外表述，统一口径『疑似生成合成内容』并附依据，不做业务欺诈定性>"
+    },
+    "model_evidence": {
+      "_group": "模型证据",
+      "models_used": ["<字符串数组：参与本次判定的模型清单，如 npr, clip_aide, effort, aeroblade>"],
+      "models_unavailable": ["<字符串数组：加载失败/超时被跳过的模型；非空时属降级运行>"],
+      "raw_scores": {
+        "npr": "<浮点 0–1：AI 生成概率，未参与为 null>",
+        "clip_aide": "<浮点 0–1 或 null>",
+        "effort": "<浮点 0–1 或 null>",
+        "aeroblade": "<浮点 0–1 或 null>",
+        "l1_aux_score": "<浮点 0–1：L1 辅助分数，仅辅助不单独判定>"
+      },
+      "fused_score": "<浮点 0–1：logit 层面加权融合并再校准后的分数>",
+      "fusion_weights_version": "<字符串：融合权重版本（独立验证集上确定，禁止用测试集搜索）>",
+      "disagreement": {
+        "score_spread": "<浮点：各路分数极差/标准差，衡量分歧度>",
+        "binary_disagree": "<布尔：固定阈值下是否存在二值判定分歧>",
+        "note": "<字符串：分歧样本一律进入待复核档>"
+      }
+    },
+    "forensic_evidence": {
+      "_group": "取证证据（L1 离散线索清单，三态：hit / miss / undecidable）",
+      "clues": [
+        {
+          "name": "<线索名：如 srgb_chunk / exif_xmp / idat_count / jpeg_double_compress / ela / cfa / freq_peak / resample>",
+          "status": "hit | miss | undecidable",
+          "detail": "<字符串：命中值或说明，如 'IDAT 块数=412 (>200)'>",
+          "caveat": "<字符串：该线索已知局限，如 '一次重编码可抹除'>"
+        }
+      ],
+      "summary": "<字符串：线索层面的一句话小结；线索只作辅助证据，不单独构成结论>"
+    },
+    "localization": {
+      "_group": "定位证据（L3）",
+      "available": "<布尔：定位分支是否参与；false 时给出 reason>",
+      "reason": "<字符串：不可用时说明（模型未加载/超时/降级策略仅在疑似时提供定位图）>",
+      "anomaly_map_path": "<字符串：TruFor 异常图/热力图文件路径（相对报告目录）>",
+      "mask_path": "<字符串：异常区域掩膜路径>",
+      "regions": [
+        {
+          "bbox_xywh": ["<整数 x>", "<整数 y>", "<整数 w>", "<整数 h>"],
+          "confidence": "<浮点 0–1>",
+          "frame_range": ["<整数：仅视频，可疑片段起止帧>"]
+        }
+      ],
+      "gradcam_path": "<字符串：Grad-CAM 关注区域图路径；性质为『关注区域解释』，≠ 伪造区域定位>",
+      "gradcam_disclaimer": "Grad-CAM 结果仅说明分类器参考了哪些区域，不能等同于伪造区域。",
+      "cross_check": "<字符串：TruFor / patch 聚合+Grad-CAM / L1 线索三路径校验结论>"
+    },
+    "uncertainty": {
+      "_group": "不确定性",
+      "statement": "<字符串：不确定性与反证说明（如两路模型分歧、分数处于不确定区间）>",
+      "known_limitations": ["<字符串数组：如 重压缩链路 / 低分辨率 / 翻拍反光 / 未见过的生成器 / 视频仅逐帧聚合>"],
+      "out_of_scope": "<字符串：属于已知识别困难场景时在此声明；定位图在真实样本高亮时强制附局限声明>"
+    },
+    "traceability": {
+      "_group": "可追溯性",
+      "model_versions": {
+        "npr": "<版本号或权重 sha256>",
+        "clip_aide": "<版本号或权重 sha256>",
+        "effort": "<版本号或权重 sha256 或 null>",
+        "aeroblade": "<版本号或权重 sha256 或 null>",
+        "trufor": "<版本号或权重 sha256 或 null>"
+      },
+      "threshold_version": "<字符串：阈值表版本（纯真实校准集标定 + bootstrap + 留出集验证后冻结）>",
+      "split_signature": "<字符串：数据划分冻结签名（splits_frozen.json），自证样本归属>",
+      "service_version": "<字符串：检测服务/代码版本（git commit）>",
+      "timing_ms": {
+        "l0": "<整数>", "l1": "<整数>", "l2": "<整数>", "l3": "<整数>",
+        "decision": "<整数>", "total": "<整数：端到端；验收以 P95 ≤ 5000ms 为准>"
+      },
+      "degraded": "<布尔：是否降级运行（任一模型缺失/超时/部分证据出结论）>",
+      "degraded_reason": "<字符串：降级原因；非降级为 null>",
+      "generated_at": "<ISO 8601 时间戳>"
+    }
+  },
+  "example_image": {
+    "input": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "phash": "9f86d081884c7d659a2feaa0c55ad015",
+      "type": "image",
+      "width": 3024,
+      "height": 4032,
+      "duration_sec": null,
+      "raw_bytes": 4957812,
+      "l0_processing": {
+        "decoded_ok": true,
+        "resize_scale": 0.127,
+        "png_chunks": [["IHDR", 13], ["sRGB", 1], ["IDAT", 65536], ["IEND", 0]],
+        "exif_present": false,
+        "notes": "PNG 解码成功；模型输入按最长边缩放至 512"
+      }
+    },
+    "conclusion": {
+      "verdict": "suspected",
+      "risk_level": "high",
+      "confidence_calibrated": 0.93,
+      "calibration_method": "temperature_scaling",
+      "calibration_version": "cal-v0.1",
+      "statement": "疑似生成合成内容：两路模型分数一致偏高，且命中多条生成痕迹取证线索。"
+    },
+    "model_evidence": {
+      "models_used": ["npr", "clip_aide"],
+      "models_unavailable": [],
+      "raw_scores": {
+        "npr": 0.91,
+        "clip_aide": 0.88,
+        "effort": null,
+        "aeroblade": null,
+        "l1_aux_score": 0.72
+      },
+      "fused_score": 0.90,
+      "fusion_weights_version": "fw-v0.1",
+      "disagreement": {
+        "score_spread": 0.03,
+        "binary_disagree": false,
+        "note": "两路一致，未触发待复核分歧条件。"
+      }
+    },
+    "forensic_evidence": {
+      "clues": [
+        { "name": "srgb_chunk", "status": "hit", "detail": "携带 sRGB 色彩块", "caveat": "一次重编码可抹除" },
+        { "name": "exif_xmp", "status": "miss", "detail": "无 eXIf/iTXt 元数据", "caveat": "截图转存后同样缺失" },
+        { "name": "idat_count", "status": "hit", "detail": "IDAT 块数=412 (>200)", "caveat": "压缩器指纹，仅辅助" },
+        { "name": "freq_peak", "status": "undecidable", "detail": "重压缩后频域峰不可判", "caveat": "与压缩强度强相关" }
+      ],
+      "summary": "容器与频域线索整体偏向生成件特征，但不单独构成判定依据。"
+    },
+    "localization": {
+      "available": true,
+      "reason": null,
+      "anomaly_map_path": "maps/001_anomaly.png",
+      "mask_path": "maps/001_mask.png",
+      "regions": [
+        { "bbox_xywh": [420, 980, 860, 540], "confidence": 0.81, "frame_range": null }
+      ],
+      "gradcam_path": "maps/001_gradcam.png",
+      "gradcam_disclaimer": "Grad-CAM 结果仅说明分类器参考了哪些区域，不能等同于伪造区域。",
+      "cross_check": "TruFor 异常区与 Grad-CAM 关注区位置一致，L1 频域线索命中，三路径互相支持。"
+    },
+    "uncertainty": {
+      "statement": "两路模型分数一致，置信度高；未见支持真实采集的反证（无 EXIF、无 CFA 一致性）。",
+      "known_limitations": ["样本为数字渲染态，对翻拍态同版式样本的区分需以留出集复核"],
+      "out_of_scope": null
+    },
+    "traceability": {
+      "model_versions": {
+        "npr": "npr-v0.1 sha256:<填入>",
+        "clip_aide": "aide-v0.1 sha256:<填入>",
+        "effort": null,
+        "aeroblade": null,
+        "trufor": "trufor-v0.1 sha256:<填入>"
+      },
+      "threshold_version": "th-v0.1",
+      "split_signature": "<填入 splits_frozen.json 签名>",
+      "service_version": "git:<commit>",
+      "timing_ms": { "l0": 40, "l1": 120, "l2": 600, "l3": 350, "decision": 15, "total": 1125 },
+      "degraded": false,
+      "degraded_reason": null,
+      "generated_at": "2026-10-10T18:00:00Z"
+    }
+  }
+}
