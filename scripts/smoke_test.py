@@ -37,6 +37,9 @@ def main():
     ap.add_argument("--image-real", default="data/images/057.png")
     ap.add_argument("--video", default="demo_assets/smoke_test.mp4")
     ap.add_argument("--clip-probe", default="models/clip_probe_norm.pt")
+    ap.add_argument("--npr", default="",
+                    help="NPR weights path; EMPTY by default because the NPR branch was "
+                         "ablated out (see docs/results.md section 9)")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--out", default="reports/smoke_test.json")
     args = ap.parse_args()
@@ -51,6 +54,7 @@ def main():
         clip_domain_lr=str(md / "clip_domain_lr.joblib"),
         combined_lr=str(md / "combined_lr.joblib"),
         fusion_json=str(md / "fusion.json"),
+        npr_weights=(str(md / "npr.pt") if args.npr else None),
         device=args.device,
     )
     for p in (cfg.clip_dir, cfg.clip_probe, cfg.forensic_lr, cfg.combined_lr, cfg.fusion_json):

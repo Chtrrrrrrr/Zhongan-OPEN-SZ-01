@@ -41,7 +41,7 @@ def main():
     ap.add_argument("--clip-domain-lr", default="models/clip_domain_lr.joblib")
     ap.add_argument("--combined-lr", default="models/combined_lr.joblib")
     ap.add_argument("--fusion", default="models/fusion.json")
-    ap.add_argument("--npr", default="models/npr.pt")
+    ap.add_argument("--npr", default="", help="NPR weights; empty by default (ablated out, see docs/results.md 9)")
     ap.add_argument("--device", default=None)
     args = ap.parse_args()
 

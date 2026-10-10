@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 
 PAGE = """<!doctype html><html lang="zh"><head><meta charset="utf-8">
-<title>OPEN-SZ-01 · AI生成材料反欺诈检测</title>
+<title>OPEN-SZ-01 路 AI鐢熸垚鏉愭枡鍙嶆璇堟娴?/title>
 <style>
 :root{--bg:#0f1420;--card:#182031;--line:#2a3550;--fg:#e8edf7;--mut:#93a1bd;
       --ok:#2e7d32;--warn:#f9a825;--bad:#c62828;--acc:#4c8dff}
@@ -56,17 +56,17 @@ th{color:var(--mut);font-weight:500}
 .spin{color:var(--mut);font-size:13px;margin-top:10px}
 code{background:#0c111b;padding:2px 6px;border-radius:4px;color:#9ecbff}
 </style></head><body>
-<header><h1>AI 生成材料反欺诈风控检测</h1>
-<span class="sub">OPEN-SZ-01 · 众安 1024 AI Coding 挑战赛 · L0→L1→L2→L3→融合→三档决策</span></header>
+<header><h1>AI 鐢熸垚鏉愭枡鍙嶆璇堥鎺ф娴?/h1>
+<span class="sub">OPEN-SZ-01 路 浼楀畨 1024 AI Coding 鎸戞垬璧?路 L0鈫扡1鈫扡2鈫扡3鈫掕瀺鍚堚啋涓夋。鍐崇瓥</span></header>
 <main>
  <div class="card">
-  <div id="drop">拖拽图片 / 视频到此处，或点击选择文件<br><span class="sub">支持 png / jpg / mp4 / mov</span></div>
+  <div id="drop">鎷栨嫿鍥剧墖 / 瑙嗛鍒版澶勶紝鎴栫偣鍑婚€夋嫨鏂囦欢<br><span class="sub">鏀寔 png / jpg / mp4 / mov</span></div>
   <input id="file" type="file" accept="image/*,video/*" style="display:none">
   <img id="prev" class="prev">
-  <div><button id="go" disabled>开始检测</button></div>
+  <div><button id="go" disabled>寮€濮嬫娴?/button></div>
   <div class="spin" id="spin"></div>
  </div>
- <div class="card" id="out"><div class="kv">等待输入…</div></div>
+ <div class="card" id="out"><div class="kv">绛夊緟杈撳叆鈥?/div></div>
 </main>
 <script>
 const drop=document.getElementById('drop'),file=document.getElementById('file'),
@@ -82,7 +82,7 @@ function take(f){if(!f)return;picked=f;isVideo=f.type.startsWith('video');
   drop.textContent=f.name;go.disabled=false;
   if(!isVideo){prev.src=URL.createObjectURL(f);prev.style.display='block'}}
 go.onclick=async()=>{
-  if(!picked)return;go.disabled=true;spin.textContent='推理中…（首次调用含模型预热）';
+  if(!picked)return;go.disabled=true;spin.textContent='鎺ㄧ悊涓€︼紙棣栨璋冪敤鍚ā鍨嬮鐑級';
   const t0=performance.now();
   const r=await fetch('/api/detect'+(isVideo?'_video':'')+'?name='+encodeURIComponent(picked.name),
                       {method:'POST',body:picked});
@@ -91,29 +91,29 @@ go.onclick=async()=>{
 };
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function render(j,wall){
-  if(j.error){out.innerHTML='<div class="kv" style="color:#ff9a9a">错误：'+esc(j.error)+'</div>';return}
+  if(j.error){out.innerHTML='<div class="kv" style="color:#ff9a9a">閿欒锛?+esc(j.error)+'</div>';return}
   const cls={normal:'normal',review:'review',suspect:'suspect'}[j.verdict]||'review';
   let h='<div class="badge '+cls+'">'+esc(j.verdict_cn||j.verdict)+'</div>';
-  h+='<p class="kv">校准后置信度 <b>'+Number(j.confidence).toFixed(3)+'</b> ｜ 融合分数 '
-     +Number(j.fused_score).toFixed(3)+' ｜ 模型分歧度 '+Number(j.disagreement).toFixed(3)
-     +' ｜ 前端往返 '+wall.toFixed(2)+'s</p>';
-  h+='<h3 style="font-size:15px;margin:14px 0 4px">模型证据</h3><table><tr><th>模型/证据</th><th>校准分数</th></tr>';
+  h+='<p class="kv">鏍″噯鍚庣疆淇″害 <b>'+Number(j.confidence).toFixed(3)+'</b> 锝?铻嶅悎鍒嗘暟 '
+     +Number(j.fused_score).toFixed(3)+' 锝?妯″瀷鍒嗘搴?'+Number(j.disagreement).toFixed(3)
+     +' 锝?鍓嶇寰€杩?'+wall.toFixed(2)+'s</p>';
+  h+='<h3 style="font-size:15px;margin:14px 0 4px">妯″瀷璇佹嵁</h3><table><tr><th>妯″瀷/璇佹嵁</th><th>鏍″噯鍒嗘暟</th></tr>';
   for(const k in (j.model_scores||{})) h+='<tr><td>'+esc(k)+'</td><td>'+Number(j.model_scores[k]).toFixed(4)+'</td></tr>';
   h+='</table>';
-  h+='<h3 style="font-size:15px;margin:14px 0 4px">L1 取证线索</h3><table><tr><th>线索</th><th>状态</th><th>说明</th></tr>';
+  h+='<h3 style="font-size:15px;margin:14px 0 4px">L1 鍙栬瘉绾跨储</h3><table><tr><th>绾跨储</th><th>鐘舵€?/th><th>璇存槑</th></tr>';
   for(const c of (j.forensic_clues||[])) h+='<tr><td>'+esc(c.name)+'</td><td>'+esc(c.status)+'</td><td>'+esc(c.detail)+'</td></tr>';
   h+='</table>';
   if(j.localization&&j.localization.heatmap_png_b64){
-    h+='<h3 style="font-size:15px;margin:14px 0 4px">伪造区域定位（L3，零权重取证图）</h3>'
+    h+='<h3 style="font-size:15px;margin:14px 0 4px">浼€犲尯鍩熷畾浣嶏紙L3锛岄浂鏉冮噸鍙栬瘉鍥撅級</h3>'
       +'<img class="hm" src="data:image/png;base64,'+j.localization.heatmap_png_b64+'">';
   }
   if(j.localization&&j.localization.suspicious_segments&&j.localization.suspicious_segments.length)
-    h+='<p class="kv">可疑片段(秒)：'+JSON.stringify(j.localization.suspicious_segments)+'</p>';
-  h+='<h3 style="font-size:15px;margin:14px 0 4px">不确定性与局限</h3><ul class="kv">'
-     +((j.uncertainty||[]).map(u=>'<li>'+esc(u)+'</li>').join('')||'<li>无</li>')+'</ul>';
-  h+='<h3 style="font-size:15px;margin:14px 0 4px">耗时 / 可追溯</h3><table>';
+    h+='<p class="kv">鍙枒鐗囨(绉?锛?+JSON.stringify(j.localization.suspicious_segments)+'</p>';
+  h+='<h3 style="font-size:15px;margin:14px 0 4px">涓嶇‘瀹氭€т笌灞€闄?/h3><ul class="kv">'
+     +((j.uncertainty||[]).map(u=>'<li>'+esc(u)+'</li>').join('')||'<li>鏃?/li>')+'</ul>';
+  h+='<h3 style="font-size:15px;margin:14px 0 4px">鑰楁椂 / 鍙拷婧?/h3><table>';
   for(const k in (j.latency_ms||{})) h+='<tr><td>'+esc(k)+'</td><td>'+Number(j.latency_ms[k]).toFixed(0)+' ms</td></tr>';
-  h+='</table><p class="kv">输入哈希 <code>'+esc(String(j.input_hash).slice(0,32))+'…</code></p>';
+  h+='</table><p class="kv">杈撳叆鍝堝笇 <code>'+esc(String(j.input_hash).slice(0,32))+'鈥?/code></p>';
   out.innerHTML=h;
 }
 </script></body></html>"""
@@ -231,7 +231,7 @@ def main():
     ap.add_argument("--clip-domain-lr", default="models/clip_domain_lr.joblib")
     ap.add_argument("--combined-lr", default="models/combined_lr.joblib")
     ap.add_argument("--fusion", default="models/fusion.json")
-    ap.add_argument("--npr", default="models/npr.pt")
+    ap.add_argument("--npr", default="", help="NPR weights; empty by default (ablated out, see docs/results.md 9)")
     ap.add_argument("--device", default=None)
     ap.add_argument("--no-warmup", action="store_true",
                     help="skip the startup warm-up call (cold first request ~14s)")

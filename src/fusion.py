@@ -100,11 +100,19 @@ class FusionEngine:
         for s in scores:
             p = self.calibrate(s.name, s.raw * s.direction)
             calibrated[s.name] = p
-        names = list(calibrated)
-        if not names:
+        if not calibrated:
             return DecisionResult(verdict="review", confidence=0.5, fused_score=0.0,
                                   reasons=["no model evidence available"])
-        w = np.array([self.weights.get(n, 1.0) for n in names], dtype=np.float64)
+        # Only members listed in the frozen weight table participate. A member that
+        # was ablated out (or is not part of the frozen version) must NOT silently
+        # enter the decision, so an unconfigured name has weight 0.
+        names = [n for n in calibrated if self.weights.get(n, 0.0) > 0]
+        if names:
+            w = np.array([self.weights[n] for n in names], dtype=np.float64)
+        else:
+            # no weight table (bare engine, e.g. unit tests): use every member equally
+            names = list(calibrated)
+            w = np.ones(len(names), dtype=np.float64)
         w = w / w.sum()
         ps = np.array([calibrated[n] for n in names])
         # logit-level weighted mean
