@@ -1,40 +1,77 @@
 # OPEN-SZ-01 可复现资料包说明
 
 > 目的：支持他人按照本资料重新还原/运行出演示中展示的结果（对应提交要求"可复现演示结果的资料包"）。
-> 范围：数据提取与盘查、D1–D8 划分协议、L0/L1 取证管线与先导基线。L2/L3 深度模型与融合决策的复现说明将在 P1–P3 阶段随代码补入（对应章节以 ⏳ 标注）。
-> 原则：全部流程**离线可运行**；数据盘查与划分部分仅依赖 Python 标准库；版本、哈希、冻结签名随包提供。
+> 范围：**全链路已交付**——数据提取与盘查、D1–D8 划分协议、L0/L1/L1b 取证、L2 深度取证（分块 CLIP）、L3 定位、融合校准与三档决策、结构化报告、视频通道、评测与消融实验。
+> 原则：训练与评测流程**可离线复现**；预训练权重一次性下载后本地缓存；版本、阈值、评测证据随包提供。
+> 一键入口：`python scripts/run_all.py`（分步说明见 §5）。
 
 ---
 
 ## 1. 资料包构成
 
 ```
-repo/                          # 代码仓库（GitHub 骨架）
+repo/                          # 代码仓库（https://github.com/Chtrrrrrrr/Zhongan-OPEN-SZ-01）
 ├── src/
-│   ├── l0_input.py            # L0 输入解析与规范化（PNG 块走查、sha256+aHash、最长边512缩放）
-│   ├── l1_forensics.py        # L1 47 维取证特征（色彩/纹理/噪声/自相关/块效应/通道相关/多尺度残差/容器）
-│   ├── l2_npr.py              # L2 NPR 接入（⏳ P1）
-│   ├── l2_clip.py             # L2 CLIP/AIDE 接入（⏳ P1）
-│   └── l2_aeroblade.py        # L2 AEROBLADE 接入（⏳ P3，可选）
+│   ├── l0_input.py            # L0 解析与规范化（PNG 块走查、sha256+aHash、最长边512缩放；支持内存解析）
+│   ├── l1_forensics.py        # L1 47 维取证特征
+│   ├── l1b_domain.py          # L1b 20 维"拍摄态 vs 渲染态"取证（噪声均匀性/光照梯度/锐度一致性/频谱）
+│   ├── l2_clip.py             # 冻结 CLIP-L/14 特征提取 + 线性头
+│   ├── l2_clip_tiles.py       # 3×3 重叠原生分辨率分块 CLIP 特征（关键增益来源）
+│   ├── l2_npr.py              # NPR 分支（已实现，经消融剔除）
+│   ├── l2_aeroblade.py        # AEROBLADE 接入位（可选，未启用）
+│   ├── l3_localization.py     # L3 ELA + 噪声不一致异常图与区域框
+│   ├── fusion.py              # 温度标定 + 加权 logit 融合 + 三档决策
+│   ├── detector.py            # 统一图片/视频服务（逐成员超时与降级）
+│   ├── video.py               # 视频通道：均匀抽帧 → 逐帧证据 → 聚合 → 可疑片段
+│   └── report.py              # 结构化 JSON + 自包含 HTML 报告
 ├── scripts/
-│   ├── extract_features.py    # 批量 L1 特征提取 → features.csv
-│   └── baseline_l1.py         # 先导基线：L2 逻辑回归，分层 5 折 × 5 种子
-├── assets/report-template.json# 结构化报告模板（手册 9.2）
-├── docs/                      # 方案说明 / 演示脚本 / PPT 大纲 / 本说明
-├── requirements.txt           # Python 依赖（torch 单独安装）
-└── README.md
+│   ├── extract_features.py    # 批量 L1 特征 → features.csv
+│   ├── extract_l1b_features.py# 批量 L1b 特征 → models/l1b_feats.npy
+│   ├── extract_clip_features.py # 批量 CLIP 全局 + 分块特征
+│   ├── train_clip_probe.py    # 在 18 生成器基准上训练冻结 CLIP 线性探针
+│   ├── train_npr.py           # 训练 NPR 分支（消融用）
+│   ├── extract_npr_scores.py  # NPR 打分与消融判定
+│   ├── evaluate_system.py     # 嵌套 CV 评测 + 延迟基准 + 报告生成（核心）
+│   ├── experiment_features.py # 特征集消融（含剔除容器指纹的对照）
+│   ├── experiment_fusion.py   # 融合规则消融（combined/forensic/consensus/avg）
+│   ├── diagnose_errors.py     # 错误归因（最困难真实/生成样本画像）
+│   ├── robustness_matrix.py   # 鲁棒性矩阵（重压缩/缩放/截图/噪声/模糊）
+│   ├── make_figures.py        # 生成架构图、消融图、前沿图、耗时图
+│   ├── smoke_test.py          # 冷/热启动、图片与视频预算自检
+│   ├── test_demo_api.py       # 演示服务 HTTP 接口测试
+│   ├── make_test_video.py     # 合成视频烟测片
+│   ├── predict.py             # 单图/单视频 CLI
+│   ├── baseline_l1.py         # L1 先导基线（分层 5 折 × 5 种子）
+│   └── run_all.py             # 一键复现
+├── demo/app.py                # 演示服务（零外部 Web 依赖，含启动预热）
+├── tests/test_l1.py           # L0/L1 自测
+├── assets/                    # 架构图/结果图/报告模板
+├── reports/                   # 评测证据（metrics / 各类消融 / 错误分析 / 冒烟测试）
+└── docs/                      # 方案说明、实测结果、演示脚本、PPT 大纲、本说明
+```
 
-数据侧（随资料包分发的数据目录，大文件不入 git）：
+数据侧（随资料包分发的数据目录，大文件按 `.gitignore` 不入 git）：
+
+```
 data/
 ├── images/                    # 119 张命题样本 PNG（001.png–119.png）
 ├── labels.csv                 # seq, filename, label（ai/real）
 ├── manifest.json              # 每图 sha256 / 宽高 / 字节数 / 源 xlsx media 成员 / 标签
 ├── splits.json                # 示例划分（seed=42, 0.6/0.2/0.2）
 ├── splits_frozen.json         # 冻结划分签名（--verify-frozen 校验对象）
-└── phash_cache.json           # aHash64 感知哈希缓存（sha256 索引）
+├── phash_cache.json           # aHash64 感知哈希缓存
+└── external/                  # AIGC-Detection-Benchmark 分片（训练用，约 1.4 GB）
 
-盘查侧脚本（工作区 scripts/，随包附）：
-scripts/
+models/                        # 训练产物（不入 git，需按 §5 复现生成）
+├── hf_cache/                  # CLIP-L/14 本地权重快照（约 1.6 GB）
+├── clip_probe_norm.pt         # 统一重编码训练的冻结 CLIP 线性探针
+├── forensic_lr.joblib         # [L1(47) ⊕ L1b(20)] 头
+├── combined_lr.joblib         # [L1 ⊕ L1b ⊕ CLIP全局 ⊕ 分块] 头
+├── clip_domain_lr.joblib      # CLIP 全局头（视频通道用）
+├── l1_lr.joblib               # 兼容保留
+└── fusion.json                # 冻结的融合权重 + 温度 + 三档阈值
+
+工作区 scripts/（盘查侧，随包附）
 ├── extract_xlsx_samples.py    # 从命题 xlsx 流式提取 119 张样本与标签
 ├── split_dataset.py           # D1–D8 划分协议脚本（纯标准库）
 └── build_audit.py             # 数据盘查报告生成 + 独立重推校验（9 项）

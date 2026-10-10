@@ -61,14 +61,14 @@ def perceptual_hash(gray: np.ndarray, hash_size: int = 16) -> str:
                    for i in range(0, len(bits), 4))
 
 
-def parse_image(path: str, keep_full: bool = True) -> ParsedInput:
+def parse_bytes(data: bytes, keep_full: bool = True) -> ParsedInput:
+    """Parse an image already held in memory (used by the robustness matrix).
+
+    Container features are read from these bytes, so a re-encoded input correctly
+    loses its original PNG-chunk fingerprints - which is exactly the behaviour the
+    robustness experiment needs to measure.
+    """
     out = ParsedInput(ok=False, media_type="image")
-    try:
-        with open(path, "rb") as f:
-            data = f.read()
-    except OSError as e:
-        out.error = f"read failed: {e}"
-        return out
     out.raw_bytes = len(data)
     out.sha256 = hashlib.sha256(data).hexdigest()
     out.png_chunks = _png_chunk_list(data)
@@ -98,3 +98,14 @@ def parse_image(path: str, keep_full: bool = True) -> ParsedInput:
     out.phash = perceptual_hash(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY))
     out.ok = True
     return out
+
+
+def parse_image(path: str, keep_full: bool = True) -> ParsedInput:
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        out = ParsedInput(ok=False, media_type="image")
+        out.error = f"read failed: {e}"
+        return out
+    return parse_bytes(data, keep_full=keep_full)
