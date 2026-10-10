@@ -1,13 +1,13 @@
 {
-  "cold_start_ms": 14422.0,
+  "cold_start_ms": 12874.6,
   "warm_image_ms": [
-    1284.8,
-    1596.0
+    1233.7,
+    1636.6
   ],
   "video": {
-    "ms": 3544.2,
-    "verdict": "suspect",
-    "confidence": 0.78,
+    "ms": 3705.8,
+    "verdict": "review",
+    "confidence": 0.1481,
     "duration_s": 4.0
   },
   "budget_ms": 5000,

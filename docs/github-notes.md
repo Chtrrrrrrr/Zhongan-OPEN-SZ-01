@@ -3,6 +3,35 @@
 仓库地址：<https://github.com/Chtrrrrrrr/Zhongan-OPEN-SZ-01>
 本地路径：`repo/`（本文件即位于 `repo/docs/`）
 
+## 0. 最新状态：推送已成功（2026-10-11）
+
+凭据在本机可用后，推送已实际完成，远端 `main` 与本地一致：
+
+```powershell
+cd repo
+git -c http.sslVerify=false push origin main
+# -> a3fd059..ac5f57a  main -> main
+git -c http.sslVerify=false ls-remote origin main
+# -> ac5f57a6fffe10199fad6f90519b0a0e21da9bf4  refs/heads/main
+```
+
+已推送的提交链：
+
+| commit | 内容 |
+| --- | --- |
+| `a3fd059` | L0/L1/L2/L3 管线骨架 + fusion/report/video 模块 |
+| `2bccdbd` | 分块 CLIP + 域取证检测管线（含实测 KR） |
+| `6feea7f` | 实测结果文档、README 快速开始、评测证据归档 |
+| `ac5f57a` | 融合权重修正（未配置成员权重为 0）+ 演示 API 测试 |
+
+非交互推送所需环境变量（避免凭据助手弹窗阻塞）：
+
+```powershell
+$env:GIT_TERMINAL_PROMPT = "0"
+$env:GCM_INTERACTIVE = "never"
+git -c http.sslVerify=false -c credential.interactive=false push origin main
+```
+
 ## 1. 克隆记录（2026-10-11，已解决）
 
 - **现象**：`git clone https://github.com/Chtrrrrrrr/Zhongan-OPEN-SZ-01 repo/` 首次失败，
