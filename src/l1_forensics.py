@@ -52,9 +52,13 @@ def _autocorr(x: np.ndarray, lag: int) -> float:
 def _blockiness(gray: np.ndarray, bs: int = 8) -> tuple[float, float]:
     """Mean |diff| across block boundaries vs inside blocks (8x8 grid)."""
     g = gray.astype(np.float32)
-    # vertical boundaries
-    vb = np.abs(g[:, bs - 1::bs] - g[:, bs::bs]).mean() if g.shape[1] > bs else 0.0
-    hb = np.abs(g[bs - 1::bs, :] - g[bs::bs, :]).mean() if g.shape[0] > bs else 0.0
+
+    def _bnd_mean(a, b):
+        n = min(a.shape[0], b.shape[0]), min(a.shape[1], b.shape[1])
+        return float(np.abs(a[:n[0], :n[1]] - b[:n[0], :n[1]]).mean())
+
+    vb = _bnd_mean(g[:, bs - 1::bs], g[:, bs::bs]) if g.shape[1] > bs else 0.0
+    hb = _bnd_mean(g[bs - 1::bs, :], g[bs::bs, :]) if g.shape[0] > bs else 0.0
     # interior diffs (off-boundary)
     vi = np.abs(np.diff(g, axis=1)).mean()
     hi = np.abs(np.diff(g, axis=0)).mean()

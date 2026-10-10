@@ -56,8 +56,8 @@ def _png_chunk_list(data: bytes) -> list:
 def perceptual_hash(gray: np.ndarray, hash_size: int = 16) -> str:
     """aHash on 16x16 downsample -> 256-bit hex string (no external deps)."""
     small = cv2.resize(gray, (hash_size, hash_size), interpolation=cv2.INTER_AREA)
-    bits = (small > small.mean()).flatten()
-    return "".join(f"{int(''.join(str(b) for b in bits[i:i + 4]), 2):x}"
+    bits = (small > small.mean()).astype(np.uint8).flatten()
+    return "".join(f"{int(''.join(str(int(b)) for b in bits[i:i + 4]), 2):x}"
                    for i in range(0, len(bits), 4))
 
 
