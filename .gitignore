@@ -1,4 +1,4 @@
-# ---------- Python ----------
+﻿# ---------- Python ----------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -24,8 +24,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ---------- 数据与大文件（不入库）/ Data & large files (not tracked) ----------
-# 命题提供的 246MB xlsx、提取出的图片等原始数据一律不入库
+# ---------- 鏁版嵁涓庡ぇ鏂囦欢锛堜笉鍏ュ簱锛? Data & large files (not tracked) ----------
+# 鍛介鎻愪緵鐨?246MB xlsx銆佹彁鍙栧嚭鐨勫浘鐗囩瓑鍘熷鏁版嵁涓€寰嬩笉鍏ュ簱
 *.xlsx
 *.xls
 data/images/
@@ -45,15 +45,15 @@ data/interim/
 *.mov
 *.mkv
 
-# 文档类静态资源白名单（README/文档配图放在 assets/，允许入库）
+# 鏂囨。绫婚潤鎬佽祫婧愮櫧鍚嶅崟锛圧EADME/鏂囨。閰嶅浘鏀惧湪 assets/锛屽厑璁稿叆搴擄級
 !assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
 !assets/**/*.gif
 !assets/**/*.webp
 
-# ---------- 模型权重（不入库；如需共享请使用 Git LFS 或外部分发） ----------
-# 推荐：git lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
+# ---------- 妯″瀷鏉冮噸锛堜笉鍏ュ簱锛涘闇€鍏变韩璇蜂娇鐢?Git LFS 鎴栧閮ㄥ垎鍙戯級 ----------
+# 鎺ㄨ崘锛歡it lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
 models/*
 !models/.gitkeep
 *.pt
@@ -66,10 +66,16 @@ models/*
 *.pkl
 *.joblib
 
-# ---------- 运行产物 ----------
+# ---------- 杩愯浜х墿 ----------
 reports/*
 !reports/.gitkeep
 !reports/metrics.json
+!reports/feature_ablation.json
+!reports/fusion_ablation.json
+!reports/smoke_test.json
+!reports/error_analysis.csv
+!reports/npr_ablation.json
+!reports/video_smoke.json
 *.log
 outputs/
 runs/

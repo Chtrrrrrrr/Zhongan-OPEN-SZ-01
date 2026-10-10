@@ -1,0 +1,246 @@
+{
+  "n_samples": 119,
+  "class_balance": {
+    "ai": 56,
+    "real": 63
+  },
+  "protocol": {
+    "cv": "stratified 5-fold; every head fit on the training fold only",
+    "fusion_weights": {
+      "combined": 0.6,
+      "forensic": 0.25,
+      "clip_external": 0.15
+    },
+    "decision_threshold": "order statistic on training-fold real scores, target FPR<=0.03",
+    "external_probe": "models\\clip_probe_norm.pt",
+    "external_probe_admission": "training-fold AUC >= 0.65",
+    "note": "the 119 samples are the only labelled domain data; no selection on held-out folds"
+  },
+  "oof_overall": {
+    "accuracy": 0.958,
+    "fpr": 0.0317,
+    "tpr": 0.9464,
+    "precision": 0.9636,
+    "confusion": {
+      "tp": 53,
+      "tn": 61,
+      "fp": 2,
+      "fn": 3
+    },
+    "accuracy_ci95": [
+      0.916,
+      0.9916
+    ],
+    "fpr_ci95": [
+      0.0,
+      0.0794
+    ],
+    "three_tier": {
+      "suspect": 55,
+      "normal": 32,
+      "review": 32
+    }
+  },
+  "per_model_oof_auc": {
+    "forensic": 0.9082,
+    "combined": 0.9657,
+    "clip_external": 0.6477
+  },
+  "roc_frontier": {
+    "tpr@fpr=0.01": 0.0,
+    "tpr@fpr=0.02": 0.125,
+    "tpr@fpr=0.03": 0.125,
+    "tpr@fpr=0.05": 0.9643,
+    "tpr@fpr=0.10": 0.9643
+  },
+  "operating_points_best_accuracy": {
+    "fpr_le_1.59pct_(1_of_63)": 0.5798,
+    "fpr_le_3.17pct_(2_of_63)": 0.9664,
+    "fpr_le_4.76pct_(3_of_63)": 0.9664,
+    "fpr_le_3pct_strict": 0.5798,
+    "official_ratio_2_of_70=2.86pct": 0.5798
+  },
+  "simulated_official_ratio": {
+    "simulated_ratio": "70:30",
+    "accuracy_mean": 0.9624,
+    "accuracy_ci95": [
+      0.92,
+      0.99
+    ],
+    "fpr_mean": 0.0312,
+    "fpr_ci95": [
+      0.0,
+      0.0714
+    ]
+  },
+  "folds": [
+    {
+      "accuracy": 1.0,
+      "fpr": 0.0,
+      "tpr": 1.0,
+      "precision": 1.0,
+      "confusion": {
+        "tp": 12,
+        "tn": 12,
+        "fp": 0,
+        "fn": 0
+      },
+      "fold": 1,
+      "thresholds": [
+        0.0725,
+        0.6994
+      ],
+      "members": [
+        "combined",
+        "forensic",
+        "clip_external"
+      ],
+      "ext_auc_train": 0.7045
+    },
+    {
+      "accuracy": 1.0,
+      "fpr": 0.0,
+      "tpr": 1.0,
+      "precision": 1.0,
+      "confusion": {
+        "tp": 11,
+        "tn": 13,
+        "fp": 0,
+        "fn": 0
+      },
+      "fold": 2,
+      "thresholds": [
+        0.0914,
+        0.6748
+      ],
+      "members": [
+        "combined",
+        "forensic",
+        "clip_external"
+      ],
+      "ext_auc_train": 0.6529
+    },
+    {
+      "accuracy": 0.9583,
+      "fpr": 0.0,
+      "tpr": 0.9091,
+      "precision": 1.0,
+      "confusion": {
+        "tp": 10,
+        "tn": 13,
+        "fp": 0,
+        "fn": 1
+      },
+      "fold": 3,
+      "thresholds": [
+        0.0717,
+        0.6141
+      ],
+      "members": [
+        "combined",
+        "forensic"
+      ],
+      "ext_auc_train": 0.6142
+    },
+    {
+      "accuracy": 0.9167,
+      "fpr": 0.1538,
+      "tpr": 1.0,
+      "precision": 0.8462,
+      "confusion": {
+        "tp": 11,
+        "tn": 11,
+        "fp": 2,
+        "fn": 0
+      },
+      "fold": 4,
+      "thresholds": [
+        0.0159,
+        0.2878
+      ],
+      "members": [
+        "combined",
+        "forensic",
+        "clip_external"
+      ],
+      "ext_auc_train": 0.6564
+    },
+    {
+      "accuracy": 0.913,
+      "fpr": 0.0,
+      "tpr": 0.8182,
+      "precision": 1.0,
+      "confusion": {
+        "tp": 9,
+        "tn": 12,
+        "fp": 0,
+        "fn": 2
+      },
+      "fold": 5,
+      "thresholds": [
+        0.0724,
+        0.7304
+      ],
+      "members": [
+        "combined",
+        "forensic"
+      ],
+      "ext_auc_train": 0.6109
+    }
+  ],
+  "external_probe_per_fold": [
+    {
+      "fold": 1,
+      "ext_auc_train": 0.7045,
+      "admitted": true
+    },
+    {
+      "fold": 2,
+      "ext_auc_train": 0.6529,
+      "admitted": true
+    },
+    {
+      "fold": 3,
+      "ext_auc_train": 0.6142,
+      "admitted": false
+    },
+    {
+      "fold": 4,
+      "ext_auc_train": 0.6564,
+      "admitted": true
+    },
+    {
+      "fold": 5,
+      "ext_auc_train": 0.6109,
+      "admitted": false
+    }
+  ],
+  "error_analysis": {
+    "false_positives_real_seqs": [
+      57,
+      58
+    ],
+    "false_negatives_ai_seqs": [
+      3,
+      29,
+      30
+    ]
+  },
+  "latency_image": {
+    "n": 30,
+    "p50_ms": 938.8,
+    "p95_ms": 1307.0,
+    "mean_ms": 1045.5,
+    "max_ms": 1384.1,
+    "budget_ms": 5000,
+    "p95_within_budget": true
+  },
+  "final_members": [
+    "combined",
+    "forensic"
+  ],
+  "final_thresholds": {
+    "low": 0.036440409414102856,
+    "high": 0.6742875975794557
+  }
+}

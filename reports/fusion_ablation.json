@@ -1,0 +1,169 @@
+{
+  "note": "out-of-fold protocol; thresholds from training-fold real scores only",
+  "oof_auc": {
+    "forensic": 0.9082,
+    "combined": 0.9657
+  },
+  "results": [
+    {
+      "rule": "combined_only",
+      "target_fpr": 0.02,
+      "accuracy": 0.6218,
+      "fpr": 0.0317,
+      "tpr": 0.2321,
+      "fp": 2,
+      "fn": 43,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "combined_only",
+      "target_fpr": 0.03,
+      "accuracy": 0.6218,
+      "fpr": 0.0317,
+      "tpr": 0.2321,
+      "fp": 2,
+      "fn": 43,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "combined_only",
+      "target_fpr": 0.05,
+      "accuracy": 0.8571,
+      "fpr": 0.0317,
+      "tpr": 0.7321,
+      "fp": 2,
+      "fn": 15,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "forensic_only",
+      "target_fpr": 0.02,
+      "accuracy": 0.6639,
+      "fpr": 0.0476,
+      "tpr": 0.3393,
+      "fp": 3,
+      "fn": 37,
+      "fp_seqs": [
+        57,
+        58,
+        83
+      ]
+    },
+    {
+      "rule": "forensic_only",
+      "target_fpr": 0.03,
+      "accuracy": 0.6639,
+      "fpr": 0.0476,
+      "tpr": 0.3393,
+      "fp": 3,
+      "fn": 37,
+      "fp_seqs": [
+        57,
+        58,
+        83
+      ]
+    },
+    {
+      "rule": "forensic_only",
+      "target_fpr": 0.05,
+      "accuracy": 0.6891,
+      "fpr": 0.0635,
+      "tpr": 0.4107,
+      "fp": 4,
+      "fn": 33,
+      "fp_seqs": [
+        57,
+        58,
+        65,
+        83
+      ]
+    },
+    {
+      "rule": "consensus",
+      "target_fpr": 0.02,
+      "accuracy": 0.605,
+      "fpr": 0.0317,
+      "tpr": 0.1964,
+      "fp": 2,
+      "fn": 45,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "consensus",
+      "target_fpr": 0.03,
+      "accuracy": 0.605,
+      "fpr": 0.0317,
+      "tpr": 0.1964,
+      "fp": 2,
+      "fn": 45,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "consensus",
+      "target_fpr": 0.05,
+      "accuracy": 0.6807,
+      "fpr": 0.0317,
+      "tpr": 0.3571,
+      "fp": 2,
+      "fn": 36,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "avg_logit",
+      "target_fpr": 0.02,
+      "accuracy": 0.6471,
+      "fpr": 0.0317,
+      "tpr": 0.2857,
+      "fp": 2,
+      "fn": 40,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "avg_logit",
+      "target_fpr": 0.03,
+      "accuracy": 0.6471,
+      "fpr": 0.0317,
+      "tpr": 0.2857,
+      "fp": 2,
+      "fn": 40,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    },
+    {
+      "rule": "avg_logit",
+      "target_fpr": 0.05,
+      "accuracy": 0.7815,
+      "fpr": 0.0317,
+      "tpr": 0.5714,
+      "fp": 2,
+      "fn": 24,
+      "fp_seqs": [
+        57,
+        58
+      ]
+    }
+  ]
+}

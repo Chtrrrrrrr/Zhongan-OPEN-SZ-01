@@ -1,0 +1,16 @@
+{
+  "cold_start_ms": 14422.0,
+  "warm_image_ms": [
+    1284.8,
+    1596.0
+  ],
+  "video": {
+    "ms": 3544.2,
+    "verdict": "suspect",
+    "confidence": 0.78,
+    "duration_s": 4.0
+  },
+  "budget_ms": 5000,
+  "image_p95_within_budget": true,
+  "video_within_budget": true
+}

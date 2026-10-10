@@ -1,0 +1,21 @@
+{
+  "npr_standalone_auc": 0.5692,
+  "combined_rank_plus_npr_w0.0": 0.9657,
+  "acc@fpr3_w0.0": 0.916,
+  "fp_w0.0": 2,
+  "fn_w0.0": 8,
+  "combined_rank_plus_npr_w0.1": 0.9615,
+  "acc@fpr3_w0.1": 0.916,
+  "fp_w0.1": 2,
+  "fn_w0.1": 8,
+  "combined_rank_plus_npr_w0.2": 0.9469,
+  "acc@fpr3_w0.2": 0.8739,
+  "fp_w0.2": 2,
+  "fn_w0.2": 13,
+  "combined_rank_plus_npr_w0.3": 0.9298,
+  "acc@fpr3_w0.3": 0.8403,
+  "fp_w0.3": 2,
+  "fn_w0.3": 17,
+  "corr_npr_combined": 0.1986,
+  "corr_npr_forensic": 0.241
+}
