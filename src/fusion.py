@@ -141,7 +141,9 @@ class FusionEngine:
             verdict=verdict,
             confidence=fused,
             fused_score=fused,
-            model_scores={n: round(float(p), 4) for n, p in calibrated.items()},
+            # only members that actually entered the decision: a computed-but-unweighted
+            # evidence channel must not appear as if it influenced the verdict
+            model_scores={n: round(float(calibrated[n]), 4) for n in names},
             disagreement=round(disagreement, 4),
             reasons=reasons,
         )

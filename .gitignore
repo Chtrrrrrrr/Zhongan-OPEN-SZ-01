@@ -1,4 +1,4 @@
-﻿# ---------- Python ----------
+# ---------- Python ----------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -75,6 +75,7 @@ reports/*
 !reports/smoke_test.json
 !reports/error_analysis.csv
 !reports/npr_ablation.json
+!reports/robustness_matrix.json
 !reports/video_smoke.json
 *.log
 outputs/

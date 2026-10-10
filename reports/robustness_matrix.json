@@ -1,0 +1,165 @@
+{
+  "protocol": "out-of-fold: each sample scored by a head fitted on the clean training fold; frozen calibration and thresholds from fusion.json",
+  "threshold_high": 0.6743,
+  "members": [
+    "combined",
+    "forensic"
+  ],
+  "n_samples": 119,
+  "rows": [
+    {
+      "perturbation": "none",
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "confusion": {
+        "tp": 51,
+        "tn": 61,
+        "fp": 2,
+        "fn": 5
+      },
+      "delta_accuracy_vs_clean": 0.0,
+      "delta_tpr_vs_clean": 0.0
+    },
+    {
+      "perturbation": "jpeg_q95",
+      "accuracy": 0.9328,
+      "fpr": 0.0317,
+      "tpr": 0.8929,
+      "confusion": {
+        "tp": 50,
+        "tn": 61,
+        "fp": 2,
+        "fn": 6
+      },
+      "delta_accuracy_vs_clean": -0.0084,
+      "delta_tpr_vs_clean": -0.0178
+    },
+    {
+      "perturbation": "jpeg_q85",
+      "accuracy": 0.9328,
+      "fpr": 0.0317,
+      "tpr": 0.8929,
+      "confusion": {
+        "tp": 50,
+        "tn": 61,
+        "fp": 2,
+        "fn": 6
+      },
+      "delta_accuracy_vs_clean": -0.0084,
+      "delta_tpr_vs_clean": -0.0178
+    },
+    {
+      "perturbation": "jpeg_q70",
+      "accuracy": 0.9328,
+      "fpr": 0.0317,
+      "tpr": 0.8929,
+      "confusion": {
+        "tp": 50,
+        "tn": 61,
+        "fp": 2,
+        "fn": 6
+      },
+      "delta_accuracy_vs_clean": -0.0084,
+      "delta_tpr_vs_clean": -0.0178
+    },
+    {
+      "perturbation": "jpeg_q50",
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "confusion": {
+        "tp": 51,
+        "tn": 61,
+        "fp": 2,
+        "fn": 5
+      },
+      "delta_accuracy_vs_clean": 0.0,
+      "delta_tpr_vs_clean": 0.0
+    },
+    {
+      "perturbation": "downscale_1024",
+      "accuracy": 0.9076,
+      "fpr": 0.0317,
+      "tpr": 0.8393,
+      "confusion": {
+        "tp": 47,
+        "tn": 61,
+        "fp": 2,
+        "fn": 9
+      },
+      "delta_accuracy_vs_clean": -0.0336,
+      "delta_tpr_vs_clean": -0.0714
+    },
+    {
+      "perturbation": "downscale_512",
+      "accuracy": 0.8655,
+      "fpr": 0.0635,
+      "tpr": 0.7857,
+      "confusion": {
+        "tp": 44,
+        "tn": 59,
+        "fp": 4,
+        "fn": 12
+      },
+      "delta_accuracy_vs_clean": -0.0757,
+      "delta_tpr_vs_clean": -0.125
+    },
+    {
+      "perturbation": "screenshot",
+      "accuracy": 0.9076,
+      "fpr": 0.0317,
+      "tpr": 0.8393,
+      "confusion": {
+        "tp": 47,
+        "tn": 61,
+        "fp": 2,
+        "fn": 9
+      },
+      "delta_accuracy_vs_clean": -0.0336,
+      "delta_tpr_vs_clean": -0.0714
+    },
+    {
+      "perturbation": "double_jpeg",
+      "accuracy": 0.9244,
+      "fpr": 0.0317,
+      "tpr": 0.875,
+      "confusion": {
+        "tp": 49,
+        "tn": 61,
+        "fp": 2,
+        "fn": 7
+      },
+      "delta_accuracy_vs_clean": -0.0168,
+      "delta_tpr_vs_clean": -0.0357
+    },
+    {
+      "perturbation": "noise_sigma3",
+      "accuracy": 0.9328,
+      "fpr": 0.0317,
+      "tpr": 0.8929,
+      "confusion": {
+        "tp": 50,
+        "tn": 61,
+        "fp": 2,
+        "fn": 6
+      },
+      "delta_accuracy_vs_clean": -0.0084,
+      "delta_tpr_vs_clean": -0.0178
+    },
+    {
+      "perturbation": "motion_blur",
+      "accuracy": 0.8571,
+      "fpr": 0.0952,
+      "tpr": 0.8036,
+      "confusion": {
+        "tp": 45,
+        "tn": 57,
+        "fp": 6,
+        "fn": 11
+      },
+      "delta_accuracy_vs_clean": -0.0841,
+      "delta_tpr_vs_clean": -0.1071
+    }
+  ]
+}
