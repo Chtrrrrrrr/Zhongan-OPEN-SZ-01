@@ -181,6 +181,56 @@ def main() -> int:
     st, _, _ = get(base, "/api/v1/report/does-not-exist")
     check("报告回取对不存在 id 返回 404 + 统一错误体", st == 404, "status=%s" % st)
 
+    # ---- 4b. 指标看板证据卡（含第二轮审计新增的三张） ----------------------------
+    EVIDENCE = ["feature_ablation", "fusion_ablation", "npr_ablation", "robustness_matrix", "smoke_test",
+                "calibration", "member_analysis", "threshold_stability", "stratified_analysis",
+                "resource_profile", "cross_generator", "aeroblade_ablation", "stratified_manual"]
+    ev_ok, ev_missing = [], []
+    for name in EVIDENCE:
+        st, body, _ = get(base, "/reports/%s.json" % name)
+        (ev_ok if st == 200 else ev_missing).append(name)
+    check("13 张证据卡的数据文件全部可达（页面按同路径读取）", not ev_missing,
+          "已加载 %d/13 缺失=%s" % (len(ev_ok), ev_missing))
+
+    st, body, _ = get(base, "/reports/cross_generator.json")
+    cg = json.loads(body) if st == 200 else {}
+    folds = cg.get("folds") or {}
+    check("跨生成器证据含对照组 AUC 与 3 个整类留出 fold（含逐生成器 recall）",
+          isinstance((cg.get("same_generator_control") or {}).get("auc"), float)
+          and len([k for k, v in folds.items() if v.get("held_out_generators")]) == 3
+          and all((v.get("per_generator_recall_at_threshold") for v in folds.values())),
+          "control=%s folds=%s" % ((cg.get("same_generator_control") or {}).get("auc"),
+                                   [v.get("held_out_generators") for v in folds.values()]))
+
+    st, body, _ = get(base, "/reports/aeroblade_ablation.json")
+    ab = json.loads(body) if st == 200 else {}
+    con = ab.get("conclusions") or {}
+    check("AEROBLADE 消融含单路 AUC / 最佳变体 / 加入融合 Δ / 最终判定",
+          bool((con.get("primary_variant_auc") is not None) and (con.get("best_variant") or {}).get("name")
+               and (con.get("best_add_in") or {}).get("delta_accuracy") is not None
+               and "剔除" in str(con.get("verdict"))),
+          "verdict=%s auc=%s best=%s" % (con.get("verdict"), con.get("primary_variant_auc"),
+                                         (con.get("best_variant") or {}).get("name")))
+
+    st, body, _ = get(base, "/reports/stratified_manual.json")
+    sm = json.loads(body) if st == 200 else {}
+    sct, strata = sm.get("shortcut_test") or {}, sm.get("strata") or {}
+    con_s = (strata.get("content") or {})
+    sc_verdict = str(sct.get("verdict") or "")
+    check("分维度证据含捷径检验与外观/内容分维度指标（含 scene FPR=1.0 与 document FPR=0.0）",
+          (sct.get("appearance_gap") is not None
+           and ("无可用" in sc_verdict or "NO usable" in sc_verdict))
+          and ((con_s.get("scene") or {}).get("fpr") == 1.0)
+          and ((con_s.get("document") or {}).get("fpr") == 0.0),
+          "gap=%s verdict=%s scene_fpr=%s doc_fpr=%s" % (sct.get("appearance_gap"), sc_verdict[:40],
+                                                        (con_s.get("scene") or {}).get("fpr"),
+                                                        (con_s.get("document") or {}).get("fpr")))
+    page_txt = (REPO / "demo" / "webui.html").read_text(encoding="utf-8")
+    check("首页含三张新证据卡标题、功能矩阵捷径检验与误报预算结论",
+          all(t in page_txt for t in ("跨生成器泛化", "AEROBLADE 消融（可选成员，结论：剔除）",
+                                      "分维度指标（人工标注）", "捷径检验", "误报预算应按")))
+
+
     # ---- 5. 实时检测（原始字节模式，页面实际使用的调用方式） ---------------------
     sample = Path(args.sample)
     if not sample.is_file():

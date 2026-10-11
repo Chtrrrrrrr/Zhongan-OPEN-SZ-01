@@ -1,0 +1,267 @@
+{
+  "report": "video_channel_validation",
+  "caveat": "CONTROLLED validation, not an external benchmark. The brief contains no videos and no labelled real+AI video corpus was reachable offline, so both classes were synthesised from the labelled STILLS (identical codec, fps, duration and canvas for both classes; only the still's provenance differs).",
+  "gap": "a genuine external video validation still requires a public corpus with both real and AI-generated video (the AI-only collections found on the mirror have no matching real class); this is recorded as an open item",
+  "protocol": {
+    "per_class": 15,
+    "seconds": 3.0,
+    "fps": 8,
+    "video_path": "10-frame uniform sampling -> per-frame forensic+global-CLIP evidence -> mean/P90 aggregation (production path)"
+  },
+  "video_level": {
+    "n": 30,
+    "auc": 0.9689,
+    "threshold_from_2fp_budget": 0.6695,
+    "accuracy": 0.8667,
+    "tpr": 0.9333,
+    "fpr": 0.2
+  },
+  "latency_ms": {
+    "p50": 2234.4,
+    "p95": 2545.9,
+    "budget_ms": 5000,
+    "p95_within_budget": true
+  },
+  "per_clip": [
+    {
+      "seq": 1,
+      "label": "ai",
+      "fused_score": 0.7407,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 13606.3
+    },
+    {
+      "seq": 2,
+      "label": "ai",
+      "fused_score": 0.8104,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2488.3
+    },
+    {
+      "seq": 3,
+      "label": "ai",
+      "fused_score": 0.6471,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2593.1
+    },
+    {
+      "seq": 4,
+      "label": "ai",
+      "fused_score": 0.6863,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2332.4
+    },
+    {
+      "seq": 5,
+      "label": "ai",
+      "fused_score": 0.9847,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2248.0
+    },
+    {
+      "seq": 6,
+      "label": "ai",
+      "fused_score": 0.9704,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2229.3
+    },
+    {
+      "seq": 7,
+      "label": "ai",
+      "fused_score": 0.9733,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2270.8
+    },
+    {
+      "seq": 8,
+      "label": "ai",
+      "fused_score": 0.995,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2246.8
+    },
+    {
+      "seq": 9,
+      "label": "ai",
+      "fused_score": 0.8235,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2203.3
+    },
+    {
+      "seq": 10,
+      "label": "ai",
+      "fused_score": 0.9164,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2169.3
+    },
+    {
+      "seq": 11,
+      "label": "ai",
+      "fused_score": 0.9338,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2127.3
+    },
+    {
+      "seq": 12,
+      "label": "ai",
+      "fused_score": 0.9361,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2178.7
+    },
+    {
+      "seq": 13,
+      "label": "ai",
+      "fused_score": 0.8514,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2268.0
+    },
+    {
+      "seq": 14,
+      "label": "ai",
+      "fused_score": 0.9206,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2175.0
+    },
+    {
+      "seq": 15,
+      "label": "ai",
+      "fused_score": 0.9702,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2231.9
+    },
+    {
+      "seq": 57,
+      "label": "real",
+      "fused_score": 0.3038,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2214.3
+    },
+    {
+      "seq": 58,
+      "label": "real",
+      "fused_score": 0.6695,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2214.6
+    },
+    {
+      "seq": 59,
+      "label": "real",
+      "fused_score": 0.4082,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2207.7
+    },
+    {
+      "seq": 60,
+      "label": "real",
+      "fused_score": 0.2166,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2241.0
+    },
+    {
+      "seq": 61,
+      "label": "real",
+      "fused_score": 0.2522,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2249.3
+    },
+    {
+      "seq": 62,
+      "label": "real",
+      "fused_score": 0.3906,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2236.9
+    },
+    {
+      "seq": 63,
+      "label": "real",
+      "fused_score": 0.0824,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2247.6
+    },
+    {
+      "seq": 64,
+      "label": "real",
+      "fused_score": 0.3088,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2162.9
+    },
+    {
+      "seq": 65,
+      "label": "real",
+      "fused_score": 0.1402,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2262.1
+    },
+    {
+      "seq": 66,
+      "label": "real",
+      "fused_score": 0.0877,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2225.4
+    },
+    {
+      "seq": 67,
+      "label": "real",
+      "fused_score": 0.1942,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2210.1
+    },
+    {
+      "seq": 68,
+      "label": "real",
+      "fused_score": 0.7811,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2243.6
+    },
+    {
+      "seq": 69,
+      "label": "real",
+      "fused_score": 0.7564,
+      "verdict": "suspect",
+      "frames": "10",
+      "latency_ms": 2221.0
+    },
+    {
+      "seq": 70,
+      "label": "real",
+      "fused_score": 0.4221,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2257.7
+    },
+    {
+      "seq": 71,
+      "label": "real",
+      "fused_score": 0.11,
+      "verdict": "review",
+      "frames": "10",
+      "latency_ms": 2218.6
+    }
+  ]
+}

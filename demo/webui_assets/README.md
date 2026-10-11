@@ -13,6 +13,31 @@
 | `verify_webui.py` | WebUI 端到端验收自检（stdlib，30 项检查） | 对运行中的服务发请求 |
 | `verify_webui_browser.mjs` | 真实浏览器（Chrome + CDP，无 npm 依赖）验收自检：渲染真实数据、样本弹窗、图片实时检测、超时降级、布局无溢出 | 对运行中的服务打开页面 |
 
+## 指标看板证据卡清单（14 张，全部 `reports/` 下实时读取）
+
+| # | 证据卡标题 | 文件 | 渲染方式 |
+| --- | --- | --- | --- |
+| 1 | 特征消融 | `reports/feature_ablation.json` | 专用表 |
+| 2 | 融合规则消融 | `reports/fusion_ablation.json` | 专用表 |
+| 3 | NPR 通道消融 | `reports/npr_ablation.json` | 专用表 |
+| 4 | 鲁棒性矩阵 | `reports/robustness_matrix.json` | 专用表 |
+| 5 | 冷启动与端到端冒烟 | `reports/smoke_test.json` | 专用键值 |
+| 6 | 置信度校准 / ECE | `reports/calibration.json` | 通用展开 |
+| 7 | 成员相关性 / 错误重叠 / 留一法 | `reports/member_analysis.json` | 通用展开 |
+| 8 | 阈值 bootstrap 稳定性 | `reports/threshold_stability.json` | 通用展开 |
+| 9 | 分层诊断拆解 | `reports/stratified_analysis.json` | 通用展开 |
+| 10 | 各环节耗时与显存画像 | `reports/resource_profile.json` | 通用展开 |
+| 11 | **跨生成器泛化（整类生成器从训练移除）** | `reports/cross_generator.json` | 专用表（对照 AUC + 3 个留出 fold + 逐生成器 recall + 方法论说明） |
+| 12 | **AEROBLADE 消融（可选成员，结论：剔除）** | `reports/aeroblade_ablation.json` | 专用表（预注册门槛 / 单路变体 / 加入融合 Δ / 与各成员相关性 / 判定） |
+| 13 | **分维度指标（人工标注）** | `reports/stratified_manual.json` | 专用表（外观+内容两维 + 捷径检验 + 两处错误归因） |
+| 14 | 错误分析清单 | `reports/error_analysis.csv` | CSV 摘要表 |
+
+* 第 11–13 张是第二轮合规审计（F1–F9）后新增的证据，页面同时把关键结论提到功能矩阵 ⑤ 卡片与
+  ④ 指标看板的「分维度指标」卡片（含「误报预算应按内容类别分别管控」的工程结论）。
+* 任一张缺失都只在该卡内显示「未生成 / 不可用（HTTP 404）」，不影响其余卡片；页脚与看板顶部
+  会显示 `已加载 N/14` 的计数。
+* 渲染原则：已知结构用专用渲染器（数值条形 + 表格），未知/新增结构退回通用展开（截断 + 原始 JSON 折叠）。
+
 ## 报告回取（与归档布局解耦）
 
 样本库点击卡片后，页面按以下顺序探测该样本的完整报告，命中即渲染，全部 404 才降级为说明文案：

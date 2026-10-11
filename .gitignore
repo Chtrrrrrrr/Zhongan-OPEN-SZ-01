@@ -24,8 +24,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ---------- 鏁版嵁涓庡ぇ鏂囦欢锛堜笉鍏ュ簱锛? Data & large files (not tracked) ----------
-# 鍛介鎻愪緵鐨?246MB xlsx銆佹彁鍙栧嚭鐨勫浘鐗囩瓑鍘熷鏁版嵁涓€寰嬩笉鍏ュ簱
+# ---------- 閺佺増宓佹稉搴°亣閺傚洣娆㈤敍鍫滅瑝閸忋儱绨遍敍? Data & large files (not tracked) ----------
+# 閸涗粙顣介幓鎰返閻?246MB xlsx閵嗕焦褰侀崣鏍у毉閻ㄥ嫬娴橀悧鍥╃搼閸樼喎顫愰弫鐗堝祦娑撯偓瀵板绗夐崗銉ョ氨
 *.xlsx
 *.xls
 data/images/
@@ -46,15 +46,14 @@ data/external/
 *.mov
 *.mkv
 
-# 鏂囨。绫婚潤鎬佽祫婧愮櫧鍚嶅崟锛圧EADME/鏂囨。閰嶅浘鏀惧湪 assets/锛屽厑璁稿叆搴擄級
-!assets/**/*.png
+# 閺傚洦銆傜猾濠氭饯閹浇绁┃鎰閸氬秴宕熼敍鍦ADME/閺傚洦銆傞柊宥呮禈閺€鎯ф躬 assets/閿涘苯鍘戠拋绋垮弳鎼存搫绱?!assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
 !assets/**/*.gif
 !assets/**/*.webp
 
-# ---------- 妯″瀷鏉冮噸锛堜笉鍏ュ簱锛涘闇€鍏变韩璇蜂娇鐢?Git LFS 鎴栧閮ㄥ垎鍙戯級 ----------
-# 鎺ㄨ崘锛歡it lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
+# ---------- 濡€崇€烽弶鍐櫢閿涘牅绗夐崗銉ョ氨閿涙稑顩ч棁鈧崗鍙橀煩鐠囪渹濞囬悽?Git LFS 閹存牕顦婚柈銊ュ瀻閸欐埊绱?----------
+# 閹恒劏宕橀敍姝t lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
 models/*
 !models/.gitkeep
 *.pt
@@ -67,7 +66,7 @@ models/*
 *.pkl
 *.joblib
 
-# ---------- 杩愯浜х墿 ----------
+# ---------- 鏉╂劘顢戞禍褏澧?----------
 reports/*
 !reports/.gitkeep
 !reports/metrics.json
@@ -78,10 +77,9 @@ reports/*
 !reports/npr_ablation.json
 !reports/robustness_matrix.json
 
-# 杩愯鏃朵骇鐗╋細API 钀界洏鎶ュ憡涓庤姹傛棩蹇椾笉鍏ュ簱
-reports/api/
+# 鏉╂劘顢戦弮鏈甸獓閻椻晪绱癆PI 閽€鐣屾磸閹躲儱鎲℃稉搴ゎ嚞濮瑰倹妫╄箛妞剧瑝閸忋儱绨?reports/api/
 
-# batch 褰掓。鍙叆搴?verify-24锛堣 reports/batch/README.md锛泇erify-119 鏈満淇濈暀浣嗕笉鍏ュ簱锛?!reports/batch/
+# batch 瑜版帗銆傞崣顏勫弳鎼?verify-24閿涘牐顫?reports/batch/README.md閿涙硣erify-119 閺堫剚婧€娣囨繄鏆€娴ｅ棔绗夐崗銉ョ氨閿?!reports/batch/
 reports/batch/*
 !reports/batch/README.md
 !reports/batch/verify-24/
@@ -99,10 +97,11 @@ reports/batch/*
 # compliance audit fixes: cross-generator test, D2/D3 key attempt, AEROBLADE ablation
 !reports/cross_generator.json
 !reports/stratified_manual.json
+!reports/video_channel_validation.json
 !reports/meta_proxy_attempt.json
 !reports/aeroblade_ablation.json
 
-# F7锛歳obustness_smoke.json锛堟棭鏈?6 鏍锋湰鎺㈤拡锛岄潪鏈夋晥璇佹嵁锛変笌 video_smoke.json 宸蹭笉瀛樺湪锛?# 瀵瑰簲鐨勭櫧鍚嶅崟琛屼竴骞剁Щ闄わ紝閬垮厤璇斁琛屾棤鏁堣瘉鎹€?
+# F7閿涙obustness_smoke.json閿涘牊妫張?6 閺嶉攱婀伴幒銏ゆ嫛閿涘矂娼張澶嬫櫏鐠囦焦宓侀敍澶夌瑢 video_smoke.json 瀹歌弓绗夌€涙ê婀敍?# 鐎电懓绨查惃鍕閸氬秴宕熺悰灞肩楠炲墎些闂勩倧绱濋柆鍨帳鐠囶垱鏂佺悰灞炬￥閺佸牐鐦夐幑顔衡偓?
 *.log
 outputs/
 runs/

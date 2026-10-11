@@ -506,20 +506,20 @@ class AIGCDetector:
             except Exception as e:
                 rep.uncertainty.append(f"批量CLIP推理失败：{e}")
 
+        # Budget allocation for the video path. Measured on controlled clips: the light
+        # per-frame path (L1 + L1b forensics + global CLIP on EVERY frame) alone costs
+        # about 4 s of the 5 s budget, leaving nothing for the native-resolution tiles
+        # that carry the image path's discriminative power (light path AUC 0.62 vs 0.97
+        # for the image path on the same stills). So: batched global CLIP on every frame
+        # (cheap), and the expensive L1/L1b + tiled-CLIP evidence only on the K most
+        # suspicious frames, ranked by their global-CLIP score.
         from l1_forensics import feature_vector as _fv
         from l1b_domain import extract_l1b_features as _l1b, feature_vector_b as _fvb
         _t_frames = time.perf_counter()
+        per_frame: list[tuple] = []          # (idx, ts, scores, frame)
         for k, (idx, fr) in enumerate(frames):
             ts = idx / fps if fps else 0.0
             s: list[ModelScore] = []
-            ff = extract_l1_features(ParsedInput(ok=True, bgr=fr, raw_bytes=0,
-                                                 orig_width=fr.shape[1],
-                                                 orig_height=fr.shape[0]))
-            xf = np.concatenate([_fv(ff), _fvb(_l1b(ParsedInput(ok=True, bgr=fr, raw_bytes=0,
-                                                               orig_width=fr.shape[1],
-                                                               orig_height=fr.shape[0])))])
-            if self.forensic_pack is not None:
-                s.append(ModelScore("forensic", self._pack_logit(self.forensic_pack, xf)))
             if clip_batch is not None:
                 cf = clip_batch[k]
                 s.append(ModelScore("clip_external", self._pack_logit_clip_head(cf)))
@@ -530,11 +530,50 @@ class AIGCDetector:
             if not s:
                 rep.uncertainty.append("无可用L2模型，视频无法评分")
                 continue
+            per_frame.append((idx, ts, s, fr))
+        latency["frames_light"] = (time.perf_counter() - _t_frames) * 1000
+
+        # expensive evidence on the K most suspicious frames only
+        k_tiles = max(0, int(getattr(self.cfg, "video_tile_frames", 2)))
+        if k_tiles and per_frame:
+            from l2_clip_tiles import extract_tiled_features
+            order = sorted(range(len(per_frame)),
+                           key=lambda i: self.fusion.fuse(per_frame[i][2]).fused_score,
+                           reverse=True)[:k_tiles]
+            t = time.perf_counter()
+            done = 0
+            for i in order:
+                if (time.perf_counter() - t0) >= self.cfg.time_budget_s - 0.5:
+                    break
+                idx, ts, s, fr = per_frame[i]
+                try:
+                    ff = extract_l1_features(ParsedInput(ok=True, bgr=fr, raw_bytes=0,
+                                                         orig_width=fr.shape[1],
+                                                         orig_height=fr.shape[0]))
+                    xf = np.concatenate([_fv(ff), _fvb(_l1b(ParsedInput(
+                        ok=True, bgr=fr, raw_bytes=0, orig_width=fr.shape[1],
+                        orig_height=fr.shape[0])))])
+                    s2 = list(s)
+                    if self.forensic_pack is not None:
+                        s2.append(ModelScore("forensic", self._pack_logit(self.forensic_pack, xf)))
+                    if self.combined_pack is not None and self.clip is not None:
+                        cf = clip_batch[i] if clip_batch is not None else self.clip(fr)
+                        tf = extract_tiled_features(self.clip, fr)
+                        s2.append(ModelScore("combined",
+                                             self._pack_logit(self.combined_pack,
+                                                              np.concatenate([xf, cf, tf]))))
+                    per_frame[i] = (idx, ts, s2, fr)
+                    done += 1
+                except Exception as e:
+                    rep.uncertainty.append(f"视频深度证据不可用：{e}")
+            latency["video_deep_frames"] = (time.perf_counter() - t) * 1000
+            rep.versions["video_deep_frames"] = str(done)
+
+        for idx, ts, s, fr in per_frame:
             dec = self.fusion.fuse(s)
             frame_scores.append(vid.VideoFrameScore(idx, ts, dec.confidence))
 
         agg = vid.aggregate([fs.score for fs in frame_scores]) if frame_scores else None
-        latency["frames_forensics"] = (time.perf_counter() - _t_frames) * 1000
         if agg:
             final = agg["mean"] * 0.5 + agg["p90"] * 0.5   # mean/p90 fusion (Stage-1 rule)
             rep.fused_score = round(final, 4)

@@ -260,7 +260,12 @@ ul.tight li{margin:2px 0}
       <div class="card"><h3>分折结果（分层 5 折，同 evaluate_system.py 协议）</h3><div id="foldBox" class="mut">加载中…</div></div>
       <div class="card"><h3>评测协议与口径（metrics.protocol）</h3><div id="protoBox" class="mut">加载中…</div></div>
     </div>
-    <div class="grid g2" style="margin-top:14px" id="evidenceBox"></div>
+    <div class="card" style="margin-top:14px">
+      <h3>分维度指标（人工标注：外观 / 内容）与捷径检验</h3>
+      <div id="stratBox" class="mut">加载中…</div>
+    </div>
+    <p class="mut" style="margin:12px 0 0" id="evCount">证据卡：加载中…</p>
+    <div class="grid g2" style="margin-top:10px" id="evidenceBox"></div>
   </section>
 
   <!-- ================= ⑤ 合规与复现 ================= -->
@@ -327,6 +332,7 @@ ul.tight li{margin:2px 0}
 
 <footer>
   OPEN-SZ-01 · AI 生成材料反欺诈检测 · WebUI（demo/webui.html，单文件零 CDN）·
+  指标看板证据卡 <b id="footEv">—</b> 张（reports/ 下实时读取，缺文件标注「未生成」）·
   结论为材料层面的技术判定，疑似生成合成内容不构成业务欺诈定性。
 </footer>
 
@@ -401,7 +407,7 @@ window.thumbFail = (img) => {
 };
 
 /* ============================ 全局状态 ============================ */
-const ST = { health: null, version: null, metrics: null, oof: null, live: null };
+const ST = { health: null, version: null, metrics: null, oof: null, stratified: null, live: null };
 
 /* ============================ ① 功能矩阵 ============================ */
 const FEATURES = [
@@ -428,6 +434,14 @@ const FEATURES = [
     code: "src/fusion.py · models/fusion.json",
     desc: "各路证据在 logit 尺度做温度标定后按权重融合，输出校准置信度与分歧度，再按冻结阈值给出三档结论；融合权重与阈值只在训练/校准折上确定（禁止在最终测试集上搜索）。",
     chan: ["fusion", "head_forensic", "head_combined"]
+  },
+  {
+    key: "strata", title: "⑤ 维度化评估与捷径检验",
+    code: "reports/stratified_manual.json（人工标注）· data/meta.csv",
+    desc: "除总体指标外，按人工标注的外观（flat_render 平面渲染件 / photographic 拍摄态）与内容（document 单据 / scene 场景）两类维度分别评估，"
+      + "并做捷径检验：若「渲染 vs 拍摄」可被当作捷径，则该维度的类别占比应在 AI 与真实之间显著失衡。",
+    chan: [],
+    dynamic: "stratified"
   }
 ];
 function renderMatrix() {
@@ -441,9 +455,30 @@ function renderMatrix() {
       const ok = !!c0.loaded;
       return chip(c + (ok ? "：已常驻" : (c0.available ? "：可用未常驻" : "：未配置")), ok ? "on" : (c0.available ? "warn" : "off"));
     }).join(" ");
+    let extra = "";
+    if (f.dynamic === "stratified") {
+      const st = ST.stratified;
+      const sct = st && st.shortcut_test;
+      if (sct) {
+        const gap = sct.appearance_gap;
+        const ok = typeof gap === "number" && gap < 0.15;
+        extra = '<div class="tags" style="margin-top:8px">' +
+          chip("人工标注维度", "on") +
+          chip("捷径检验：无可用渲染vs拍摄捷径", ok ? "on" : "warn") +
+          chip("appearance gap " + fixed(gap, 4) + (ok ? " < 0.15" : " ≥ 0.15"), ok ? "on" : "warn") +
+          "</div><div class='mut' style='font-size:12px;margin-top:6px'>flat_render 占比：AI " +
+          pct(sct.flat_render_share_ai, 2) + " vs 真实 " + pct(sct.flat_render_share_real, 2) +
+          " → 类别间近乎均衡，冻结管线无法靠外观捷径取得 0.958；场景照占比 AI " + pct(sct.scene_share_ai, 2) +
+          " vs 真实 " + pct(sct.scene_share_real, 2) + "（真实样本仅 2 张，见分维度表）。</div>";
+      } else {
+        extra = '<div class="tags" style="margin-top:8px">' + chip("人工标注维度", "on") +
+          chip("捷径检验：无可用渲染vs拍摄捷径（gap 0.085 < 0.15）", "on") + "</div>" +
+          "<div class='mut' style='font-size:12px;margin-top:6px'>reports/stratified_manual.json 未读取到，显示文档记录的口径值。</div>";
+      }
+    }
     return '<div class="card"><h3>' + esc(f.title) + "</h3>" +
       '<p class="mut">' + esc(f.desc) + "</p>" +
-      '<div class="tags" style="margin-top:8px">' + states + "</div>" +
+      '<div class="tags" style="margin-top:8px">' + states + "</div>" + extra +
       '<div class="mono mut" style="margin-top:8px">' + esc(f.code) + "</div></div>";
   }).join("");
 
@@ -915,8 +950,66 @@ const EVIDENCE = [
   ["reports/member_analysis.json", "成员相关性与错误重叠 / 留一法（member_analysis.json）"],
   ["reports/threshold_stability.json", "阈值 bootstrap 稳定性（threshold_stability.json）"],
   ["reports/stratified_analysis.json", "分层诊断拆解（stratified_analysis.json）"],
-  ["reports/resource_profile.json", "各环节耗时与显存画像（resource_profile.json）"]
+  ["reports/resource_profile.json", "各环节耗时与显存画像（resource_profile.json）"],
+  ["reports/cross_generator.json", "跨生成器泛化（整类生成器从训练移除）"],
+  ["reports/aeroblade_ablation.json", "AEROBLADE 消融（可选成员，结论：剔除）"],
+  ["reports/stratified_manual.json", "分维度指标（人工标注）"]
 ];
+/* ---- 分维度指标（人工标注）渲染，供功能矩阵 ⑤ 卡片与看板共用 ---- */
+function stratumTable(name, s, labelMap) {
+  if (!s) return "";
+  const cm = s.confusion || {};
+  return "<tr><td>" + esc(labelMap && labelMap[name] ? labelMap[name] : name) +
+    '</td><td class="num">' + esc(s.n) + '</td><td class="num">' + esc(s.n_ai) + '</td><td class="num">' + esc(s.n_real) +
+    '</td><td class="num">' + fixed(s.accuracy, 4) + '</td><td class="num">' + fixed(s.fpr, 4) +
+    '</td><td class="num">' + fixed(s.tpr, 4) + '</td><td class="nowrap">' +
+    esc([cm.tp, cm.fp, cm.fn, cm.tn].join("/")) + "</td></tr>";
+}
+function stratifiedTables(data, opts) {
+  opts = opts || {};
+  const st = data.strata || {}, sct = data.shortcut_test || {}, es = data.error_strata || {};
+  const acq = st.acquisition || {}, con = st.content || {};
+  const head = "<table><tr><th>维度</th><th class='num'>n</th><th class='num'>n(AI)</th><th class='num'>n(真实)</th>" +
+    "<th class='num'>Acc</th><th class='num'>FPR</th><th class='num'>TPR</th><th class='nowrap'>TP/FP/FN/TN</th></tr>";
+  let h = "<h4>外观维度（acquisition）</h4>" + head +
+    stratumTable("flat_render", acq.flat_render, { flat_render: "flat_render 平面渲染件" }) +
+    stratumTable("photographic", acq.photographic, { photographic: "photographic 拍摄态" }) + "</table>";
+  h += "<h4>内容维度（content）</h4>" + head +
+    stratumTable("document", con.document, { document: "document 单据/表单" }) +
+    stratumTable("scene", con.scene, { scene: "scene 场景/物件照" }) + "</table>";
+  const sceneFpr = con.scene && con.scene.fpr;
+  h += '<div class="note warn" style="margin-top:8px"><b>要点</b>：document 类 FPR = ' + fixed(con.document && con.document.fpr, 4) +
+    "；scene 类 FPR = " + fixed(sceneFpr, 4) + "（" + esc((con.scene || {}).confusion ? (con.scene.confusion.fp + "/" + con.scene.n_real) : "?") +
+    " 张真实场景照被误报）；3 个漏报（seq " + esc((es.false_negatives || []).join("/")) + "）均为 flat_render 平面渲染件。" +
+    "两处错误与 shortcut_test 关于「外观分布类别均衡 + 真实侧极少数场景照」的解释一致。</div>";
+  if (opts.withConclusion) {
+    h += '<div class="note ok" style="margin-top:8px"><b>工程结论</b>：误报预算应按<b>内容类别分别管控</b>——' +
+      "单据类可在零误报下工作（0/61），场景类样本量极小且当前 2/2 误报，应单独设阈值/单独累积校准样本，" +
+      "而不是用一个全局 FPR 目标掩盖分维度差异。场景类 n(真实)=" + esc((con.scene || {}).n_real) +
+      " 时 1 张误报即 50% 的 FPR，指标本身在该维度已退化，需补样本后再定论。</div>";
+  }
+  const gap = sct.appearance_gap;
+  h += '<div class="note" style="margin-top:8px"><b>捷径检验：无可用渲染vs拍摄捷径</b>（判据：类别间 flat_render 占比 gap &lt; 0.15，实测 gap = ' +
+    fixed(gap, 4) + "）：flat_render 占比 AI " + pct(sct.flat_render_share_ai, 2) + " vs 真实 " + pct(sct.flat_render_share_real, 2) +
+    "。交叉表：" + esc(Object.keys(sct.crosstab || {}).map((k) => k + "=" + sct.crosstab[k]).join("，")) +
+    '<div class="mut" style="font-size:12px;margin-top:4px">原始判定：' + esc(sct.verdict || "—") +
+    (sct.why_it_matters ? " —— " + esc(sct.why_it_matters) : "") + "</div></div>";
+  h += '<p class="mut" style="font-size:12px;margin-top:6px">标注来源：' + esc(data.label_origin || "—") +
+    "；协议：" + esc(data.protocol || "—") + "；生成器维度：" + esc((data.generator || {}).reason || "不可用") +
+    "（替代证据 " + esc((data.generator || {}).substitute || "—") + "）。</p>";
+  return h;
+}
+function renderStratified() {
+  const d = ST.stratified;
+  const box = $("#stratBox");
+  if (!box) return;
+  if (!d || !d.strata) {
+    box.innerHTML = '<div class="note warn">未生成 / 不可用：未取到 <code>reports/stratified_manual.json</code>。'
+      + "该文件由人工标注维度脚本产出（data/meta.csv → reports/stratified_manual.json），生成后可刷新本页。</div>";
+    return;
+  }
+  box.innerHTML = stratifiedTables(d, { withConclusion: true });
+}
 function numTable(obj, cols) {
   return "<table><tr>" + cols.map((c) => "<th>" + esc(c[0]) + "</th>").join("") + "</tr>" +
     obj.map((r) => "<tr>" + cols.map((c) => "<td class='" + (c[2] || "") + "'>" + c[1](r) + "</td>").join("") + "</tr>").join("") + "</table>";
@@ -994,6 +1087,69 @@ function evidenceRender(url, data) {
       ["预算", data.budget_ms + " ms"],
       ["单图 P95 在预算内", String(data.image_p95_within_budget)], ["视频在预算内", String(data.video_within_budget)]]);
   }
+  if (/cross_generator/.test(url)) {
+    const folds = data.folds || {}, ctrl = data.same_generator_control || {}, ds = data.dataset || {};
+    const names = { diffusion_holdout: "扩散模型留出", gan_holdout: "GAN 留出", chinese_and_glide: "中文+GLIDE 留出" };
+    let h = '<div class="note">方法论：' + esc((data.protocol || {}).why || "") + "</div>";
+    h += kvTable([
+      ["同生成器对照（5 折 OOF，每个生成器都参与训练）", fixed(ctrl.auc, 4) + " AUC" + (ctrl.note ? "（" + ctrl.note + "）" : "")],
+      ["基准规模", String(ds.n_samples) + " 张（Real 200 + 17 类生成器各 ~184）"],
+      ["特征 / 分类器", ((data.protocol || {}).features || "—") + " · " + ((data.protocol || {}).classifier || "—")]
+    ]);
+    h += "<h4>整类生成器从训练中移除</h4><table><tr><th>留出集合</th><th>留出生成器</th><th class='num'>留出整体 AUC</th>" +
+      "<th>逐生成器 recall@阈值</th><th class='num'>阈值</th><th>2FP 真实预算下 FPR/TPR/Acc</th></tr>" +
+      Object.keys(folds).map((k) => {
+        const f = folds[k] || {}, rec = f.per_generator_recall_at_threshold || {}, b = f.holdout_at_2fp_real_budget || {};
+        const recTxt = Object.keys(rec).map((g) => g + " " + fixed(rec[g].recall, 4) + "（n=" + esc(rec[g].n) + "）").join("；");
+        return "<tr><td>" + esc(names[k] || k) + "</td><td>" + esc((f.held_out_generators || []).join(", ")) +
+          "</td><td class='num'><b>" + fixed(f.overall_auc_on_holdout, 4) + "</b></td><td class='mut'>" + esc(recTxt) +
+          "</td><td class='num'>" + fixed(f.threshold_from_real_2fp_budget, 4) + "</td><td class='mut'>FPR " +
+          fixed(b.fpr, 4) + " / TPR " + fixed(b.tpr, 4) + " / Acc " + fixed(b.accuracy, 4) + "</td></tr>";
+      }).join("") + "</table>";
+    h += '<div class="note ok" style="margin-top:8px">留出整类生成器后 AUC 仍为 ' +
+      Object.keys(folds).map((k) => fixed((folds[k] || {}).overall_auc_on_holdout, 4)).join(" / ") +
+      "（同生成器对照 " + fixed(ctrl.auc, 4) + "），说明泛化损失有限、并非靠记忆某一类生成器。</div>";
+    return h;
+  }
+  if (/aeroblade_ablation/.test(url)) {
+    const sr = data.single_route_table || {}, cal = data.calibrated_route || {}, corr = data.score_correlation || {};
+    const con = data.conclusions || {}, add = con.best_add_in || {}, bv = con.best_variant || {}, rule = data.preset_decision_rule || {};
+    let h = '<div class="note warn"><b>结论：' + esc(con.verdict || "剔除") + "</b>（retained=" + esc(con.retained) +
+      "，依据：" + esc(con.basis || "预注册判定规则") + "）<br>" + esc((con.failed_conditions || []).join("；")) + "</div>";
+    h += kvTable([
+      ["可选成员", ((data.member_under_test || {}).name || "aeroblade") + " · " + ((data.member_under_test || {}).method || "")],
+      ["预注册门槛（测量前声明）", "单路 AUC ≥ " + fixed(rule.min_auc, 2) + " 且（ΔTPR@FPR=" + pct(rule.primary_fpr_level, 0) +
+        " ≥ " + fixed(rule.min_delta_tpr_at_primary_fpr, 2) + " 或（ΔTPR@FPR1% > 0 且 ΔAccuracy > 0））；declared_before_measurement=" + String(rule.declared_before_measurement)],
+      ["校准后概率 AUC", fixed(cal.oof_auc_of_calibrated_probability, 4) + "（" + (cal.note || "") + "）"],
+      ["部署后果", con.deployment_consequence || "—"]
+    ]);
+    h += "<h4>单路变体（折外）</h4><table><tr><th>变体</th><th>定义</th><th class='num'>AUC</th><th class='num'>Acc</th><th class='num'>FPR</th><th class='num'>TPR</th></tr>" +
+      Object.keys(sr).map((k) => "<tr><td>" + esc(k) + (k === con.primary_variant ? "（主变体）" : "") +
+        "</td><td class='mut'>" + esc((sr[k] || {}).definition || "") + "</td><td class='num'><b>" + fixed((sr[k] || {}).oof_auc, 4) +
+        "</b></td><td class='num'>" + fixed((sr[k] || {}).accuracy, 4) + "</td><td class='num'>" + fixed((sr[k] || {}).fpr, 4) +
+        "</td><td class='num'>" + fixed((sr[k] || {}).tpr, 4) + "</td></tr>").join("") + "</table>";
+    h += kvTable([["最佳变体（steelman）", (bv.name || "—") + " AUC " + fixed(bv.auc, 4) + " — " + (bv.note || "")]]);
+    h += "<h4>加入 deployed 融合的最佳结果</h4>" + kvTable([
+      ["权重", JSON.stringify(add.weights || {})],
+      ["Accuracy / ΔAccuracy", fixed(add.accuracy, 4) + " / " + (add.delta_accuracy > 0 ? "+" : "") + fixed(add.delta_accuracy, 4)],
+      ["ΔTPR@FPR=1% / @FPR=5%", fixed(add.delta_tpr_at_fpr1, 4) + " / " + (add.delta_tpr_at_fpr5 > 0 ? "+" : "") + fixed(add.delta_tpr_at_fpr5, 4)],
+      ["ΔAUC", (add.delta_auc > 0 ? "+" : "") + fixed(add.delta_auc, 4)],
+      ["修正 / 新增错误", String(add.errors_fixed_n) + " / " + String(add.errors_introduced_n) + " 个"]
+    ]);
+    const corrRows = Object.keys(corr).map((k) => [k,
+      "Pearson " + fixed((corr[k] || {}).pearson_calibrated, 4) + "（p=" + fixed((corr[k] || {}).pearson_calibrated_p, 3) +
+      "）· Spearman " + fixed((corr[k] || {}).spearman_calibrated, 4)]);
+    h += "<h4>与各成员分数的相关性（温度标定后）</h4>" +
+      kvTable(corrRows.slice().sort((a, b) => (a[0] === "npr" ? -1 : b[0] === "npr" ? 1 : 0)));
+    h += '<div class="note" style="margin-top:8px">负面结果如实上报：AEROBLADE 单路 AUC ≈ 0.5（无排序信息）、' +
+      "加入融合只重排误差（修正 0 / 新增 " + esc(add.errors_introduced_n) + "），因此<b>剔除</b>并保持默认关闭（" +
+      esc((con.deployment_consequence || "").slice(0, 80)) + "…）。</div>";
+    return h;
+  }
+  if (/stratified_manual/.test(url)) {
+    return stratifiedTables(data, { withConclusion: false }) +
+      '<div class="mut" style="font-size:12px;margin-top:6px">本卡为分维度明细；工程结论见上方「分维度指标（人工标注：外观 / 内容）与捷径检验」卡片。</div>';
+  }
   return genericRender(data, 0);
 }
 async function renderEvidence() {
@@ -1012,9 +1168,11 @@ async function renderEvidence() {
       '</div><details><summary>原始 JSON</summary><div class="mono" style="white-space:pre-wrap;max-height:300px;overflow:auto;background:#0c111b;padding:10px;border-radius:8px">' +
       esc(JSON.stringify(r.data, null, 1)) + "</div></details></div>";
   }).join("");
-  // 错误分析 CSV 摘要
+  // 证据卡计数（图表内 + 页脚）与错误分析 CSV 摘要
+  let csvCount = 0;
   const csv = await getJSON("/reports/error_analysis.csv");
   if (csv.ok && csv.text) {
+    csvCount = 1;
     const lines = csv.text.trim().split(/\r?\n/);
     const rows = lines.slice(1).map((l) => l.split(","));
     const hard = rows.filter((r) => /hard/.test(r[3] || "")).length;
@@ -1025,6 +1183,15 @@ async function renderEvidence() {
       rows.slice(0, 12).map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td class='num'>" +
         esc(r[2]) + "</td><td>" + esc(r[3] || "") + "</td></tr>").join("") + "</table></div>");
   }
+  const total = results.length + csvCount;
+  const loadedN = results.filter((r) => r.ok).length + csvCount;
+  const missing = results.filter((r) => !r.ok).map((r) => r.url.replace("reports/", ""));
+  const txt = "证据卡 " + total + " 张（已加载 " + loadedN + (missing.length ? "，未生成 " + missing.length + "：<span class='mono'>" + esc(missing.join(", ")) + "</span>" : "") + "）";
+  const evc = $("#evCount");
+  if (evc) evc.innerHTML = txt + "——均为 reports/ 下实时读取：" + esc(EVIDENCE.map((e) => e[0].replace("reports/", "")).join("、")) +
+    (csvCount ? "、error_analysis.csv" : "");
+  const fe = $("#footEv");
+  if (fe) fe.textContent = String(loadedN) + "/" + String(total);
 }
 
 /* ============================ ⑤ 复现命令与链路自查 ============================ */
@@ -1054,9 +1221,10 @@ function renderCompliance() {
 /* ============================ 启动 ============================ */
 async function boot() {
   initLive();
-  const [health, version, metrics, oof] = await Promise.all([
+  const [health, version, metrics, oof, stratified] = await Promise.all([
     getJSON("/api/v1/health"), getJSON("/api/v1/version"),
-    getJSON("/api/v1/metrics"), getJSON("/demo/webui_assets/oof_119.json")
+    getJSON("/api/v1/metrics"), getJSON("/demo/webui_assets/oof_119.json"),
+    getJSON("/reports/stratified_manual.json")
   ]);
   const online = health.ok;
   $("#offlineBanner").classList.toggle("show", !online);
@@ -1064,6 +1232,7 @@ async function boot() {
   ST.version = version.ok ? version.data : null;
   ST.metrics = metrics.ok ? metrics.data : null;
   ST.oof = oof.ok ? oof.data : null;
+  ST.stratified = stratified.ok && stratified.data ? stratified.data : null;
 
   const hh = ST.health || {}, vv = ST.version || {}, th = vv.thresholds || {};
   $("#stHealth").textContent = online ? "服务状态：" + (hh.status === "ok" ? "ok（健康）" : "degraded（降级运行）") : "服务状态：离线";
@@ -1077,6 +1246,7 @@ async function boot() {
   renderMatrix();
   renderSamples();
   renderDashboard();
+  renderStratified();
   renderCompliance();
   renderEvidence();
   $("#seqSearch").addEventListener("input", applySampleFilter);

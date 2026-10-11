@@ -95,6 +95,12 @@ async function main() {
       kpis: [...document.querySelectorAll('#kpiBox .kpi')].map(k => k.querySelector('b').textContent),
       evidenceCards: document.querySelectorAll('#evidenceBox .card').length,
       evidenceMissing: document.querySelectorAll('#evidenceBox .note.warn').length,
+      evidenceTitles: [...document.querySelectorAll('#evidenceBox .card h3')].map(h => h.textContent),
+      footEv: (q('#footEv') || {}).textContent || '',
+      evCount: (q('#evCount') || {}).innerText || '',
+      stratTxt: (q('#stratBox') || {}).innerText || '',
+      matrixTxt: (q('#matrixCards') || {}).innerText || '',
+      bodyTxt: document.body.innerText,
       confusion: [...document.querySelectorAll('#confBox .cm div')].map(x => x.textContent.trim()).join('|'),
       leaked: (document.body.innerText.match(/undefined|NaN|\\[object Object\\]|&quot;|&lt;br&gt;/g) || []),
       cmds: document.querySelectorAll('#cmds .mono').length
@@ -110,7 +116,24 @@ async function main() {
   ck("指标看板 6 个 KPI 渲染（含 0.958/0.0317/0.9464）",
     d.kpis.length === 6 && d.kpis.some((k) => k.includes("0.958")) && d.kpis.some((k) => k.includes("0.0317")),
     d.kpis.join(" | "));
-  ck("消融/指标证据卡片 ≥ 5 张", d.evidenceCards >= 5, "cards=" + d.evidenceCards);
+  ck("消融/指标证据卡 + CSV 摘要共 14 张", d.evidenceCards === 14, "cards=" + d.evidenceCards);
+  ck("三张新增证据卡标题正确",
+    ["跨生成器泛化（整类生成器从训练移除）", "AEROBLADE 消融（可选成员，结论：剔除）", "分维度指标（人工标注）"]
+      .every((t) => d.evidenceTitles.some((x) => x.includes(t))),
+    d.evidenceTitles.length + " 张：" + d.evidenceTitles.slice(-4).join(" / "));
+  ck("跨生成器卡渲染对照 0.9807 与三个整类留出 AUC（0.9785 / 0.9932 / 1.0000）",
+    ["0.9807", "0.9785", "0.9932", "1.0000"].every((v) => d.bodyTxt.includes(v)));
+  ck("AEROBLADE 卡渲染 单路 0.5096 / 最佳变体 0.5445 / ΔAcc -0.0168 / 判定 剔除",
+    ["0.5096", "0.5445", "-0.0168", "剔除"].every((v) => d.bodyTxt.includes(v)));
+  ck("分维度卡渲染 gap 0.0853 与 scene FPR 1.0000 / document FPR 0.0000",
+    d.stratTxt.includes("0.0853") && d.stratTxt.includes("1.0000") && d.stratTxt.includes("0.0000"),
+    d.stratTxt.slice(0, 90).replace(/\n+/g, " "));
+  ck("功能矩阵 ⑤ 卡含人工标注维度与捷径检验结论",
+    d.matrixTxt.includes("人工标注维度") && d.matrixTxt.includes("捷径检验：无可用渲染vs拍摄捷径")
+    && d.matrixTxt.includes("0.0853"));
+  ck("看板含「误报预算应按内容类别分别管控」工程结论", d.stratTxt.includes("误报预算应按"));
+  ck("证据卡计数同步（看板顶部 + 页脚 14/14）",
+    /证据卡 14 张/.test(d.evCount) && /14\/14/.test(d.footEv), d.evCount.slice(0, 60) + " | footer=" + d.footEv);
   ck("混淆矩阵布局正确（真实 AI → TP 53 / FN 3）", /真实 AI\|TP 53\|FN 3/.test(d.confusion), d.confusion);
   ck("页面无 undefined/NaN/未转义实体泄漏", d.leaked.length === 0, JSON.stringify(d.leaked.slice(0, 5)));
   ck("复现命令块已渲染", d.cmds >= 5, "cmds=" + d.cmds);
