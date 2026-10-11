@@ -176,7 +176,7 @@ def main():
 
     # ---------------- 2. warm end-to-end pass -------------------------------------
     det.detect_image(paths[0])                       # warm the resident models
-    observed = {"L0": [], "L1": [], "L2_clip": [], "L2_clip_tiles": [], "L2_npr": [],
+    observed = {"L0": [], "L1": [], "L1b": [], "L2_clip": [], "L2_clip_tiles": [], "L2_npr": [],
                 "L3": [], "fusion": [], "total": []}
     used = 0
     t_all0 = time.perf_counter()
@@ -196,8 +196,8 @@ def main():
     # deployed path (NPR is not part of the frozen fusion): same detector, NPR disabled
     det.cfg.npr_weights = None
     det._npr = None
-    deployed_stage = {"total": [], "L2_clip": [], "L2_clip_tiles": [], "L1": [], "L3": [],
-                      "fusion": []}
+    deployed_stage = {"total": [], "L0": [], "L1": [], "L1b": [], "L2_clip": [],
+                      "L2_clip_tiles": [], "L3": [], "fusion": []}
     for p in paths[:args.samples]:
         rep, _ = det.detect_image(p)
         for k in deployed_stage:

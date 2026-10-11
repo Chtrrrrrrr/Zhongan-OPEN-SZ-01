@@ -96,7 +96,7 @@
   },
   "metrics": {
    "path": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\reports\\metrics.json",
-   "sha256": "398dfa4fd545b875abccbfeb551d46ca92c7ef934549d8a76bcef870652f8019"
+   "sha256": "4906df2f5dadb0ebd61ad4e542335c31071e9fb41c928d0423fe17e7c5725091"
   }
  },
  "generator": "demo/webui_assets/build_assets.py",

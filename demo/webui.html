@@ -478,6 +478,9 @@ function renderMatrix() {
       String(((v.metrics || {}).n_samples) || "—") + " 套 · OOF acc " + fixed((v.metrics || {}).oof_accuracy, 4) +
       " / FPR " + fixed((v.metrics || {}).oof_fpr, 4) + " / TPR " + fixed((v.metrics || {}).oof_tpr, 4)]
   ]);
+  tiers += '<p class="mut" style="font-size:12px;margin:8px 0 0">注：<code>code_hash</code> 与 <code>metrics.sha256</code> 是<b>字节级</b>哈希，'
+    + "本机（<code>core.autocrlf=true</code>，CRLF）与干净 clone（LF）会得到不同的值，属行尾差异而非内容差异；跨环境比对请先归一化行尾，"
+    + "或改用 <code>git show HEAD:&lt;path&gt;</code> 取哈希。模型权重 <code>*.pt/*.joblib</code> 与输入 <code>input_sha256</code>（图片/视频字节）不受影响。</p>";
   $("#tierBox").innerHTML = tiers;
 
   // 通道状态表

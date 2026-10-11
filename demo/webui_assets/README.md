@@ -40,10 +40,16 @@
   因此真实样本的 review 计入 TN、AI 样本的 review 计入 FN。这一点在页面上也做了显式说明。
 * `oof_119.json.sources` 记录了三个来源文件的路径与 sha256，便于审计比对。
   **注意这是「磁盘字节」的 sha256**：仓库 `core.autocrlf=true`，`reports/metrics.json` 工作区为 CRLF、
-  git blob 为 LF，因此字节 sha（`398dfa4f…`）与 `git show HEAD:reports/metrics.json` 的 blob sha
-  （`bc412ced…`）不同属正常——归一化换行后两者一致，`git diff` 为空。审计比对时请用同一种口径。
+  git blob 为 LF，因此字节 sha 与 `git show HEAD:reports/metrics.json` 的 blob sha 不同属正常
+  （归一化换行后一致，`git diff` 为空）。审计比对时请统一口径。
+* 同一行尾效应也落在接口对外报的哈希字段上：`GET /api/v1/version` 的 `code.code_hash`（对跟踪文本文件求字节哈希）
+  与 `metrics.sha256` 在本机（CRLF）与干净 clone/Linux（LF）上会不同；模型权重 `*.pt/*.joblib`、
+  逐样本报告里的 `input_sha256`（图片/视频字节）不受影响，`fusion.json` 未被 git 跟踪也不受影响。
+  跨环境比对哈希前请 `git show HEAD:<path>` 或先 CRLF→LF 归一化。
 * `--check` 的判定口径：**数据内容**必须一致（samples / counts / deployed_metrics / protocol …），
   来源指纹漂移只打印提示不算失败（他人重跑评测脚本、或上述 CRLF 差异都不应让检查变红）。
+  来源文件被重新生成后（例如 `reports/metrics.json` 由队长提交 c8c8184 更新了 latency 分位数），
+  重跑 `build_assets.py` 即可刷新 `sources` 里的指纹记录。
 
 ## 重建
 

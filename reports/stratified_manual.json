@@ -1,0 +1,104 @@
+{
+  "report": "stratified_manual",
+  "meta_source": "data/meta.csv",
+  "label_origin": "manual visual pass by the captain (not a proxy, not hand-waved)",
+  "semantics": {
+    "acquisition": "APPEARANCE as observed in the visual pass: flat_render = no capture artefacts (no perspective/lighting gradient/shadow/background/hand/watermark); photographic = capture-like. For AI-generated images there is no real camera, so this records appearance, which is exactly the variable the rendered-vs-photographed shortcut would key on.",
+    "content": "document (form/invoice/record page) vs scene (object/room/food)",
+    "generator": "unavailable - the brief ships no generator labels"
+  },
+  "protocol": "out-of-fold fused score from the same folds/seed as reports/metrics.json",
+  "generator": {
+    "status": "unavailable",
+    "reason": "the brief ships no generator labels",
+    "substitute": "reports/cross_generator.json"
+  },
+  "strata": {
+    "acquisition": {
+      "flat_render": {
+        "n": 52,
+        "n_ai": 27,
+        "n_real": 25,
+        "accuracy": 0.9423,
+        "fpr": 0.0,
+        "tpr": 0.8889,
+        "confusion": {
+          "tp": 24,
+          "tn": 25,
+          "fp": 0,
+          "fn": 3
+        }
+      },
+      "photographic": {
+        "n": 67,
+        "n_ai": 29,
+        "n_real": 38,
+        "accuracy": 0.9701,
+        "fpr": 0.0526,
+        "tpr": 1.0,
+        "confusion": {
+          "tp": 29,
+          "tn": 36,
+          "fp": 2,
+          "fn": 0
+        }
+      }
+    },
+    "content": {
+      "document": {
+        "n": 109,
+        "n_ai": 48,
+        "n_real": 61,
+        "accuracy": 0.9725,
+        "fpr": 0.0,
+        "tpr": 0.9375,
+        "confusion": {
+          "tp": 45,
+          "tn": 61,
+          "fp": 0,
+          "fn": 3
+        }
+      },
+      "scene": {
+        "n": 10,
+        "n_ai": 8,
+        "n_real": 2,
+        "accuracy": 0.8,
+        "fpr": 1.0,
+        "tpr": 1.0,
+        "confusion": {
+          "tp": 8,
+          "tn": 0,
+          "fp": 2,
+          "fn": 0
+        }
+      }
+    }
+  },
+  "shortcut_test": {
+    "crosstab": {
+      "flat_render/ai": 27,
+      "flat_render/real": 25,
+      "photographic/ai": 29,
+      "photographic/real": 38
+    },
+    "flat_render_share_ai": 0.4821,
+    "flat_render_share_real": 0.3968,
+    "scene_share_ai": 0.1429,
+    "scene_share_real": 0.0317,
+    "appearance_gap": 0.0853,
+    "verdict": "NO usable rendered-vs-photographed shortcut: the flat-render share is nearly equal across classes",
+    "why_it_matters": "the frozen pipeline cannot reach 0.958 by keying on appearance; the class-balanced appearance distribution also explains the two false positives (real scene photos 057/058) and the three false negatives (flat-render AI samples 003/029/030)"
+  },
+  "error_strata": {
+    "false_positives": [
+      57,
+      58
+    ],
+    "false_negatives": [
+      3,
+      29,
+      30
+    ]
+  }
+}

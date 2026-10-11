@@ -6,7 +6,7 @@
     "11.2 冷启动与热启动",
     "15.2 响应速度 ≤5s"
   ],
-  "generated_at": "2026-10-11T03:18:39+00:00",
+  "generated_at": "2026-10-11T04:11:20+00:00",
   "script": "repo/scripts/resource_profile.py",
   "environment": {
     "device": "cuda",
@@ -37,164 +37,191 @@
     "note": "allocations were declared in the script source before measuring and leave headroom under the 5 s acceptance budget; they are engineering targets, not measured values"
   },
   "cold_start": {
-    "detector_construction_ms": 0.5,
-    "first_sample_through_fresh_detector_ms": 2890.2,
-    "clip_backbone_load_ms_first_access": 10159.9,
+    "detector_construction_ms": 0.4,
+    "first_sample_through_fresh_detector_ms": 3776.4,
+    "clip_backbone_load_ms_first_access": 10857.0,
     "note": "measured in-process: torch is already imported and the CUDA context is warm, so this is a lower bound on a true process cold start; it does include loading the CLIP backbone, the probe head, NPR and the joblib heads on first use. The first CLIP load reads ~1.7 GB of weights from disk (8.75 s here); the cold-start sample above benefits from the OS page cache, so a genuinely cold machine should be budgeted closer to the model-load figure."
   },
   "model_loading": {
-    "detector_construction_ms": 0.5,
+    "detector_construction_ms": 0.4,
     "components": {
-      "clip_backbone_and_probe": 10159.9,
-      "npr_net": 169.0,
-      "forensic_lr_joblib": 76.6,
+      "clip_backbone_and_probe": 10857.0,
+      "npr_net": 167.1,
+      "forensic_lr_joblib": 63.0,
       "combined_lr_joblib": 0.8,
-      "clip_domain_lr_joblib": 0.6,
-      "l1_lr_joblib": 0.5
+      "clip_domain_lr_joblib": 0.5,
+      "l1_lr_joblib": 0.4
     },
     "cuda_allocated_after_load_mib": 1243.7
   },
   "warm_image_profile": {
     "L0": {
       "n": 30,
-      "p50_ms": 19.2,
-      "p95_ms": 143.6,
-      "mean_ms": 55.3,
-      "min_ms": 5.4,
-      "max_ms": 149.9,
-      "stdev_ms": 56.2
+      "p50_ms": 18.9,
+      "p95_ms": 143.1,
+      "mean_ms": 55.1,
+      "min_ms": 5.1,
+      "max_ms": 150.1,
+      "stdev_ms": 55.7
     },
     "L1": {
       "n": 30,
-      "p50_ms": 75.5,
-      "p95_ms": 91.1,
-      "mean_ms": 75.2,
-      "min_ms": 58.7,
-      "max_ms": 101.2,
-      "stdev_ms": 10.9
+      "p50_ms": 73.0,
+      "p95_ms": 84.0,
+      "mean_ms": 71.8,
+      "min_ms": 57.9,
+      "max_ms": 85.5,
+      "stdev_ms": 8.2
+    },
+    "L1b": {
+      "n": 30,
+      "p50_ms": 252.7,
+      "p95_ms": 486.0,
+      "mean_ms": 301.9,
+      "min_ms": 88.4,
+      "max_ms": 559.8,
+      "stdev_ms": 121.8
     },
     "L2_clip": {
       "n": 30,
-      "p50_ms": 30.9,
-      "p95_ms": 31.6,
-      "mean_ms": 30.9,
-      "min_ms": 29.7,
-      "max_ms": 32.2,
-      "stdev_ms": 0.6
+      "p50_ms": 50.7,
+      "p95_ms": 54.4,
+      "mean_ms": 49.0,
+      "min_ms": 38.0,
+      "max_ms": 55.0,
+      "stdev_ms": 4.9
     },
     "L2_clip_tiles": {
       "n": 30,
-      "p50_ms": 193.1,
-      "p95_ms": 199.3,
-      "mean_ms": 194.0,
-      "min_ms": 188.0,
-      "max_ms": 204.5,
-      "stdev_ms": 3.9
+      "p50_ms": 493.4,
+      "p95_ms": 503.3,
+      "mean_ms": 493.8,
+      "min_ms": 482.1,
+      "max_ms": 504.4,
+      "stdev_ms": 5.7
     },
     "L2_npr": {
       "n": 30,
-      "p50_ms": 4.8,
-      "p95_ms": 5.7,
-      "mean_ms": 4.7,
-      "min_ms": 3.2,
-      "max_ms": 6.1,
-      "stdev_ms": 0.7
+      "p50_ms": 5.7,
+      "p95_ms": 7.4,
+      "mean_ms": 5.9,
+      "min_ms": 4.9,
+      "max_ms": 10.1,
+      "stdev_ms": 1.0
     },
     "L3": {
       "n": 30,
-      "p50_ms": 26.5,
-      "p95_ms": 33.1,
-      "mean_ms": 26.0,
-      "min_ms": 15.9,
-      "max_ms": 34.2,
-      "stdev_ms": 4.5
+      "p50_ms": 26.9,
+      "p95_ms": 32.9,
+      "mean_ms": 26.2,
+      "min_ms": 19.5,
+      "max_ms": 36.0,
+      "stdev_ms": 4.2
     },
     "fusion": {
       "n": 30,
       "p50_ms": 0.2,
-      "p95_ms": 0.3,
+      "p95_ms": 0.4,
       "mean_ms": 0.2,
-      "min_ms": 0.2,
-      "max_ms": 0.3,
-      "stdev_ms": 0.0
+      "min_ms": 0.1,
+      "max_ms": 0.4,
+      "stdev_ms": 0.1
     },
     "total": {
       "n": 30,
-      "p50_ms": 845.7,
-      "p95_ms": 1265.6,
-      "mean_ms": 956.5,
-      "min_ms": 617.4,
-      "max_ms": 1378.8,
-      "stdev_ms": 207.3
+      "p50_ms": 1679.6,
+      "p95_ms": 2057.8,
+      "mean_ms": 1773.2,
+      "min_ms": 1473.5,
+      "max_ms": 2121.1,
+      "stdev_ms": 183.4
     },
-    "wall_clock_per_sample_ms": 960.0
+    "wall_clock_per_sample_ms": 1777.2
   },
   "deployed_path_no_npr": {
     "total": {
       "n": 30,
-      "p50_ms": 857.8,
-      "p95_ms": 1259.2,
-      "mean_ms": 952.4,
-      "min_ms": 611.6,
-      "max_ms": 1356.8,
-      "stdev_ms": 202.5
+      "p50_ms": 1698.3,
+      "p95_ms": 2047.3,
+      "mean_ms": 1773.2,
+      "min_ms": 1482.2,
+      "max_ms": 2094.1,
+      "stdev_ms": 175.4
     },
-    "L2_clip": {
+    "L0": {
       "n": 30,
-      "p50_ms": 31.2,
-      "p95_ms": 32.0,
-      "mean_ms": 31.2,
-      "min_ms": 30.2,
-      "max_ms": 32.8,
-      "stdev_ms": 0.6
-    },
-    "L2_clip_tiles": {
-      "n": 30,
-      "p50_ms": 193.6,
-      "p95_ms": 199.1,
-      "mean_ms": 193.0,
-      "min_ms": 186.6,
-      "max_ms": 201.7,
-      "stdev_ms": 3.9
+      "p50_ms": 18.7,
+      "p95_ms": 142.1,
+      "mean_ms": 55.4,
+      "min_ms": 5.1,
+      "max_ms": 151.7,
+      "stdev_ms": 56.2
     },
     "L1": {
       "n": 30,
-      "p50_ms": 77.1,
-      "p95_ms": 93.2,
-      "mean_ms": 77.1,
-      "min_ms": 56.4,
-      "max_ms": 98.3,
-      "stdev_ms": 11.2
+      "p50_ms": 72.4,
+      "p95_ms": 88.3,
+      "mean_ms": 71.7,
+      "min_ms": 56.3,
+      "max_ms": 93.7,
+      "stdev_ms": 9.6
+    },
+    "L1b": {
+      "n": 30,
+      "p50_ms": 243.8,
+      "p95_ms": 473.5,
+      "mean_ms": 299.0,
+      "min_ms": 89.5,
+      "max_ms": 534.2,
+      "stdev_ms": 119.4
+    },
+    "L2_clip": {
+      "n": 30,
+      "p50_ms": 49.1,
+      "p95_ms": 55.0,
+      "mean_ms": 47.7,
+      "min_ms": 30.9,
+      "max_ms": 55.5,
+      "stdev_ms": 5.8
+    },
+    "L2_clip_tiles": {
+      "n": 30,
+      "p50_ms": 494.4,
+      "p95_ms": 508.3,
+      "mean_ms": 495.7,
+      "min_ms": 484.5,
+      "max_ms": 528.0,
+      "stdev_ms": 8.1
     },
     "L3": {
       "n": 30,
-      "p50_ms": 25.9,
-      "p95_ms": 33.0,
-      "mean_ms": 25.9,
-      "min_ms": 12.6,
-      "max_ms": 36.4,
-      "stdev_ms": 5.3
+      "p50_ms": 26.6,
+      "p95_ms": 33.7,
+      "mean_ms": 26.2,
+      "min_ms": 19.1,
+      "max_ms": 37.3,
+      "stdev_ms": 4.7
     },
     "fusion": {
       "n": 30,
       "p50_ms": 0.2,
-      "p95_ms": 0.2,
+      "p95_ms": 0.4,
       "mean_ms": 0.2,
-      "min_ms": 0.1,
-      "max_ms": 0.3,
-      "stdev_ms": 0.0
+      "min_ms": 0.2,
+      "max_ms": 0.4,
+      "stdev_ms": 0.1
     }
   },
   "isolated_stage_profile": {
     "L0": {
       "latency": {
         "n": 10,
-        "p50_ms": 19.8,
-        "p95_ms": 88.8,
-        "mean_ms": 30.3,
-        "min_ms": 5.5,
-        "max_ms": 136.1,
-        "stdev_ms": 35.8
+        "p50_ms": 18.8,
+        "p95_ms": 88.9,
+        "mean_ms": 30.1,
+        "min_ms": 5.1,
+        "max_ms": 137.3,
+        "stdev_ms": 36.2
       },
       "peak_allocated_mib": 1209.2,
       "peak_delta_mib_p50": 0.0,
@@ -203,12 +230,12 @@
     "L1": {
       "latency": {
         "n": 10,
-        "p50_ms": 77.8,
-        "p95_ms": 96.8,
-        "mean_ms": 78.1,
-        "min_ms": 62.3,
-        "max_ms": 102.9,
-        "stdev_ms": 12.5
+        "p50_ms": 72.0,
+        "p95_ms": 90.5,
+        "mean_ms": 74.1,
+        "min_ms": 54.6,
+        "max_ms": 94.7,
+        "stdev_ms": 11.3
       },
       "peak_allocated_mib": 1209.2,
       "peak_delta_mib_p50": 0.0,
@@ -217,12 +244,12 @@
     "L1b": {
       "latency": {
         "n": 10,
-        "p50_ms": 289.3,
-        "p95_ms": 523.2,
-        "mean_ms": 314.4,
-        "min_ms": 103.7,
-        "max_ms": 620.0,
-        "stdev_ms": 135.8
+        "p50_ms": 245.1,
+        "p95_ms": 449.1,
+        "mean_ms": 269.7,
+        "min_ms": 91.9,
+        "max_ms": 539.8,
+        "stdev_ms": 115.0
       },
       "peak_allocated_mib": 1209.2,
       "peak_delta_mib_p50": 0.0,
@@ -231,12 +258,12 @@
     "L2_clip": {
       "latency": {
         "n": 10,
-        "p50_ms": 31.3,
-        "p95_ms": 32.3,
-        "mean_ms": 31.4,
-        "min_ms": 30.2,
-        "max_ms": 32.7,
-        "stdev_ms": 0.7
+        "p50_ms": 49.4,
+        "p95_ms": 54.6,
+        "mean_ms": 48.9,
+        "min_ms": 40.1,
+        "max_ms": 55.0,
+        "stdev_ms": 4.8
       },
       "peak_allocated_mib": 1227.8,
       "peak_delta_mib_p50": 18.6,
@@ -245,12 +272,12 @@
     "L2_clip_tiles": {
       "latency": {
         "n": 10,
-        "p50_ms": 196.0,
-        "p95_ms": 201.9,
-        "mean_ms": 196.3,
-        "min_ms": 191.2,
-        "max_ms": 202.4,
-        "stdev_ms": 3.5
+        "p50_ms": 495.4,
+        "p95_ms": 509.3,
+        "mean_ms": 495.3,
+        "min_ms": 480.7,
+        "max_ms": 518.3,
+        "stdev_ms": 9.4
       },
       "peak_allocated_mib": 1358.9,
       "peak_delta_mib_p50": 149.7,
@@ -259,12 +286,12 @@
     "L2_npr": {
       "latency": {
         "n": 10,
-        "p50_ms": 4.5,
+        "p50_ms": 5.7,
         "p95_ms": 6.1,
-        "mean_ms": 4.6,
-        "min_ms": 3.2,
-        "max_ms": 6.7,
-        "stdev_ms": 0.9
+        "mean_ms": 5.7,
+        "min_ms": 5.2,
+        "max_ms": 6.1,
+        "stdev_ms": 0.3
       },
       "peak_allocated_mib": 1229.5,
       "peak_delta_mib_p50": 20.3,
@@ -273,12 +300,12 @@
     "L3": {
       "latency": {
         "n": 10,
-        "p50_ms": 16.9,
-        "p95_ms": 22.9,
-        "mean_ms": 16.7,
-        "min_ms": 9.0,
-        "max_ms": 23.8,
-        "stdev_ms": 5.0
+        "p50_ms": 17.5,
+        "p95_ms": 23.8,
+        "mean_ms": 18.5,
+        "min_ms": 14.1,
+        "max_ms": 25.7,
+        "stdev_ms": 3.5
       },
       "peak_allocated_mib": 1209.2,
       "peak_delta_mib_p50": 0.0,
@@ -291,7 +318,7 @@
         "p95_ms": 0.1,
         "mean_ms": 0.1,
         "min_ms": 0.1,
-        "max_ms": 0.2,
+        "max_ms": 0.1,
         "stdev_ms": 0.0
       },
       "peak_allocated_mib": 1209.2,
@@ -301,12 +328,12 @@
     "end_to_end_image": {
       "latency": {
         "n": 10,
-        "p50_ms": 863.7,
-        "p95_ms": 1184.1,
-        "mean_ms": 910.6,
-        "min_ms": 681.9,
-        "max_ms": 1343.1,
-        "stdev_ms": 169.2
+        "p50_ms": 1692.9,
+        "p95_ms": 1965.9,
+        "mean_ms": 1733.8,
+        "min_ms": 1607.4,
+        "max_ms": 2131.4,
+        "stdev_ms": 140.9
       },
       "peak_allocated_mib": 1358.9,
       "peak_delta_mib_p50": null,
@@ -320,12 +347,12 @@
     "duration_s": 4.0,
     "verdict": "review",
     "n": 20,
-    "p50_ms": 3160.5,
-    "p95_ms": 3311.3,
-    "mean_ms": 3190.1,
-    "min_ms": 3111.6,
-    "max_ms": 3383.7,
-    "stdev_ms": 69.3,
+    "p50_ms": 3208.5,
+    "p95_ms": 3324.6,
+    "mean_ms": 3222.0,
+    "min_ms": 3150.9,
+    "max_ms": 3346.7,
+    "stdev_ms": 53.0,
     "budget_ms": 5000,
     "p95_within_budget": true,
     "note": "short embedded smoke clip; a full acceptance run needs longer videos at several durations/resolutions (manual 表 16-2)"
@@ -335,8 +362,8 @@
       "module": "L0 输入解析",
       "required": "必须",
       "target_ms": 80,
-      "measured_p50_ms": 19.2,
-      "measured_p95_ms": 143.6,
+      "measured_p50_ms": 18.9,
+      "measured_p95_ms": 143.1,
       "measured_n": 30,
       "measured_peak_memory_mib": 1209.2,
       "measured_stage_peak_delta_mib": 0.0,
@@ -347,8 +374,8 @@
       "module": "L1 取证线索",
       "required": "必须",
       "target_ms": 350,
-      "measured_p50_ms": 75.5,
-      "measured_p95_ms": 91.1,
+      "measured_p50_ms": 73.0,
+      "measured_p95_ms": 84.0,
       "measured_n": 30,
       "measured_peak_memory_mib": 1209.2,
       "measured_stage_peak_delta_mib": 0.0,
@@ -359,8 +386,8 @@
       "module": "L1b 采集方式/域线索",
       "required": "必须",
       "target_ms": 350,
-      "measured_p50_ms": 289.3,
-      "measured_p95_ms": 523.2,
+      "measured_p50_ms": 245.1,
+      "measured_p95_ms": 449.1,
       "measured_n": 10,
       "measured_peak_memory_mib": 1209.2,
       "measured_stage_peak_delta_mib": 0.0,
@@ -371,8 +398,8 @@
       "module": "L2 NPR",
       "required": "可选/未进入冻结融合",
       "target_ms": 250,
-      "measured_p50_ms": 4.8,
-      "measured_p95_ms": 5.7,
+      "measured_p50_ms": 5.7,
+      "measured_p95_ms": 7.4,
       "measured_n": 30,
       "measured_peak_memory_mib": 1229.5,
       "measured_stage_peak_delta_mib": 20.3,
@@ -383,8 +410,8 @@
       "module": "L2 CLIP / AIDE",
       "required": "核心",
       "target_ms": 1200,
-      "measured_p50_ms": 30.9,
-      "measured_p95_ms": 31.6,
+      "measured_p50_ms": 50.7,
+      "measured_p95_ms": 54.4,
       "measured_n": 30,
       "measured_peak_memory_mib": 1227.8,
       "measured_stage_peak_delta_mib": 18.6,
@@ -395,8 +422,8 @@
       "module": "L2 CLIP 分块(3x3 tiles)",
       "required": "核心",
       "target_ms": 1500,
-      "measured_p50_ms": 193.1,
-      "measured_p95_ms": 199.3,
+      "measured_p50_ms": 493.4,
+      "measured_p95_ms": 503.3,
       "measured_n": 30,
       "measured_peak_memory_mib": 1358.9,
       "measured_stage_peak_delta_mib": 149.7,
@@ -407,8 +434,8 @@
       "module": "L3 篡改定位与热力图",
       "required": "建议",
       "target_ms": 700,
-      "measured_p50_ms": 26.5,
-      "measured_p95_ms": 33.1,
+      "measured_p50_ms": 26.9,
+      "measured_p95_ms": 32.9,
       "measured_n": 30,
       "measured_peak_memory_mib": 1209.2,
       "measured_stage_peak_delta_mib": 0.0,
@@ -420,7 +447,7 @@
       "required": "必须",
       "target_ms": 70,
       "measured_p50_ms": 0.2,
-      "measured_p95_ms": 0.3,
+      "measured_p95_ms": 0.4,
       "measured_n": 30,
       "measured_peak_memory_mib": 1209.2,
       "measured_stage_peak_delta_mib": 0.0,
@@ -431,24 +458,24 @@
       "module": "端到端（图片，热启动）",
       "required": "必须",
       "target_ms": 5000,
-      "measured_p50_ms": 845.7,
-      "measured_p95_ms": 1265.6,
+      "measured_p50_ms": 1679.6,
+      "measured_p95_ms": 2057.8,
       "measured_n": 30,
       "measured_peak_memory_mib": 1358.9,
       "measured_stage_peak_delta_mib": null,
       "measurement_source": "pipeline latency counters (src/detector.py)",
       "p95_within_target": true,
       "variant_deployed_no_npr": {
-        "measured_p50_ms": 857.8,
-        "measured_p95_ms": 1259.2
+        "measured_p50_ms": 1698.3,
+        "measured_p95_ms": 2047.3
       }
     },
     {
       "module": "端到端（视频）",
       "required": "必须",
       "target_ms": 5000,
-      "measured_p50_ms": 3160.5,
-      "measured_p95_ms": 3311.3,
+      "measured_p50_ms": 3208.5,
+      "measured_p95_ms": 3324.6,
       "measured_n": 20,
       "measured_peak_memory_mib": null,
       "measured_stage_peak_delta_mib": null,
@@ -458,47 +485,49 @@
   ],
   "acceptance": {
     "hard_acceptance_selection": "单张图 / 单条视频 P95 <= 5000 ms (命题验收标准)",
-    "image_p95_ms": 1265.6,
-    "video_p95_ms": 3311.3,
+    "image_p95_ms": 2057.8,
+    "video_p95_ms": 3324.6,
     "hard_acceptance_pass": true,
-    "image_headroom_ms": 3734.4
+    "image_headroom_ms": 2942.2
   },
   "all_rows_within_target": false,
   "headline": {
     "device": "cuda",
     "gpu_name": "NVIDIA GeForce RTX 5070 Laptop GPU",
     "gpu_total_memory_mib": 8150.6,
-    "image_p50_ms": 845.7,
-    "image_p95_ms": 1265.6,
-    "image_p95_ms_deployed_no_npr": 1259.2,
-    "video_p50_ms": 3160.5,
-    "video_p95_ms": 3311.3,
+    "image_p50_ms": 1679.6,
+    "image_p95_ms": 2057.8,
+    "image_p95_ms_deployed_no_npr": 2047.3,
+    "video_p50_ms": 3208.5,
+    "video_p95_ms": 3324.6,
     "end_to_end_budget_ms": 5000,
     "hard_acceptance_pass": true,
     "peak_gpu_memory_mib": 1358.9,
     "gpu_memory_headroom_mib": 6791.7,
-    "cold_start_first_sample_ms": 2890.2,
-    "clip_backbone_load_ms": 10159.9,
+    "cold_start_first_sample_ms": 3776.4,
+    "clip_backbone_load_ms": 10857.0,
     "stages_p50_ms": {
-      "L0": 19.2,
-      "L1": 75.5,
-      "L2_clip": 30.9,
-      "L2_clip_tiles": 193.1,
-      "L2_npr": 4.8,
-      "L3": 26.5,
+      "L0": 18.9,
+      "L1": 73.0,
+      "L1b": 252.7,
+      "L2_clip": 50.7,
+      "L2_clip_tiles": 493.4,
+      "L2_npr": 5.7,
+      "L3": 26.9,
       "fusion": 0.2,
-      "total": 845.7,
+      "total": 1679.6,
       "wall_clock_per_sample_ms": null
     },
     "stages_p95_ms": {
-      "L0": 143.6,
-      "L1": 91.1,
-      "L2_clip": 31.6,
-      "L2_clip_tiles": 199.3,
-      "L2_npr": 5.7,
-      "L3": 33.1,
-      "fusion": 0.3,
-      "total": 1265.6,
+      "L0": 143.1,
+      "L1": 84.0,
+      "L1b": 486.0,
+      "L2_clip": 54.4,
+      "L2_clip_tiles": 503.3,
+      "L2_npr": 7.4,
+      "L3": 32.9,
+      "fusion": 0.4,
+      "total": 2057.8,
       "wall_clock_per_sample_ms": null
     },
     "rows_exceeding_declared_target": [
