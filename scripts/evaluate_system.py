@@ -221,6 +221,11 @@ def main():
                          "pooled out-of-fold order statistic over several CV rounds; the "
                          "in-run value is a single nested split and is noisier. The "
                          "out-of-fold metrics below do not depend on either choice.")
+    ap.add_argument("--frozen-heads", default="",
+                    help="keep already-frozen joblib heads instead of refitting them on "
+                         "all 119 samples (the deployment artifacts are fit on the official "
+                         "119 PLUS the external corpus, see scripts/freeze_external_fix.py). "
+                         "Out-of-fold metrics are unaffected: they always refit per fold.")
     ap.add_argument("--n-folds", type=int, default=5)
     ap.add_argument("--target-fpr", type=float, default=0.03)
     ap.add_argument("--fp-budget", type=int, default=2,
@@ -382,19 +387,34 @@ def main():
     print(f"[errors] FP(real->ai)={fp_seqs}")
     print(f"[errors] FN(ai->real)={fn_seqs}")
 
-    # ---- final heads on all 119 (deployment/demo) ----
-    scf, clff = fit_head(XF, y)
-    scc, clfc = fit_head(XC, y)
+    # ---- final heads (deployment/demo) ----
+    # The deployed heads may have been frozen from a larger training corpus
+    # (scripts/freeze_external_fix.py adds external material). Refitting here on the 119
+    # samples only would silently REPLACE the deployment artifact with a weaker one, so
+    # --frozen-heads keeps the shipped files and this run just verifies them.
+    if args.frozen_heads:
+        for name, fname in (("forensic", "forensic_lr.joblib"),
+                            ("combined", "combined_lr.joblib")):
+            p = Path(args.frozen_heads) if Path(args.frozen_heads).is_dir() else models_dir
+            pack = joblib.load(p / fname)
+            print(f"[final] kept frozen {name} head from {p / fname} "
+                  f"(in-dim {int(pack['scaler'].mean_.shape[0])})")
+        scf, clff = None, None
+        scc, clfc = None, None
+    else:
+        scf, clff = fit_head(XF, y)
+        scc, clfc = fit_head(XC, y)
+        joblib.dump({"scaler": scf, "clf": clff, "features": "l1_47+l1b_20"},
+                    models_dir / "forensic_lr.joblib")
+        joblib.dump({"scaler": scc, "clf": clfc,
+                     "features": "l1_47+l1b_20+clip_global+clip_tiles"},
+                    models_dir / "combined_lr.joblib")
     scd, clfd = fit_head(Fg, y)
-    joblib.dump({"scaler": scf, "clf": clff, "features": "l1_47+l1b_20"},
-                models_dir / "forensic_lr.joblib")
-    joblib.dump({"scaler": scc, "clf": clfc, "features": "l1_47+l1b_20+clip_global+clip_tiles"},
-                models_dir / "combined_lr.joblib")
     joblib.dump({"scaler": scd, "clf": clfd, "features": "clip_global"},
                 models_dir / "clip_domain_lr.joblib")
 
-    all_logits = {"forensic": head_logits(scf, clff, XF),
-                  "combined": head_logits(scc, clfc, XC),
+    all_logits = {"forensic": (head_logits(scf, clff, XF) if scf else model_logits["forensic"]),
+                  "combined": (head_logits(scc, clfc, XC) if scc else model_logits["combined"]),
                   "clip_external": ext}
     final_members = ["combined", "forensic"]
     if roc_auc_score(y, ext) >= EXT_MIN_AUC:

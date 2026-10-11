@@ -239,10 +239,10 @@
   },
   "latency_image": {
     "n": 40,
-    "p50_ms": 1621.8,
-    "p95_ms": 1978.8,
-    "mean_ms": 1597.5,
-    "max_ms": 2081.6,
+    "p50_ms": 1026.9,
+    "p95_ms": 1323.4,
+    "mean_ms": 1086.2,
+    "max_ms": 1409.5,
     "budget_ms": 5000,
     "p95_within_budget": true
   },
@@ -251,8 +251,8 @@
     "forensic"
   ],
   "final_thresholds": {
-    "low": 0.026294449831441434,
-    "high": 0.6946558618333415
+    "low": 0.026294,
+    "high": 0.760633
   },
   "in_run_nested_thresholds": {
     "low": 0.026294,

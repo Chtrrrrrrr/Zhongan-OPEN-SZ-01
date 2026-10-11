@@ -1,0 +1,468 @@
+{
+  "report": "external_reals_fix",
+  "generated_at": "2026-10-11T14:48:44Z",
+  "motivation": "docs/known-issue-scene-photo-fpr.md",
+  "protocol": {
+    "evaluation_set": "the 119 competition samples (out-of-fold only)",
+    "training": "official training fold + all external labelled material",
+    "inner_cv": "official training samples only (keeps the threshold in competition-material units)",
+    "fp_budget": 2,
+    "rounds": 6,
+    "n_folds": 5,
+    "sample_weight_official": 0.0
+  },
+  "corpus": {
+    "real": 1040,
+    "fake": 521,
+    "folders": [
+      "fake_ai",
+      "fake_dataset",
+      "fake_tamper",
+      "real",
+      "real_synthbuster"
+    ]
+  },
+  "variants": {
+    "baseline_official_only": {
+      "official_oof": {
+        "accuracy_mean": 0.9468,
+        "accuracy_min": 0.9412,
+        "accuracy_max": 0.9664,
+        "fpr_mean": 0.0317,
+        "tpr_mean": 0.9226,
+        "per_round": [
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0317,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0317,
+            "tpr": 0.9643
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0317,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0317,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0317,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.9981,
+      "external_real_fpr_at_pooled_threshold": 0.001,
+      "pooled_threshold": 4.912921,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9706,
+      "external_auc": 0.4453,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_reals_only": {
+      "official_oof": {
+        "accuracy_mean": 0.8908,
+        "accuracy_min": 0.8739,
+        "accuracy_max": 0.916,
+        "fpr_mean": 0.0053,
+        "tpr_mean": 0.7738,
+        "per_round": [
+          {
+            "accuracy": 0.8739,
+            "fpr": 0.0,
+            "tpr": 0.7321
+          },
+          {
+            "accuracy": 0.8992,
+            "fpr": 0.0159,
+            "tpr": 0.8036
+          },
+          {
+            "accuracy": 0.8824,
+            "fpr": 0.0,
+            "tpr": 0.75
+          },
+          {
+            "accuracy": 0.8992,
+            "fpr": 0.0159,
+            "tpr": 0.8036
+          },
+          {
+            "accuracy": 0.916,
+            "fpr": 0.0,
+            "tpr": 0.8214
+          },
+          {
+            "accuracy": 0.8739,
+            "fpr": 0.0,
+            "tpr": 0.7321
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": -1.075439,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.951,
+      "external_auc": 0.8318,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_fakes_only": {
+      "official_oof": {
+        "accuracy_mean": 0.9552,
+        "accuracy_min": 0.9412,
+        "accuracy_max": 0.9664,
+        "fpr_mean": 0.0476,
+        "tpr_mean": 0.9583,
+        "per_round": [
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0476,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0476,
+            "tpr": 0.9643
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0476,
+            "tpr": 0.9643
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0476,
+            "tpr": 0.9821
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0476,
+            "tpr": 0.9643
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0476,
+            "tpr": 0.9464
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.999,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": 5.616389,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.8306,
+      "external_auc": 0.7895,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both": {
+      "official_oof": {
+        "accuracy_mean": 0.9174,
+        "accuracy_min": 0.8908,
+        "accuracy_max": 0.9412,
+        "fpr_mean": 0.0027,
+        "tpr_mean": 0.8274,
+        "per_round": [
+          {
+            "accuracy": 0.8992,
+            "fpr": 0.0,
+            "tpr": 0.7857
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0,
+            "tpr": 0.875
+          },
+          {
+            "accuracy": 0.8908,
+            "fpr": 0.0159,
+            "tpr": 0.7857
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0,
+            "tpr": 0.875
+          },
+          {
+            "accuracy": 0.9328,
+            "fpr": 0.0,
+            "tpr": 0.8571
+          },
+          {
+            "accuracy": 0.8992,
+            "fpr": 0.0,
+            "tpr": 0.7857
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": 0.140912,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.944,
+      "external_auc": 1.0,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both_w30": {
+      "official_oof": {
+        "accuracy_mean": 0.9426,
+        "accuracy_min": 0.9328,
+        "accuracy_max": 0.9496,
+        "fpr_mean": 0.0106,
+        "tpr_mean": 0.8899,
+        "per_round": [
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0,
+            "tpr": 0.8929
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0159,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0159,
+            "tpr": 0.8929
+          },
+          {
+            "accuracy": 0.9328,
+            "fpr": 0.0159,
+            "tpr": 0.875
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0159,
+            "tpr": 0.8929
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0,
+            "tpr": 0.875
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": 0.033003,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9594,
+      "external_auc": 1.0,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both_w100": {
+      "official_oof": {
+        "accuracy_mean": 0.951,
+        "accuracy_min": 0.9412,
+        "accuracy_max": 0.9664,
+        "fpr_mean": 0.0344,
+        "tpr_mean": 0.9345,
+        "per_round": [
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0159,
+            "tpr": 0.9464
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0476,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0476,
+            "tpr": 0.9464
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": 0.777736,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9608,
+      "external_auc": 1.0,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both_w300": {
+      "official_oof": {
+        "accuracy_mean": 0.9594,
+        "accuracy_min": 0.9496,
+        "accuracy_max": 0.9664,
+        "fpr_mean": 0.0212,
+        "tpr_mean": 0.9375,
+        "per_round": [
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0317,
+            "tpr": 0.9643
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0159,
+            "tpr": 0.9464
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0317,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0159,
+            "tpr": 0.9286
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0,
+      "external_real_fpr_at_pooled_threshold": 0.0,
+      "pooled_threshold": 0.729477,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9636,
+      "external_auc": 0.9999,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both_w1000": {
+      "official_oof": {
+        "accuracy_mean": 0.9524,
+        "accuracy_min": 0.9412,
+        "accuracy_max": 0.9664,
+        "fpr_mean": 0.0132,
+        "tpr_mean": 0.9137,
+        "per_round": [
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0,
+            "tpr": 0.8929
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9664,
+            "fpr": 0.0159,
+            "tpr": 0.9464
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0476,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9496,
+            "fpr": 0.0159,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0,
+            "tpr": 0.875
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0029,
+      "external_real_fpr_at_pooled_threshold": 0.0019,
+      "pooled_threshold": 1.10394,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9636,
+      "external_auc": 0.9997,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    },
+    "external_both_w3000": {
+      "official_oof": {
+        "accuracy_mean": 0.951,
+        "accuracy_min": 0.9328,
+        "accuracy_max": 0.958,
+        "fpr_mean": 0.0185,
+        "tpr_mean": 0.9167,
+        "per_round": [
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0159,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0317,
+            "tpr": 0.9464
+          },
+          {
+            "accuracy": 0.958,
+            "fpr": 0.0159,
+            "tpr": 0.9286
+          },
+          {
+            "accuracy": 0.9412,
+            "fpr": 0.0317,
+            "tpr": 0.9107
+          },
+          {
+            "accuracy": 0.9328,
+            "fpr": 0.0159,
+            "tpr": 0.875
+          }
+        ]
+      },
+      "official_threshold": 0.868855,
+      "external_real_fpr_at_official_threshold": 0.0106,
+      "external_real_fpr_at_pooled_threshold": 0.0019,
+      "pooled_threshold": 1.86406,
+      "external_real_n": 1040,
+      "accuracy_ceiling_at_budget": 0.9636,
+      "external_auc": 0.999,
+      "temperature_note": "external scores are calibrated with the last outer fold's official inner-CV temperature (same scale family)"
+    }
+  }
+}

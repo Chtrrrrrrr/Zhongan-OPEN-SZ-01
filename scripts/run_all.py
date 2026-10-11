@@ -25,7 +25,11 @@ Runs the whole pipeline with the exact ordering used for the reported numbers:
                                                data/eval_protocol_frozen.json
   step 11 multi-round verification          -> reports/verify_matrix.json,
                                                models/deployment_metrics.json
-  step 12 external holdout (optional)       -> reports/external_holdout.json
+  step 12 real-scene-photo fix (optional)   -> models/external_corpus/,
+                                               reports/external_reals_fix.json,
+                                               reports/fusion_tuning_reals.json,
+                                               models/fix_metrics.json
+  step 13 external holdout (optional)       -> reports/external_holdout.json
 
 Usage:
   python scripts/run_all.py                      # everything
@@ -36,6 +40,9 @@ Usage:
   python scripts/run_all.py --skip-clip-train    # reuse an existing probe
   python scripts/run_all.py --with-robustness    # add the (slow) robustness matrix
   python scripts/run_all.py --testset <dir>      # also run the external holdout
+  python scripts/run_all.py --steps 12 --testset <dir>
+                                                 # rebuild the real-scene-photo fix from
+                                                 # the external corpus (~55 min on GPU)
 
 Everything is written under the workspace so the package is self-contained.
 """
@@ -77,6 +84,13 @@ def main():
     ap.add_argument("--verify-rounds", type=int, default=6)
     ap.add_argument("--testset", default="",
                     help="optional external 真假测试素材集 for the robustness holdout")
+    ap.add_argument("--scene-photo-fix", action="store_true",
+                    help="run step 12: rebuild the real-scene-photo false-positive fix "
+                         "(external corpus extraction + retrain + freeze, ~55 min on GPU). "
+                         "Needs --testset.")
+    ap.add_argument("--official-weight", type=float, default=300.0,
+                    help="sample_weight for competition rows when external material is "
+                         "added to training (step 12)")
     args = ap.parse_args()
     steps = {s.strip() for s in args.steps.split(",")}
     py = sys.executable
@@ -184,15 +198,44 @@ def main():
              "--out", "repo/reports/verify_matrix.json"],
             "step 11b/12  verification matrix (config x aggregation x member set)")
 
+    if args.scene_photo_fix:
+        if not args.testset:
+            raise SystemExit("--scene-photo-fix needs --testset <dir> for the corpus")
+        ts = args.testset
+        run([py, "repo/scripts/extract_external_corpus.py",
+             "--out", "models/external_corpus",
+             "--labels", f"{ts}/real=0,{ts}/real_synthbuster=0,{ts}/fake_ai=1,"
+                         f"{ts}/fake_dataset=1,{ts}/fake_tamper=1",
+             "--feature-spec", "models/feature_spec.json", "--device", args.device,
+             "--resume"],
+            "step 12a/13  external corpus features (real + generated, current spec)")
+        run([py, "repo/scripts/train_with_external_reals.py",
+             "--corpus", "models/external_corpus", "--rounds", str(args.verify_rounds),
+             "--variants", "baseline_official_only",
+             "--weight-grid", str(int(args.official_weight)),
+             "--extra-seeds", str(args.verify_rounds),
+             "--out", "repo/reports/external_reals_fix.json"],
+            "step 12b/13  before/after: external material in the training folds only")
+        run([py, "repo/scripts/tune_fusion_for_reals.py",
+             "--corpus", "models/external_corpus",
+             "--official-weights", f"100,{int(args.official_weight)},1000",
+             "--out", "repo/reports/fusion_tuning_reals.json"],
+            "step 12c/13  fusion weights x official up-weight (claim-photo safety)")
+        run([py, "repo/scripts/freeze_external_fix.py",
+             "--corpus", "models/external_corpus", "--corpus-mode", "both",
+             "--official-weight", str(int(args.official_weight)),
+             "--rounds", str(args.verify_rounds), "--threshold", "official"],
+            "step 12d/13  freeze heads + thresholds, write models/fix_metrics.json")
+
     if args.testset:
         run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
              "--cache", "models/external_cache", "--stage", "extract",
              "--device", args.device],
-            "step 12a  external testset feature extraction")
+            "step 13a  external testset feature extraction")
         run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
              "--cache", "models/external_cache", "--stage", "evaluate",
              "--out", "repo/reports/external_holdout.json"],
-            "step 12b  external holdout evaluation (frozen thresholds)")
+            "step 13b  external holdout evaluation (frozen thresholds)")
 
     if args.with_robustness:
         run([py, "repo/scripts/robustness_matrix.py", "--device", args.device],

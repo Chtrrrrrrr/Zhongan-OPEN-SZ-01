@@ -35,7 +35,12 @@ repo/                          # 代码仓库（https://github.com/Chtrrrrrrr/Zh
 │   ├── calibrate_deployment.py# ★ 多轮嵌套 CV → 冻结头/阈值 + 出部署口径指标
 │   ├── verify_matrix.py       # ★ 验证矩阵（单元 × 聚合 × 成员组合 × 多种子）
 │   ├── verify_rounds.py       # ★ 逐轮折外证据、成员 LOO、判定规则对照、错误归因
-│   ├── external_holdout.py    # ★ 外部 1537 张素材集的冻结阈值检查（误报频率/泛化排序）
+│   ├── external_holdout.py    # ★ 外部素材集的冻结阈值检查（误报频率/泛化排序）
+│   ├── calibrate_with_external_reals.py # ★ 扩充纯真实标定池（手册 R2）及可分性检查
+│   ├── extract_external_corpus.py       # ★ 外部带标签语料的特征块提取（当前规格）
+│   ├── train_with_external_reals.py     # ★ 外部语料只进训练折：缺陷修复前后对照
+│   ├── tune_fusion_for_reals.py         # ★ 融合权重 × 命题权重联合选择（场景照安全）
+│   ├── freeze_external_fix.py           # ★ 冻结修复后的头与阈值 + models/fix_metrics.json
 │   ├── train_clip_probe.py    # 在 18 生成器基准上训练冻结 CLIP 线性探针
 │   ├── train_npr.py           # 训练 NPR 分支（消融用）
 │   ├── extract_npr_scores.py  # NPR 打分与消融判定
@@ -73,12 +78,17 @@ data/
 
 models/                        # 训练产物（不入 git，需按 §5 复现生成）
 ├── hf_cache/                  # CLIP-L/14 本地权重快照（约 1.6 GB）
+├── feature_spec.json          # ★ 冻结的特征块布局（分块尺度/聚合/patch 开关），离线与在线共用
+├── clip_tiles_spec.npy        # ★ 按 feature_spec 聚合好的分块特征（119 张）
+├── clip_patch.npy             # ★ patch-token 统计（119 张）
 ├── clip_probe_norm.pt         # 统一重编码训练的冻结 CLIP 线性探针
-├── forensic_lr.joblib         # [L1(47) ⊕ L1b(20)] 头
-├── combined_lr.joblib         # [L1 ⊕ L1b ⊕ CLIP全局 ⊕ 分块] 头
+├── forensic_lr.joblib         # [L1 ⊕ L1b ⊕ patch] 头（含外部语料训练，见 fix_metrics.json）
+├── combined_lr.joblib         # [forensic ⊕ CLIP全局 ⊕ 分块] 头（同上）
 ├── clip_domain_lr.joblib      # CLIP 全局头（视频通道用）
-├── l1_lr.joblib               # 兼容保留
-└── fusion.json                # 冻结的融合权重 + 温度 + 三档阈值
+├── fusion.json                # 冻结的融合权重 + 温度 + 三档阈值（阈值空间=概率）
+├── fix_metrics.json           # ★ 场景照误判缺陷修复的配置与折外验证结果
+├── deployment_metrics.json    # ★ 多轮嵌套 CV 的部署口径指标与阈值标定过程
+└── external_corpus/           # ★ 外部带标签语料特征（1561 张：1040 真实/521 生成）
 
 工作区 scripts/（盘查侧，随包附）
 ├── extract_xlsx_samples.py    # 从命题 xlsx 流式提取 119 张样本与标签

@@ -107,6 +107,10 @@ reports/batch/*
 !reports/tile_clip_sweep.json
 !reports/verify_matrix.json
 !reports/external_real_calibration.json
+# second iteration (docs/known-issue-scene-photo-fpr.md): the before/after comparison
+# for the real-scene-photo false-positive fix and the fusion-weight selection table
+!reports/external_reals_fix.json
+!reports/fusion_tuning_reals.json
 
 # F7閿涙obustness_smoke.json閿涘牊妫張?6 閺嶉攱婀伴幒銏ゆ嫛閿涘矂娼張澶嬫櫏鐠囦焦宓侀敍澶夌瑢 video_smoke.json 瀹歌弓绗夌€涙ê婀敍?# 鐎电懓绨查惃鍕閸氬秴宕熺悰灞肩楠炲墎些闂勩倧绱濋柆鍨帳鐠囶垱鏂佺悰灞炬￥閺佸牐鐦夐幑顔衡偓?
 *.log
