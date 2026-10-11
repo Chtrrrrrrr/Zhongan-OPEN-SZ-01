@@ -16,6 +16,10 @@ Runs the whole pipeline with the exact ordering used for the reported numbers:
                                                reports/threshold_stability.json,
                                                reports/stratified_analysis.json
   step 9  per-stage latency + GPU memory    -> reports/resource_profile.json (manual 16.2)
+  step 10 compliance pack                   -> reports/cross_generator.json,
+                                               reports/aeroblade_ablation.json,
+                                               reports/meta_proxy_attempt.json,
+                                               data/eval_protocol_frozen.json
 
 Usage:
   python scripts/run_all.py                      # everything
@@ -52,7 +56,7 @@ def run(cmd: list[str], desc: str) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--steps", default="1,2,3,4,5,6,7,8,9")
+    ap.add_argument("--steps", default="1,2,3,4,5,6,7,8,9,10")
     ap.add_argument("--skip-clip-train", action="store_true")
     ap.add_argument("--with-robustness", action="store_true",
                     help="also run the robustness matrix (about 30-40 min on GPU)")
@@ -124,6 +128,18 @@ def main():
         run([py, "repo/scripts/resource_profile.py", "--device", args.device],
             "step 9/9  per-stage latency + GPU memory + manual 16.2 budget table")
 
+    if "10" in steps:
+        run([py, "repo/scripts/build_meta.py"],
+            "step 10a  D2/D3 stratification key attempt + validity check")
+        run([py, "repo/scripts/aeroblade_ablation.py"],
+            "step 10b  AEROBLADE ablation (optional member, manual 12.1)")
+        run([py, "repo/scripts/cross_generator_test.py", "--max-per-shard", "200"],
+            "step 10c  cross-generator test: whole generators removed from training")
+        run([py, "repo/scripts/freeze_eval_protocol.py"],
+            "step 10d  freeze the evaluation protocol + signature")
+        run([py, "repo/scripts/freeze_eval_protocol.py", "--verify"],
+            "step 10e  verify the evaluation-protocol freeze")
+
     if args.with_robustness:
         run([py, "repo/scripts/robustness_matrix.py", "--device", args.device],
             "extra  robustness matrix (manual ch.14.1)")
@@ -134,6 +150,8 @@ def main():
     print("Metrics pack: reports/calibration.json, reports/member_analysis.json, "
           "reports/threshold_stability.json, reports/stratified_analysis.json, "
           "reports/resource_profile.json, reports/protocol_reconciliation.json")
+    print("Compliance pack: reports/cross_generator.json, reports/aeroblade_ablation.json, "
+          "reports/meta_proxy_attempt.json, data/eval_protocol_frozen.json")
 
 
 if __name__ == "__main__":

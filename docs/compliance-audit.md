@@ -625,3 +625,200 @@ foreach ($n in @("calibration.json","error_analysis.csv","feature_ablation.json"
 ## 附录 B　本次审计未修改任何既有文件
 
 本审计为只读审计，除新增本文件外未改动仓库内任何代码、证据或他人文档。审计过程中未写入团队状态文件；进度记录保存于 `.tmp/t5_progress.json`。
+
+---
+
+# 第二轮复验（t9，2026-10-11）
+
+> 本章为**追加**内容：第 0–4 节与附录 A/B 为第一轮（t5）原始记录，本章未删改其中任何结论，仅在其后追加复验判定。凡第二轮改判，均在本章内给出文件与字段级证据。
+> 复验对象：第一轮的 8 项"不符合"、39 项"部分符合"中的待修条目，以及修补后新增证据。
+
+## 5.0 复验基线与方法
+
+| 项目 | 值（本轮实测） |
+|---|---|
+| 本地 HEAD | `1956491e73a9cb8aa3fe24f1e8efc7123955e0e8`（"fix(reports): refresh archived sample reports to schema 1.1.0 (F9)…"） |
+| 远端 `origin/main` | `e918c403b99018754dd80ce5c6b6c619c40f3d18` → **本地领先 1 个提交，t8 的 F9 提交未推送** |
+| 跟踪文件总数 | 235（`git ls-files`）；其中 `reports/` 42、`reports/batch` 29 |
+| 已修改未提交 | `README.md`、`docs/results.md`、`demo/webui.html`、`demo/webui_assets/{README.md,verify_webui.py}`、`reports/{calibration,member_analysis,stratified_analysis,threshold_stability}.json`、`scripts/{member_analysis,run_all,threshold_stability}.py`、`src/{detector,l2_aeroblade}.py` |
+| 未跟踪 | `reports/protocol_reconciliation.json`、`scripts/{aeroblade_ablation,build_meta,cross_generator_test,protocol_reconciliation}.py` |
+| 被 `.gitignore:69` 忽略（永不入库） | `reports/aeroblade_ablation.json`、`reports/cross_generator.json` |
+
+**本轮执行的核验命令（均为只读；未运行任何会写入 `reports/` 的脚本，遵守"不得改证据 JSON"约束）**：
+
+```powershell
+cd repo; git ls-files | Measure-Object -Line; git ls-files -- api demo/webui.html demo/webui_assets docs/api.md docs/compliance-audit.md reports scripts
+git status --short; git check-ignore -v -- reports/aeroblade_ablation.json reports/cross_generator.json reports/protocol_reconciliation.json
+git -c http.sslVerify=false ls-remote origin HEAD refs/heads/main; git rev-parse HEAD
+python -c "import json;d=json.load(open('reports/member_analysis.json',encoding='utf-8'));print(json.dumps(d['degradation_path_exception'],ensure_ascii=False,indent=1))"
+python -c "import json;d=json.load(open('reports/threshold_stability.json',encoding='utf-8'));print(json.dumps(d['pure_real_holdout'],ensure_ascii=False,indent=1))"
+python -c "import json;print(json.load(open('reports/cross_generator.json',encoding='utf-8')))"
+Get-Content models/crossgen.log -Tail 25
+python -c "import csv,hashlib,json,numpy as np;from sklearn.model_selection import StratifiedKFold;rows=sorted(csv.DictReader(open('data/labels.csv',encoding='utf-8')),key=lambda r:int(r['seq']));y=np.array([1 if r['label']=='ai' else 0 for r in rows]);skf=StratifiedKFold(5,shuffle=True,random_state=42);f=np.zeros(len(y),dtype=int);[f.__setitem__(va,k) for k,(_,va) in enumerate(skf.split(np.zeros((len(y),1)),y))];print(hashlib.sha256(','.join(map(str,f)).encode()).hexdigest())"
+```
+
+**独立复算结论（本轮新增的第三方核验）**：用 `data/labels.csv` + `StratifiedKFold(5, shuffle=True, random_state=42)` 重算逐样本折号向量并做 SHA-256，得到 `021c8fe2ef6637676364653874bf9cb3dbd74f06d1cdbd94b9f01a75fa7b6740`，与 `reports/protocol_reconciliation.json → evaluation_protocol_signature.fold_assignment_sha256` **逐位一致（MATCH=True）**。即评测协议的折切分现在可被独立复现并已指纹化。
+
+## 5.1 逐项复验判定表
+
+| 编号 | 第一轮判定 | 第二轮判定 | 证据（文件 → 字段路径） | 复验说明 |
+|---|---|---|---|---|
+| **F1** forensic 例外登记 | 部分符合 | **符合** | `reports/member_analysis.json → degradation_path_exception{status:"registered", exception_id:"E1-forensic-degradation-path", pre_registered_gate{value:0.02, declared_before_measurement:true}, actual_measurement{…}, retention_basis[5], fallback_evidence{requires_clip_or_gpu:false, standalone_fallback_operating_points{auc:0.9082,…}}, registration{…}, insufficient_evidence{…}, if_the_exception_is_rejected{…}}` | 手册 12.1 的实质要求是"门槛在实验开始前确定"（`declared_before_measurement=true`，且原句为"应**考虑**从最终版本移除"，非强制移除）。本轮登记给出 5 条可复算依据 + 拒绝代价量化（acc 0.9160、ΔAUC −0.0026、16.3 降级路径消失）→ 规则与执行一致，判定改判为符合。**保留一条低等级流程备注**：`registration.registered_before_final_freeze=false` 与 `process_order_gap` 系团队自报，登记落盘晚于 `models/fusion.json` 冻结；这不违反 12.1 原文，但若团队把"例外登记早于冻结"列为自身流程规范，需在下一次冻结前置完成 |
+| **F2** 独立纯真实留出集 | 部分符合 | **仍部分符合**（修补动作闭合、缺口待数据） | `reports/threshold_stability.json → pure_real_holdout{status:"no_external_independent_corpus_available_internal_holdout_substituted", approximation_bias{direction:"乐观", two_separate_effects{score_level,threshold_level}, measured_magnitude{composition_dependence{splits_with_all_extreme_samples_in_calibration:48, splits_without:452, fraction:0.096, holdout_fpr_when_extreme_in_calibration:0.0, holdout_fpr_when_extreme_split_or_in_holdout:0.0848}}}, sample_size_for_manual_13_1_compliance{minimum_n_to_certify_3pct_with_zero_fp:100, recommended_n:300, composition_requirements[3], acceptance_rule_proposed[4], interim_labelling_before_the_corpus_exists}}` | 第一轮的修补建议是"要么建集，要么显式声明"。本轮**声明已完整**：区分分数层无偏/阈值层有偏、给出偏差方向与量级（9.6% 的切分会把留出 FPR 压到 0，其余 8.48%）、给出 Clopper-Pearson 所需样本量（n=100 零误报上界 2.95%；n=300 允许 ≤2 误报）。但手册 13.1 步骤 1/6 要求的**外部独立纯真实语料**客观仍不存在（文件自述为 internal hold-out）→ 缺口不因文档而闭合，判定仍部分符合；该缺口是本报告**唯一必须靠数据采集才能闭合**的核心项 |
+| **F3a** D2/D3 分层 | 不符合（D2）/部分符合（D3） | **仍不符合 / 仍部分符合** | `data/meta.csv`（119 行，`generator/acquisition/content` **全部为 `unavailable`**，`source=proxy_rejected_unavailable`）；`data/splits.json → protocol.D2/D3` 仍为"占位：缺生成器/采集方式元数据"；`data/splits.json → created=2026-10-10T17:20:33Z`（未用 meta 重生成，无 meta 键） | 任务描述称"采集方式为代理标签"，实测为**全列 unavailable**（团队选择拒绝代理标签，属诚实的保守处置，但手册 D2/D3 的"按生成器/采集方式分层"仍未实现）。最小可行修补：要么接受 L1b 代理标签（并把它写进 `splits.json.protocol.D3` 与 `docs/data-audit.md`），要么在 `docs/solution.md`/`results.md` 明确 D2/D3 为"数据不可得，不实施"并说明对结论的影响 |
+| **F3b** 跨生成器测试 | 不符合 | **仍不符合（且新证据不成立）** | `reports/cross_generator.json → folds.{diffusion_holdout,gan_holdout,chinese_and_glide}.overall_auc_on_holdout = NaN`，`per_generator.*.auc = null`；`models/crossgen.log` 三条 `UndefinedMetricWarning: Only one class is present in y_true`；`repo/scripts/cross_generator_test.py:187-189`（`mask_hold` 仅含被留出生成器的样本）与 `:205`（`len(np.unique(yy))>1` 才计算） | 见 N1：该 JSON 是**空证据**（单类 y_true，AUC 必然未定义），不能支撑任何跨生成器结论；`same_generator_control.auc=0.9807` 只说明同分布可控。判定仍不符合 |
+| **F3c** 协议脱钩 | 部分符合 | **符合** | `reports/protocol_reconciliation.json →{two_protocols{frozen_split{verification.all_match:true, part_sizes}, …}, authority_relationship{how_D8_is_satisfied, residual_gap_closed_by_this_file}, why_out_of_fold_for_the_headline{measured_single_split_variance{accuracy{min:0.7917,max:1.0,ci95:[0.8333,1.0]}, share_of_draws_reaching_95pct_accuracy:0.564}}, evaluation_protocol_signature{protocol_sha256:"1e598726…", fold_assignment_sha256, fold_assignment_by_seq}, reproducibility_checks{fold_assignment_recomputed_matches_bundle:true, frozen_split_signatures_reproduce:true}, recommendation{…}}` | 该文件正面回答了三件事：两套协议的关系与权威性、为何用折外（24 张测试集的 accuracy 读数区间 0.7917–1.0，无法区分 95% 与 83%）、以及折外协议的可复现签名。**本审计独立复算折号向量 SHA-256 与文件一致**（见 5.0）。残余项（低，见 N-series R1）：文件建议的 `data/eval_protocol_frozen.json` 未落盘，`docs/results.md §3` 未按 `handoff[0]` 补写说明 |
+| **F4** Optional 消融（AEROBLADE） | 部分符合 | **符合（经消融剔除，有证据）** | `reports/aeroblade_ablation.json →{member_under_test{implementation:"repo/src/l2_aeroblade.py"}, dependency{weight_sha256{safetensors:"sha256:a1d99348…"}, downloaded_during_run:false}, preset_decision_rule{min_auc:0.65, min_delta_tpr_at_primary_fpr:0.02, primary_fpr_level:0.05, declared_before_measurement:true}, single_route_table{multiscale_mse_512_256_128.oof_auc:0.5096, …}, score_correlation{npr.spearman_calibrated:0.608}, add_to_deployed_fusion{incumbent{error_seqs:[3,9,29,30,31,57,58]}, weight_sweep{…errors_fixed_n:0, errors_introduced_n:1..2}}, conclusions{verdict:"剔除 (remove；负面结果)", retained:false}, per_sample(119)}`；`src/detector.py:31 enable_aeroblade: bool = False` | 真实实现（冻结 SD-VAE，训练无关）、真实跑通（权重量与 sha256 落证）、真实消融（单路 AUC 0.5096、最佳变体 l1_256 0.5445 均 < 0.65；加入融合修正 0 个错误、Δacc −0.0084…−0.0168）→ 按预注册规则剔除，属手册 8.3/12.1 要求的那类负面结果，判定"符合（经消融剔除，有证据）"。修本轮独立核对 `add_to_deployed_fusion.incumbent` 的 error_seqs 与 `reports/member_analysis.json` 的留一法/逐步表一致 |
+| **F4'** Optional 消融（Effort） | 不符合 | **仍不符合（如实记录，未美化）** | `reports/aeroblade_ablation.json → not_verified[0] = {member:"effort", method:"Effort … requires a low-rank adaptation of an EDM diffusion model", status:"未在预算内验证 (not verified within budget)", reason:"…needs an EDM checkpoint and GPU training time that exceed this task's budget; no score was produced, so no ablation number is claimed for it"}` | 未产出任何分数、未编造数字，处置正确；但手册表 9/表 15 要求的"Effort 是否带来增益"仍**没有实验判定**。判定仍不符合（属 Optional，不阻断命题验收）。建议：在交付文档中把 Effort 明确列为"未验证的 Optional（原因：需 EDM 低秩微调，超出算力预算）"，与 AEROBLADE 的"已验证剔除"区分开 |
+| **F5** L0/L1b 分层预算 | 部分符合 | **仍部分符合（透明化改善）** | 代码：`src/detector.py:339-344`（注释"L1b is its own budget line"，`latency["L1b"]`）；实测：`repo/reports/batch/verify-24/metrics.json → archive_qc.markers_present["latency_ms.L1b"]=24`、`repo/reports/batch/verify-24/samples/001.json → latency_ms.L1b=351.6`、`reports/001.json → latency_ms.L1b=360.8`；文档：`docs/results.md §5.1`（预算再分配表 + 未做取舍说明 + 自判"部分符合"） | L1b 耗时现在在部署路径可见 ✓，且 `docs/results.md §5.1` 把第一轮的审计判定**反向引用并如实保留**（未粉饰）。但 `reports/resource_profile.json` **未重生成**（`generated_at=2026-10-11T03:18:39`，`warm_image_profile` 无 `L1b` 键，`rows_exceeding_declared_target` 仍列 `L1b`，其 n=10 < 手册 16.2 的 ≥20）→ 手册 16.2 的"分模块实测 P50/P95/显存"表仍缺部署路径 L1b 行。判定仍部分符合。最小修补：重跑 `python repo/scripts/resource_profile.py --device cuda` |
+| **F6** 文档耗时数字 | 部分符合 | **仍部分符合（1 处残留）** | 已修：`README.md:57` = "1007.9 ms / 1300.6 ms（归档 `reports/metrics.json`；运行间抖动 ±10%）"；`docs/results.md:85-119` 全部改为归档值并加"数字来源与波动说明（F6 修补）"，且 `:91-92` 保留旧值作为"另一次运行"对照；`:123-137` 新增 §5.1。残留：`docs/results.md:15`（§1 KR3 行）仍写"P50 **939 ms** / P95 **1307 ms**；视频 **3.54 s**；冷启动 14.4 s" | 同一文件 §1 与 §5 现在**自相矛盾**，且 §1 的 3.54 s/14.4 s 与归档 `reports/smoke_test.json`（`video.ms=3705.8`、`cold_start_ms=12874.6`）不符。最小修补：把 `docs/results.md:15` 改为 1007.9/1300.6 ms、3705.8 ms、12874.6 ms（或统一写"见 §5"） |
+| **F7** 无效证据/白名单 | 低 | **符合** | `Test-Path repo/reports/robustness_smoke.json` → **False**；`repo/.gitignore:78-83` 已改为 `reports/api/` → `!reports/batch/` → `reports/batch/*` → `!reports/batch/README.md` → `!reports/batch/verify-24/`，并删除了失效的 `!reports/robustness_smoke.json`、`!reports/video_smoke.json`；`git check-ignore` 实测：`verify-24/metrics.json` NOT-IGNORED、`verify-119/metrics.json` 命中 `reports/batch/*`、`reports/api/requests.jsonl` 命中 `reports/api/` | 逐个抽查 `repo/reports` 剩余证据（metrics / calibration / member_analysis / threshold_stability / stratified / resource_profile / protocol_reconciliation / aeroblade_ablation / robustness_matrix / smoke_test）均可解析且与工作区副本一致（见 N3 唯一例外） |
+| **F8** 视频能力验证 | 中 | **仍不符合** | `reports/resource_profile.json → video_channel.note`（仍是 *"short embedded smoke clip; a full acceptance run needs longer videos…"*）；`docs/results.md §7` 仍标注"通道验证（【工程假设】），不是视频检测的基准指标" | 本轮未新增任何公开视频数据集证据。判定不变 |
+| **F9** 归档 schema 漂移 | 中低 | **符合** | `repo/reports/batch/verify-24/metrics.json →{report_schema_version:"1.1.0", archive_qc{applicable:true, n_samples:24, markers_present:{explanation:24, localization.available:24, versions.artifact_sha256:24, latency_ms.L1b:24}, all_pass:true}, generator{script:"scripts/batch_evaluate.py", argv:[…"--limit","24","--spread",…], generated_at, python:"3.14.7"}}`；抽样 `verify-24/samples/001.json`（16 键、`latency_ms.L1b=351.6`、`versions` 含三级哈希、`explanation.status="可用"` 且 9 块）；`verify-24` 序号为确定性均匀抽样 `[1,6,11,…,119]`（24 个）；`git ls-files reports/batch` = 29 个文件；`repo/reports/batch/verify-119` 本机存在（123 文件，按 `.gitignore` 不入库） | 归档现为**单一 schema、带质检门**，符合"归档不得新旧混放"的要求。残余项见 N7（4 份 API 降级报告无哈希）与 §5.2 R2（干净 clone 只有 24 个序号，README 已说明复现命令） |
+| **F10** 降级模式标注 | 低 | **仍部分符合（改善）** | 已标注：`api/server.py:522-535`（`degraded_report` 写入 `versions.mode` + `versions.channel`），实例 `repo/reports/api/20261011T114758-32082945.json → versions{channel:"image-degraded", mode:"full", pipeline:"open-sz-01 v0.3"}`；未标注：`src/detector.py` 的常规 `_traceability` 无 `mode`（`grep '"mode"'` 仅命中视频通道 `"channel":"video-stage1"`） | API 路径已满足 16.3"明确标注为降级模式"；直连 CLI（`scripts/predict.py`）在无 CLIP 时仍不会标注。最小修补：在 `detector._traceability` 内按实际加载的成员写 `mode`（如 `degraded_forensic_only`） |
+| **F11** L3 区域坐标/错误分析维度 | 低 | **仍部分符合** | `repo/reports/batch/verify-24/samples/001.json → localization.boxes` 长度为 **0**；`reports/001.json → localization.boxes` 同为 0；未见新增逐例维度标注表 | 手册 9.2"关键异常区域坐标"仍无输出；14.2 的错误维度（低照度/反光/褶皱/真实电子文档/生成方式）仍缺失。最小修补：`top_anomaly_boxes` 至少返回 Top-1 候选框并标 `below_threshold=true` |
+| **F12** ECE headline 阶段混用 | 低 | **仍部分符合** | `reports/calibration.json` 本轮仍不在已修改清单内；`headline.fpr_at_tpr_95pct=0.0317`（标定前）与 `headline.tpr_at_fpr_1pct_*=0.0`（标定后）同处一块，而 `operating_point.guardrails_after_final_temperature["fpr@tpr=95%"].fpr=0.127` | 数值本身无误，属命名/呈现问题。最小修补：把该键改名为 `fpr_at_tpr_95pct_raw_stage` 并补 `…_after_temperature=0.127` |
+| **F13** 100 套评测集/独立性口径声明 | 中·信息性 | **仍部分符合** | `docs/results.md` 未见第一轮建议的顶部"验收口径声明"小节（§1 直接进入 KR 表；§4 仍是 FPR 口径说明）；`reports/metrics.json → protocol.note` 保留原文 | 判定不变（信息性）。最小修补：在 `docs/results.md` 顶部加 3 行固定表述（评测集=119 张 47:53、协议=分层 5 折折外、部署头在同批样本上拟合 → 不构成对未见分布的承诺） |
+| **F14** git 归档 | 高 | **仍部分符合（显著改善）** | 已跟踪 ✓（`git ls-files` 实测非零）：`api/`(1)、`demo/webui.html`、`demo/webui_assets/`(124)、`docs/api.md`、`docs/compliance-audit.md`、`reports/{calibration,member_analysis,resource_profile,stratified_analysis,threshold_stability}.json`、`scripts/{batch_evaluate,metrics_common,member_analysis}.py`、`reports/batch/README.md`。未闭合 ✗：`origin/main=e918c40` 落后本地 `1956491`（t8 提交未推送）；t6/t7 全部改动未提交（`reports/{calibration,member_analysis,stratified_analysis,threshold_stability}.json`、`docs/results.md`、`README.md`、`scripts/*`、`src/*`）；`reports/aeroblade_ablation.json` 与 `reports/cross_generator.json` 被 `.gitignore:69 reports/*` 忽略（`git check-ignore -v` 命中）；`reports/cross_generator.json` 未复制到 `repo/reports/` | 第一轮的核心诉求（GitHub 上看不到 REST/WebUI/指标包）**已在 e918c40 解决**；但"最终状态 = 仓库内容"这一目标仍未达成：远端缺 F9 提交、近半目录未提交、两项新证据永远不会入库。修复命令见 §5.3 |
+
+## 5.2 本轮新发现（第一轮清单未覆盖）
+
+| 编号 | 等级 | 问题 | 证据 | 最小修补 |
+|---|---|---|---|---|
+| **N1** | **高** | `reports/cross_generator.json` 是**空证据**：三个 fold 的 `overall_auc_on_holdout` 全为 `NaN`、`per_generator.*.auc` 全为 `null`；该 JSON 还含 `NaN` 字面量（**非法严格 JSON**，`JSON.parse` 会抛错） | `models/crossgen.log` 三条 `UndefinedMetricWarning: Only one class is present in y_true. ROC AUC score is not defined`；`repo/scripts/cross_generator_test.py:187-189` 令 `mask_hold` 只含被留出生成器的样本（全是 AI 类）→ 单类；`:205` 因此返回 None；脚本 `:207-218` 的 `holdout_at_3pct_real_budget` 因 `real_hold.sum()==0` 被整块跳过 | 把 Real 样本一并留在 holdout：`mask_hold = np.isin(g, held_ids) | (g == 0)`，或改为报告"留出生成器在固定真实 FPR 预算下的 TPR"；写出前把 `NaN/None` 归一为 `null`；修好后重跑 `python repo/scripts/cross_generator_test.py` |
+| **N2** | 高 | `.gitignore:69 reports/*` 使两项新证据**永不可入库**，且其中一项未归档到 `repo/reports/` | `git check-ignore -v -- reports/aeroblade_ablation.json reports/cross_generator.json` → 均命中 `.gitignore:69:reports/*`；`Test-Path repo/reports/cross_generator.json` → False（`aeroblade_ablation.json` 已复制到 `repo/reports/`，但同样被忽略） | 在 `.gitignore` 白名单补 `!reports/aeroblade_ablation.json`、`!reports/cross_generator.json`，复制 `reports/cross_generator.json → repo/reports/`，然后提交 |
+| **N3** | 中 | **归档漂移（新实例）**：工作区 `reports/metrics.json` 与仓库归档 `repo/reports/metrics.json` 的**仅 latency 块**不同 —— 工作区 P50 809.4 / P95 1216.8 / mean 912.1 / max 1258.1，归档 P50 1007.9 / P95 1300.6 / mean 1054.2 / max 1392.7（分类指标全部逐位相同：acc 0.958 / fpr 0.0317 / tpr 0.9464 / TP53-TN61-FP2-FN3） | SHA-256 比对：`metrics.json` ws=`4906DF2F5DAD` vs repo=`398DFA4FD545`（DIFF）；其余 10 个证据文件 same | 二选一：把工作区 `reports/metrics.json` 同步到 `repo/reports/`（并让 `docs/results.md §5` 引用新值），或重跑 `evaluate_system.py` 后同步；同时把 `docs/results.md §5.1` 的说明扩到"归档即口径基准"。**注意**：第一轮 A7.6/B9.3 引用的 1007.9/1300.6 仍与归档一致，故对照表结论不受影响 |
+| **N4** | 中 | `docs/results.md:15`（§1 KR3 行）未随 F6 修补更新，与同文件 §5 冲突 | 见 F6 行 | 见 F6 行 |
+| **N5** | 中 | `data/meta.csv` 的 `generator/acquisition/content` 三列**全为 `unavailable`**（`source=proxy_rejected_unavailable`），且 `data/splits.json` 未用 meta 重生成 | `python -c` 统计 119 行；`data/splits.json → protocol.D2/D3` 仍"占位"、`created=2026-10-10T17:20:33Z` | 见 F3a 行（接受代理标签并在 protocol 中声明，或显式记为"数据不可得、不实施"） |
+| **N6** | 中低 | L1b 独立计时只进了**报告**与 verify-24 质检，未进 16.2 的**预算表** | `reports/resource_profile.json → generated_at=2026-10-11T03:18:39`、`warm_image_profile` 无 L1b 键、`rows_exceeding_declared_target` 仍含 L1b（n=10） | 重跑 `python repo/scripts/resource_profile.py --device cuda` 并把隔离测量重复数提到 ≥20 |
+| **N7** | 低 | `repo/reports/api` 59 份中仍有 **4 份缺 `versions.artifact_sha256`**（无追溯链）；本轮确认它们都是**降级/超时路径**报告 | `20261011T114758-32082945.json`、`…114840-6a21ee4f.json`、`…114840-ca4e3909.json`、`…115010-6987d754.json` → `versions` 仅 `{pipeline, channel:"image-degraded", mode}`；其余 55/59 同时含 `artifact_sha256` 与 `explanation`；无 stub/占位报告残留（与 t8 的清理一致） | 在 `api/server.py:522-535` 的 `degraded_report` 中补 `thresholds_sha256`/`input_sha256`/`artifact_sha256`（可用 `report.py` 现成函数），使降级输出同样可追溯 |
+| **N8** | 低 | 本轮新增证据**未进一键复现与复现文档** | `scripts/run_all.py:120` 只接入 `protocol_reconciliation.py`；`aeroblade_ablation.py`、`cross_generator_test.py`、`build_meta.py` 未接入 `run_all.py`；`docs/reproduce.md` 对新证据零提及（仅 `--meta data/meta.csv` 一行） | 在 `run_all.py` 增加对应 step（可置于 optional 分组），并在 `docs/reproduce.md` 补命令（已并入本章 §5.3） |
+
+## 5.3 更新后的验收命令清单（含本轮新增证据）
+
+> 在第一轮第 3 节之外**追加**；第一轮命令仍然有效。
+
+```powershell
+cd "C:\Files\Deepseek Harness\Zhongan-OPEN-SZ-01"   # WS；repo = .\repo
+
+# ===== 本轮新增证据的复现命令 =====
+
+# N9.1 F1 例外登记（重算留一法/重叠度/降级路径可用性，写 reports/member_analysis.json）
+python repo/scripts/member_analysis.py
+
+# N9.2 F2 独立性说明 + bootstrap + 所需样本量（写 reports/threshold_stability.json）
+python repo/scripts/threshold_stability.py
+
+# N9.3 F3c 协议调和 + 折号指纹（写 reports/protocol_reconciliation.json）
+python repo/scripts/protocol_reconciliation.py
+
+# N9.4 F3a 元数据（当前实现只写入 unavailable 占位；换代理标签需改 build_meta.py 后重跑）
+python repo/scripts/build_meta.py --images data/images --labels data/labels.csv --out data/meta.csv
+python scripts/split_dataset.py --meta data/meta.csv --seed 42          # 重生成 splits.json（D2/D3 才会生效）
+python scripts/split_dataset.py --verify-frozen data/splits_frozen.json
+
+# N9.5 F3b 跨生成器（当前产物为 NaN，需先按 N1 修脚本再重跑）
+python repo/scripts/cross_generator_test.py --device cuda --out reports/cross_generator.json
+#   修好后应满足：所有 overall_auc_on_holdout 为有限值、无 NaN 字面量
+
+# N9.6 F4 AEROBLADE 消融（重跑需 SD-VAE 缓存 hf_cache/hub/models--stabilityai--sd-vae-ft-mse）
+python repo/scripts/aeroblade_ablation.py --device cuda --out reports/aeroblade_ablation.json
+
+# N9.7 F5/N6 分层预算表重生成（含部署路径 L1b 行）
+python repo/scripts/resource_profile.py --device cuda
+
+# N9.8 F9 归档重建（入库归档 = verify-24；本机全量 = verify-119）
+python repo/scripts/batch_evaluate.py --dir data/images --labels data/labels.csv --limit 24 --spread --out repo/reports/batch/verify-24
+python repo/scripts/batch_evaluate.py --dir data/images --labels data/labels.csv --out repo/reports/batch/verify-119
+python -c "import json;q=json.load(open('repo/reports/batch/verify-24/metrics.json',encoding='utf-8'))['archive_qc'];print(q);assert q['all_pass']"
+
+# ===== 独立核验（只读，本轮审计实际执行）=====
+
+# N9.9 折号指纹独立复算（必须与 reports/protocol_reconciliation.json 一致）
+python -c "import csv,hashlib,numpy as np;from sklearn.model_selection import StratifiedKFold;rows=sorted(csv.DictReader(open('data/labels.csv',encoding='utf-8')),key=lambda r:int(r['seq']));y=np.array([1 if r['label']=='ai' else 0 for r in rows]);skf=StratifiedKFold(5,shuffle=True,random_state=42);f=np.zeros(len(y),dtype=int);[f.__setitem__(va,k) for k,(_,tr) in enumerate(skf.split(np.zeros((len(y),1)),y))];print(hashlib.sha256(','.join(map(str,f)).encode()).hexdigest())"
+#   期望：021c8fe2ef6637676364653874bf9cb3dbd74f06d1cdbd94b9f01a75fa7b6740
+
+# N9.10 归档一致性（应全为 same；当前 metrics.json 为 DIFF，见 N3）
+foreach ($n in @("metrics.json","calibration.json","member_analysis.json","threshold_stability.json",
+                 "stratified_analysis.json","resource_profile.json","protocol_reconciliation.json",
+                 "aeroblade_ablation.json","cross_generator.json","robustness_matrix.json","smoke_test.json")) {
+  $a="reports\$n"; $b="repo\reports\$n"
+  $ha=if(Test-Path $a){(Get-FileHash $a -Algorithm SHA256).Hash.Substring(0,12)}else{"MISSING"}
+  $hb=if(Test-Path $b){(Get-FileHash $b -Algorithm SHA256).Hash.Substring(0,12)}else{"MISSING"}
+  "{0,-30} {1} {2} {3}" -f $n,$ha,$hb,$(if($ha -eq $hb){"same"}else{"DIFF"})
+}
+
+# ===== F14 收口命令（本轮唯一"高"等级未闭合项）=====
+
+cd repo
+# N9.11 补白名单（N2）
+#   在 .gitignore 白名单中追加： !reports/aeroblade_ablation.json   !reports/cross_generator.json
+#   并复制： copy ..\reports\cross_generator.json reports\
+git add -A .gitignore README.md docs/results.md scripts src demo reports
+git commit -m "chore(round2): F1/F2/F3c/F4 evidence, F6/F9 doc sync, whitelist new evidence"
+git -c http.sslVerify=false push origin main
+git -c http.sslVerify=false ls-remote origin refs/heads/main   # 期望 = 本地 HEAD
+git rev-parse HEAD
+```
+
+## 5.4 139 项对照表复核（证据变化后的条目影响）
+
+第一轮 139 项**仍然成立**（本轮未发现任何"第一轮结论与现证据相反"的条目）。本轮因新证据而**改判 8 项**，计数由「符合 89 / 部分符合 39 / 不符合 8 / 符合（经消融剔除）3」变为 **「符合 94 / 部分符合 34 / 不符合 7 / 符合（经消融剔除，有证据）4」**（合计仍 139）。
+
+| 条目 | 第一轮 | 第二轮 | 改判依据 |
+|---|---|---|---|
+| A3.4 AEROBLADE | 部分符合 | **符合（经消融剔除，有证据）** | `reports/aeroblade_ablation.json`（实现+消融+剔除判定），`src/detector.py:31` |
+| A3.6 最终保留规则 | 部分符合 | **符合** | `member_analysis.json → degradation_path_exception.retention_basis` |
+| A6.5 最终测试冻结 | 部分符合 | **符合** | `protocol_reconciliation.json → authority_relationship.how_D8_is_satisfied` + 折号指纹独立复算一致 |
+| B3.8 D8 冻结 | 部分符合 | **符合** | 同上 |
+| B4.3 留一法门槛纪律 | 部分符合 | **符合** | 例外登记 + `declared_before_measurement=true` |
+| B4.6 保留判据一致性 | 部分符合 | **符合** | 同上（`retention_gate` + 登记） |
+| A9.4 +Effort/+AEROBLADE | 不符合 | **部分符合** | AEROBLADE 已闭环；Effort 记为"未在预算内验证" |
+| A3.3 Effort 未实现 | 不符合 | **仍不符合** | `not_verified[0]`（未产出分数，如实记录） |
+
+**不受影响但需在引用时附注的条目**（数值/口径有变化，结论不变）：
+
+| 条目 | 附注 |
+|---|---|
+| A7.6 / B9.3 耗时 | 归档值仍为 P50 1007.9 / P95 1300.6 ms、视频 P95 3311.3 ms；工作区 `metrics.json` 已变为 809.4/1216.8（见 N3）→ 引用时必须写明以哪一份为准 |
+| B10.6 / B10.7 / A2.8 分层预算 | 判据不变（L0/L1b 超预算、端到端通过）；新增事实：L1b 已在部署路径可计时（F5） |
+| B10.13 降级模式标注 | API 路径已达标（F10）；CLI 路径未标注 |
+| A5.8 L3 关键区域坐标 | `boxes` 仍为 0（F11） |
+| B11.1–B11.5 五项冻结 | B11.3 由"完全脱钩"改善为"协议已指纹化、但建议的 `data/eval_protocol_frozen.json` 未落盘"；其余四项判据不变 |
+
+## 5.5 总结论（本轮复验回答）
+
+### 5.5.1 "是否符合解题思路与验证手册的全部要求"？—— **尚未完全符合。**
+
+准确表述应为：**项目在自定协议下自洽、可复现、披露充分，第一轮暴露的"文档-证据一致性"类缺口已基本闭合；但仍有 7 项条款级"不符合"与若干"部分符合"，其中 6 项的闭合依赖外部数据（非文档或工程可解），另有 1 项（Effort）依赖算力预算。**
+
+计数（第二轮）：**符合 94 / 部分符合 34 / 不符合 7 / 符合（经消融剔除，有证据）4**（合计 139）。
+
+命题 6 项验收标准不变：**3 项符合**（响应速度、可解释性、AI 原生度红线）+ **3 项部分符合**（综合准确率、误报控制、类型覆盖），**0 项不符合**——三处"部分"的根因分别是评测集规模（无官方 100 套 / 无独立真实留出集）、FPR 上界未由独立语料证实、视频与生成器覆盖不足。
+
+### 5.5.2 仍不符合项（7 条，按影响排序）与最小可行修补
+
+| # | 条目 | 影响 | 修补（最小可行） | 闭合条件 |
+|---|---|---|---|---|
+| 1 | **A6.2 / B3.2（D2）** 按生成器分层 | 中（影响跨生成器结论的可信度） | 接受 L1b 代理标签并写入 `data/splits.json.protocol.D2` + `docs/data-audit.md`；或显式记为"元数据不可得，不实施 D2" | **需数据**（命题未提供生成器标签） |
+| 2 | **B2.4 / B8.3（跨生成器测试与拆解）** | 中 | 先修 N1（holdout 需含 Real 类），重跑 `cross_generator_test.py`；再把结果并入 15.1 的分生成器诊断 | 可工程闭合（脚本 bug），但"119 张的分生成器拆解"仍需数据 |
+| 3 | **B2.2 自建中文单据集** | 中 | 无法在剩余时间内新建；在 `results.md` 显式记为"未构建，领域适配未验证" | **需数据** |
+| 4 | **B2.6 / F8 公开视频数据集验证** | 中 | 取 GenVideo/DeMamba 子集（≥100 条、≥2 生成器族）跑 `batch_evaluate.py --video`；否则把 KR2 后半明确降级为"通道可用、能力未验证" | 半需数据 + 文档 |
+| 5 | **A3.3 / A9.4（Effort）** | 低（Optional） | 在交付文档中列为"未验证的 Optional（原因：需 EDM 低秩微调，超算力预算）"，与 AEROBLADE 的"已验证剔除"区分 | **需算力** |
+| 6 | **B9.1 / B11.x（100 套评测集与留出集独立性）** | 中 | 按 F2 的 `sample_size_for_manual_13_1_compliance`（n≥100 零误报 / 推荐 n=300）采集；此前按 `interim_labelling_before_the_corpus_exists` 标注 | **需数据** |
+| 7 | **F13 口径声明** | 低（信息性） | `docs/results.md` 顶部加 3 行固定口径声明 | 文档即可闭合 |
+
+### 5.5.3 可由工程/文档立即闭合的残余（建议在提交前一次性做完）
+
+1. **N1 修 `cross_generator_test.py` 的单类 bug**（高）：否则 F3b/B8.3 永久停在"空证据"。
+2. **F14 收口**（高）：补 `.gitignore` 白名单（`aeroblade_ablation.json`、`cross_generator.json`）→ 复制 `cross_generator.json` 到 `repo/reports/` → 提交 → `push`（本地现领先 `origin/main` 1 个提交）。
+3. **N3 归档漂移**：同步 `reports/metrics.json` 到 `repo/reports/`，或重跑 `evaluate_system.py` 后同步；并在 `docs/results.md §5` 声明"归档即口径基准"。
+4. **N4/F6**：更新 `docs/results.md:15`（939/1307/3.54/14.4 → 归档值）。
+5. **N6/F5**：重跑 `resource_profile.py`（补部署路径 L1b 行，隔离测量 n≥20）。
+6. **N8**：把 `aeroblade_ablation.py`、`cross_generator_test.py`、`build_meta.py` 接入 `run_all.py`，并在 `docs/reproduce.md` 补命令（命令已见 §5.3）。
+7. **N7**：在 `api/server.py` 的 `degraded_report` 中补三个哈希字段。
+8. **F10/F11/F12/F13**：detector 写 `mode`；`top_anomaly_boxes` 至少给 Top-1 候选框；拆分 `calibration.json` headline 的阶段字段；补 `results.md` 顶部口径声明。
+
+### 5.5.4 一句话结论
+
+> **第二轮复验：第一轮的 8 项"不符合"中，3 项（AEROBLADE 消融、跨生成器待定项之外的 F3c 协议调和、F7 无效证据）已闭合、1 项（F14）显著改善但未收口、其余与新增的数据类缺口（D2/D3、跨生成器、自建集、视频集、Effort）构成当前剩余的 7 项不符合；139 项对照表仍成立且已按新证据改判 8 项。项目尚未达到"完全符合解题思路与验证手册的全部要求"，但已达到"命题六项验收标准无不符合项、且全部缺口可追溯到具体数据/算力需求"的状态——剩余工作按 §5.5.2/§5.5.3 清单执行即可收敛。**
