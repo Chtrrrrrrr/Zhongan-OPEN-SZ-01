@@ -60,7 +60,8 @@ SERVICE_NAME = "open-sz-01-api"
 SERVICE_VERSION = "1.0.0"
 API_VERSION = "v1"
 API_PREFIX = f"/api/{API_VERSION}"
-REPORT_SCHEMA_VERSION = "1.0.0"
+REPORT_SCHEMA_VERSION = "1.1.0"          # 与 src/report.py:REPORT_VERSION 对齐（见 pipeline_report_schema_version）
+REPORT_SCHEMA_VERSION_FALLBACK = REPORT_SCHEMA_VERSION
 PIPELINE_VERSION = "open-sz-01 v0.3"
 
 ROOT = Path(__file__).resolve().parent.parent          # <repo>/api/server.py -> <repo>
@@ -209,6 +210,31 @@ def find_reports_dir(explicit: str | None = None) -> Path:
         if c.is_dir():
             return c
     return ROOT / "reports"
+
+
+def report_search_dirs(primary: Path, explicit: list[str] | None = None) -> list[Path]:
+    """报告查找目录（按优先级）：主目录 -> 仓库 reports/ -> 工作区 reports/ 及其 api 子目录。
+
+    变更是为了让 WebUI 样本库能回取到"实际存在的"报告：仓库内的 reports/ 只保留
+    聚合指标与 batch 归档，逐样本 0xx.json 由流水线写在工作区 reports/；两者都查，
+    避免出现"repo 里没有该 id 就 404"的情况（F9 接口刷新）。
+    """
+    cands = [Path(primary)]
+    cands += [Path(p) for p in (explicit or [])]
+    cands += [ROOT / "reports", ROOT.parent / "reports",
+              ROOT.parent / "reports" / "api", Path.cwd() / "reports"]
+    out: list[Path] = []
+    seen: set[str] = set()
+    for c in cands:
+        try:
+            key = str(Path(c).resolve())
+        except OSError:
+            continue
+        if key in seen or not Path(c).is_dir():
+            continue
+        seen.add(key)
+        out.append(Path(c))
+    return out
 
 
 def resolve_clip_dir(base: Path | None) -> Path | None:
@@ -656,7 +682,7 @@ class DetectorService:
             "service": SERVICE_NAME,
             "service_version": SERVICE_VERSION,
             "api_version": API_VERSION,
-            "report_schema_version": REPORT_SCHEMA_VERSION,
+            "report_schema_version": pipeline_report_schema_version(),
             "pipeline": {"version": PIPELINE_VERSION, "mode": self.mode,
                          "device": getattr(self.detector, "device", None),
                          "time_budget_s": self.cfg.time_budget_s,
@@ -669,6 +695,22 @@ class DetectorService:
                         "executable": sys.executable},
             "generated_at": utc_now_iso(),
         }
+
+
+def pipeline_report_schema_version() -> str:
+    """报告 schema 版本以 src/report.py 的 REPORT_VERSION 为准（单一真源）。
+
+    F9 教训：API 侧曾硬编码 1.0.0，与流水线实际 schema 漂移；这里改为运行时读取，
+    读不到时才回退到已知版本，且 health/version 都会显式暴露该值供评审比对。
+    """
+    try:
+        src = ROOT / "src"
+        if str(src) not in sys.path:
+            sys.path.insert(0, str(src))
+        from report import REPORT_VERSION          # noqa: PLC0415
+        return str(REPORT_VERSION)
+    except Exception:  # noqa: BLE001
+        return REPORT_SCHEMA_VERSION_FALLBACK
 
 
 def load_pipeline_modules(logger):
@@ -839,6 +881,12 @@ class ServerConfig:
     metrics_path: Path = dataclasses.field(default_factory=lambda: ROOT / "reports" / "metrics.json")
     log_path: Path | None = None
     demo_dir: Path = dataclasses.field(default_factory=lambda: ROOT / "demo")
+    extra_reports_dirs: list[str] = dataclasses.field(default_factory=list)
+    report_dirs: list[Path] = dataclasses.field(default_factory=list)
+
+    @property
+    def report_dirs_or_default(self) -> list[Path]:
+        return self.report_dirs or [self.report_dir, self.reports_dir]
 
     @property
     def max_upload_bytes(self) -> int:
@@ -866,6 +914,7 @@ def build_config(args: argparse.Namespace) -> ServerConfig:
         enable_npr=bool(args.enable_npr), enable_aeroblade=not args.disable_aeroblade,
         allow_path_input=not args.no_path_input,
         allow_root=list(args.allow_root or []),
+        extra_reports_dirs=list(getattr(args, "extra_reports_dir", None) or []),
     )
     cfg.models_dir = find_models_dir(args.models_dir)
     cfg.data_dir = find_data_dir(args.data_dir)
@@ -876,6 +925,8 @@ def build_config(args: argparse.Namespace) -> ServerConfig:
                         else cfg.reports_dir / "metrics.json")
     cfg.log_path = (Path(args.log) if args.log else cfg.reports_dir / "api" / "requests.jsonl")
     cfg.demo_dir = Path(args.demo_dir)
+    # 报告查找目录：主目录 + 仓库 reports/ + 工作区 reports/（逐样本报告所在）
+    cfg.report_dirs = report_search_dirs(cfg.report_dir, cfg.extra_reports_dirs)
     # 非本机监听时，自动关闭服务端路径读取（避免把文件系统暴露给远端）
     loopback = cfg.host in ("127.0.0.1", "localhost", "::1")
     if not loopback and args.allow_path_input is None:
@@ -1144,10 +1195,16 @@ def build_openapi(cfg: ServerConfig, base_url: str, mode: str) -> dict:
             "/api/v1/report/{report_id}": {
                 "get": {
                     "tags": ["report"], "operationId": "getReport", "summary": "回取已落盘报告",
+                    "description": (
+                        "按 report_id 回取报告。查找顺序：`<reports>/api/<id>.json` → "
+                        "`<reports>/<id>.json` → 工作区 `reports/<id>.json` → 同名 `.html`。"
+                        "因此 WebUI 样本库用 0xx.json 的 id（如 `001`）即可取到工作区里"
+                        "流水线生成的逐样本报告。当前 report schema 版本见 "
+                        "`GET /api/v1/version` 的 `report_schema_version`。"),
                     "parameters": [{"name": "report_id", "in": "path", "required": True,
                                     "schema": {"type": "string"}}],
                     "responses": {"200": {"description": "报告 JSON（或 HTML，若只有 HTML 落盘）"},
-                                  "404": {"description": "报告不存在",
+                                  "404": {"description": "报告不存在（details.searched 列出查找过的路径）",
                                           "content": {"application/json": {"schema": _err_ref()}}},
                                   **common_errors},
                 }},
@@ -1188,6 +1245,9 @@ def build_openapi(cfg: ServerConfig, base_url: str, mode: str) -> dict:
                     "warmup": {"type": "object"}, "queue": {"type": "object"},
                     "requests_served": {"type": "integer"}, "stub_reason": {"type": "string", "nullable": True},
                     "models_dir": {"type": "string", "nullable": True},
+                    "reports_dir": {"type": "string"},
+                    "report_search_dirs": {"type": "array", "items": {"type": "string"}},
+                    "report_schema_version": {"type": "string"},
                 },
             },
             "Version": {
@@ -1568,7 +1628,8 @@ def make_handler(ctx: "ServerContext"):
             if m:
                 return self._report(m.group(1))
             if path.startswith("/reports/"):
-                return self._serve_static(cfg.reports_dir, path[len("/reports/"):])
+                return self._serve_static(cfg.reports_dir, path[len("/reports/"):],
+                                          extra_bases=list(cfg.report_dirs_or_default))
             if path.startswith("/demo/"):
                 return self._serve_static(cfg.demo_dir, path[len("/demo/"):])
             if path.startswith(f"{API_PREFIX}/detect/"):
@@ -1602,19 +1663,27 @@ def make_handler(ctx: "ServerContext"):
             return self._respond(200, FALLBACK_PAGE.encode("utf-8"),
                                  "text/html; charset=utf-8", note="fallback-page")
 
-        def _serve_static(self, base: Path, rel: str):
+        def _serve_static(self, base: Path, rel: str, extra_bases: list[Path] | None = None):
+            """静态文件服务：主目录优先，其次报告查找目录（逐样本报告在工作区 reports/）。"""
             rel = urllib.parse.unquote(rel)
-            target = (base / rel).resolve()
-            if not is_within(target, base) or not target.is_file():
-                raise ApiError("E_NOT_FOUND", f"静态资源不存在：{rel}")
-            ctype = {
-                ".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8",
-                ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
-                ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-                ".svg": "image/svg+xml", ".ico": "image/x-icon", ".mp4": "video/mp4",
-                ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8",
-            }.get(target.suffix.lower(), "application/octet-stream")
-            return self._respond(200, target.read_bytes(), ctype, note="static")
+            bases = [base] + [b for b in (extra_bases or [])
+                              if Path(b).resolve() != Path(base).resolve()]
+            while bases:
+                b = bases.pop(0)
+                target = (Path(b) / rel).resolve()
+                if is_within(target, b) and target.is_file():
+                    ctype = {
+                        ".html": "text/html; charset=utf-8",
+                        ".json": "application/json; charset=utf-8",
+                        ".js": "application/javascript; charset=utf-8",
+                        ".css": "text/css; charset=utf-8",
+                        ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                        ".svg": "image/svg+xml", ".ico": "image/x-icon", ".mp4": "video/mp4",
+                        ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8",
+                    }.get(target.suffix.lower(), "application/octet-stream")
+                    return self._respond(200, target.read_bytes(), ctype, note="static")
+            raise ApiError("E_NOT_FOUND", f"静态资源不存在：{rel}",
+                           details={"searched_dirs": [str(b) for b in [base] + (extra_bases or [])]})
 
         def _health(self):
             svc = self.ctx.service
@@ -1635,6 +1704,8 @@ def make_handler(ctx: "ServerContext"):
                 "models_dir": str(self.ctx.cfg.models_dir) if self.ctx.cfg.models_dir else None,
                 "data_dir": str(self.ctx.cfg.data_dir) if self.ctx.cfg.data_dir else None,
                 "reports_dir": str(self.ctx.cfg.reports_dir),
+                "report_search_dirs": [str(p) for p in self.ctx.cfg.report_dirs_or_default],
+                "report_schema_version": pipeline_report_schema_version(),
                 "channels": channels,
                 "warmup": svc.warmup,
                 "queue": self.ctx.queue.stats(),
@@ -1859,7 +1930,8 @@ class ServerContext:
         self.cfg = cfg
         self.service = service
         self.queue = InferenceQueue(workers=cfg.workers, max_queue=cfg.max_queue)
-        self.store = ReportStore(cfg.report_dir, [cfg.reports_dir], self.logger)
+        dirs = [p for p in cfg.report_dirs_or_default if Path(p).resolve() != Path(cfg.report_dir).resolve()]
+        self.store = ReportStore(cfg.report_dir, dirs, self.logger)
         self.started_ts = time.time()
         self.started_at = utc_now_iso()
         self.counters: dict[str, int] = {}
@@ -2030,6 +2102,9 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--data-dir", default=None)
     ap.add_argument("--reports-dir", default=None)
     ap.add_argument("--report-dir", default=None, help="API 落盘报告目录（默认 <reports>/api）")
+    ap.add_argument("--extra-reports-dir", action="append", default=[],
+                    help="额外报告查找目录（可重复）；默认已包含仓库与工作区的 reports/，"
+                         "用于回取逐样本报告 0xx.json")
     ap.add_argument("--metrics", default=None, help="metrics.json 路径")
     ap.add_argument("--log", default=None, help="请求日志 JSONL 路径")
     ap.add_argument("--demo-dir", default=str(ROOT / "demo"))

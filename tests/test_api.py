@@ -264,6 +264,13 @@ def run_suite(base_url: str, *, full_mode: bool = False, verbose: bool = True,
         s.check("health.queue", isinstance(health.get("queue"), dict),
                 f"queue={health.get('queue')}")
         s.check("health.warmup_field", "warmup" in health, f"warmup={health.get('warmup')}")
+        dirs = health.get("report_search_dirs")
+        s.check("health.report_search_dirs",
+                isinstance(dirs, list) and len(dirs) >= 2,
+                f"report_search_dirs={dirs}")
+        s.check("health.report_schema_version",
+                bool(re.fullmatch(r"\d+\.\d+\.\d+", str(health.get("report_schema_version") or ""))),
+                f"report_schema_version={health.get('report_schema_version')}")
 
     r = request("GET", f"{base}{API_PREFIX}/version")
     s.check("version.status", r.status == 200, f"HTTP {r.status}")
@@ -285,6 +292,11 @@ def run_suite(base_url: str, *, full_mode: bool = False, verbose: bool = True,
                 f"thresholds keys={sorted((ver.get('thresholds') or {}).keys())}")
         s.check("version.report_schema", bool(ver.get("report_schema_version")),
                 f"report_schema_version={ver.get('report_schema_version')}")
+        s.check("version.report_schema_consistency",
+                bool(ver.get("report_schema_version"))
+                and ver.get("report_schema_version") == health.get("report_schema_version"),
+                f"version={ver.get('report_schema_version')} health="
+                f"{health.get('report_schema_version')}")
         if full_mode:
             s.check("version.thresholds.low_high",
                     isinstance((ver.get("thresholds") or {}).get("low"), (int, float))
@@ -510,6 +522,71 @@ def run_suite(base_url: str, *, full_mode: bool = False, verbose: bool = True,
     s.check("security.static_traversal",
             r.status in (400, 403, 404),
             f"HTTP {r.status}（不允许 200 泄露仓库文件）")
+
+    # ---------------- 样本库回取（F9：逐样本报告 schema 刷新后的接口回归） ----------------
+    r = request("GET", f"{base}{API_PREFIX}/report/001")
+    if r.status == 200:
+        doc = r.json()
+        versions = doc.get("versions") if isinstance(doc.get("versions"), dict) else {}
+        markers = {
+            "explanation": isinstance(doc.get("explanation"), dict) and bool(doc["explanation"]),
+            "localization.available": isinstance(doc.get("localization"), dict)
+            and "available" in doc["localization"],
+            "versions.artifact_sha256": "artifact_sha256" in versions,
+            "latency_ms.L1b": isinstance(doc.get("latency_ms"), dict)
+            and "L1b" in doc["latency_ms"],
+        }
+        s.check("report.sample_library", bool(doc.get("verdict")) and isinstance(doc.get("model_scores"), dict),
+                f"001 → verdict={doc.get('verdict')} conf={doc.get('confidence')}")
+        s.check("report.sample_library.new_schema", all(markers.values()),
+                f"markers={markers} schema={ver.get('report_schema_version')}")
+    else:
+        code, _ = envelope_error(r)
+        s.skip("report.sample_library", f"HTTP {r.status} code={code}（本机无逐样本归档，可选）")
+        s.skip("report.sample_library.new_schema", "无逐样本归档可校验")
+
+    r = request("GET", f"{base}/reports/001.json")
+    if r.status == 200:
+        sample = r.json()
+        s.check("static.reports_fallback", bool(sample.get("verdict")),
+                f"/reports/001.json → verdict={sample.get('verdict')}（静态回退到工作区 reports/）")
+    else:
+        s.check("static.reports_fallback", r.status == 404,
+                f"HTTP {r.status}（无 001.json 时允许 404）")
+
+    r = request("GET", f"{base}/reports/definitely-missing.json")
+    code, _ = envelope_error(r)
+    s.check("error.static_missing", r.status == 404 and code == "E_NOT_FOUND",
+            f"HTTP {r.status} code={code}")
+
+    # 归档质检：仓库内 batch 归档（已提交）的逐样本 JSON 必须是当前 schema
+    arch = ROOT / "reports" / "batch" / "verify-24"
+    samples = sorted((arch / "samples").glob("*.json")) if arch.is_dir() else []
+    if samples:
+        want_markers = ["explanation", "localization.available", "versions.artifact_sha256",
+                        "latency_ms.L1b"]
+        bad = []
+        for p in samples:
+            try:
+                doc = json.loads(p.read_text(encoding="utf-8"))
+            except Exception as e:  # noqa: BLE001
+                bad.append(f"{p.name}:{type(e).__name__}")
+                continue
+            versions_d = doc.get("versions") if isinstance(doc.get("versions"), dict) else {}
+            checks = {
+                "explanation": isinstance(doc.get("explanation"), dict) and bool(doc["explanation"]),
+                "localization.available": isinstance(doc.get("localization"), dict)
+                and "available" in doc["localization"],
+                "versions.artifact_sha256": "artifact_sha256" in versions_d,
+                "latency_ms.L1b": isinstance(doc.get("latency_ms"), dict)
+                and "L1b" in doc["latency_ms"],
+            }
+            if not all(checks.values()):
+                bad.append(f"{p.name}:{[k for k, v in checks.items() if not v]}")
+        s.check("archive.schema_markers", not bad,
+                f"{len(samples)} 份逐样本报告，缺失={bad[:3]} 期望标记={want_markers}")
+    else:
+        s.skip("archive.schema_markers", f"未找到 batch 归档：{arch}")
 
     r = request("POST", f"{base}{API_PREFIX}/detect/batch", b'{"paths": ["/etc/hostname"]}',
                 {"Content-Type": "application/json",

@@ -26,6 +26,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import statistics
 import sys
 import time
@@ -225,7 +226,17 @@ def resolve_label(entry: dict, labels: list[dict]) -> str | None:
     return None
 
 
-def discover_files(roots: list[Path], exts: set[str], recursive: bool, limit: int | None) -> list[Path]:
+def spread_select(items: list, limit: int) -> list:
+    """在有序列表上均匀抽样 limit 个（确定性、跨类均衡），用于可复现的小规模归档。"""
+    n = len(items)
+    if limit <= 0 or n <= limit:
+        return list(items)
+    idx = sorted({int(round(i)) for i in np.linspace(0, n - 1, limit)})
+    return [items[i] for i in idx]
+
+
+def discover_files(roots: list[Path], exts: set[str], recursive: bool, limit: int | None,
+                   spread: bool = False) -> list[Path]:
     files: list[Path] = []
     for r in roots:
         if r.is_file():
@@ -244,7 +255,7 @@ def discover_files(roots: list[Path], exts: set[str], recursive: bool, limit: in
             seen.add(key)
             uniq.append(p)
     if limit:
-        uniq = uniq[:limit]
+        uniq = spread_select(uniq, limit) if spread else uniq[:limit]
     return uniq
 
 
@@ -320,6 +331,66 @@ def percentile(values: list[float], q: float) -> float | None:
     if not vals:
         return None
     return round(float(np.percentile(vals, q)), 1)
+
+
+# --------------------------------------------------------------------------- #
+# 归档 schema 质检（F9：确保归档的逐样本报告是当前 schema，而非旧版混放）
+# --------------------------------------------------------------------------- #
+#: 当前 report schema 的必备标记（report.py REPORT_VERSION 对应的字段集）
+ARCHIVE_MARKERS: dict[str, str] = {
+    "explanation": "关注区域解释块（Grad-CAM 不可用时的替代说明也在其中）",
+    "localization.available": "定位分节的可用性标记",
+    "versions.artifact_sha256": "权重/阈值产物哈希表（可追溯）",
+    "latency_ms.L1b": "L1b 域取证独立计时行",
+}
+
+
+def report_schema_version() -> str | None:
+    """读取 src/report.py 的报告 schema 版本（JSON 本身不内嵌该字段，故归档需显式记录）。"""
+    try:
+        from report import REPORT_VERSION        # noqa: PLC0415
+        return str(REPORT_VERSION)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def marker_present(doc: dict, marker: str) -> bool:
+    cur = doc
+    for part in marker.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return False
+        cur = cur[part]
+    return bool(cur) or cur in (0, False)
+
+
+def archive_qc(sample_paths: list[Path], *, applicable: bool = True) -> dict:
+    """统计逐样本报告里各 schema 标记的出现次数，用于归档质检。"""
+    counts = {m: 0 for m in ARCHIVE_MARKERS}
+    examples: dict[str, list[str]] = {m: [] for m in ARCHIVE_MARKERS}
+    unreadable = []
+    for p in sample_paths:
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            unreadable.append(p.name)
+            continue
+        for m in ARCHIVE_MARKERS:
+            if marker_present(doc, m):
+                counts[m] += 1
+            elif len(examples[m]) < 3:
+                examples[m].append(p.name)
+    n = len(sample_paths)
+    return {
+        "applicable": applicable,
+        "n_samples": n,
+        "markers_expected": sorted(ARCHIVE_MARKERS),
+        "markers_present": counts,
+        "missing_examples": {m: v for m, v in examples.items() if v},
+        "unreadable": unreadable,
+        "all_pass": bool(applicable) and n > 0 and all(counts[m] == n for m in ARCHIVE_MARKERS),
+        "note": ("占位模式（--no-model）不产报告字段，归档质检不适用"
+                 if not applicable else None),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -413,7 +484,8 @@ def run_batch(args) -> dict:
     if not roots:
         raise SystemExit("[error] 请用 --dir / --file / --list 指定待评测输入")
 
-    files = discover_files(roots, exts, args.recursive, args.limit)
+    files = discover_files(roots, exts, args.recursive, args.limit,
+                           spread=bool(getattr(args, "spread", False)))
     if not files:
         raise SystemExit(f"[error] 未发现可评测文件（扩展名={sorted(exts)}）")
 
@@ -451,6 +523,7 @@ def run_batch(args) -> dict:
         print(f"[batch] 预热 {warm['ms']} ms（{Path(warm['sample']).name}）", flush=True)
 
     records = []
+    saved_samples: list[Path] = []
     for e in entries:
         rec = {"seq": e["seq"], "file": str(e["path"]), "name": e["name"], "kind": e["kind"],
                "label": e["label"], "verdict": None, "verdict_cn": None, "confidence": None,
@@ -503,15 +576,19 @@ def run_batch(args) -> dict:
         # 逐样本报告落盘
         try:
             if rec["report"] is not None:
-                rec["report"].save_json(str(samples_dir / f"{e['path'].stem}.json"))
+                sample_path = samples_dir / f"{e['path'].stem}.json"
+                rec["report"].save_json(str(sample_path))
+                saved_samples.append(sample_path)
                 if args.html and rec["failure_type"] in ("false_positive", "false_negative"):
                     from report import save_html                      # noqa: PLC0415
                     save_html(rec["report"], str(samples_dir / f"{e['path'].stem}.html"))
             else:
                 payload = {k: v for k, v in rec.items() if k != "report"}
                 payload["report_schema"] = "batch-stub/1.0"
-                (samples_dir / f"{e['path'].stem}.json").write_text(
-                    json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+                sample_path = samples_dir / f"{e['path'].stem}.json"
+                sample_path.write_text(json.dumps(payload, ensure_ascii=False, indent=1),
+                                       encoding="utf-8")
+                saved_samples.append(sample_path)
         except Exception as ex:  # noqa: BLE001
             print(f"[warn] 报告落盘失败 {e['name']}：{ex}", file=sys.stderr)
         rec["report"] = None
@@ -521,6 +598,8 @@ def run_batch(args) -> dict:
 
     metrics = aggregate_metrics(records, labelled)
     failures = build_failures(records)
+    schema_version = report_schema_version()
+    qc = archive_qc(saved_samples, applicable=det is not None)
     metrics.update({
         "generated_at": now_iso(),
         "inputs": [str(p) for p in roots],
@@ -529,11 +608,20 @@ def run_batch(args) -> dict:
         "detector": note,
         "warmup": warm,
         "elapsed_s": round(time.perf_counter() - t_start, 2),
+        "report_schema_version": schema_version,
+        "archive_qc": qc,
+        "generator": {
+            "script": "scripts/batch_evaluate.py",
+            "argv": [Path(sys.argv[0]).name] + sys.argv[1:],
+            "generated_at": now_iso(),
+            "python": sys.version.split()[0],
+        },
         "protocol": {
             "positive_class": "ai（AI 生成/篡改）",
             "negative_class": "real（真实拍摄）",
             "three_tier": "normal→real，suspect→ai，review→弃权（另计覆盖率与保守下界）",
             "note": "本脚本仅做评测聚合，不训练/不选阈值；阈值来自模型侧冻结配置",
+            "report_schema_version": schema_version,
         },
         "out_dir": str(out_dir),
         "models_dir": str(find_models_dir(args.models_dir)),
@@ -739,7 +827,13 @@ def render_markdown(metrics: dict, failures: list[dict], records: list[dict]) ->
             lines.append(f"| {row['seq']} | {row['name']} | {row['label']} | {row['verdict']} | "
                          f"{row['confidence']} | {row['failure_type']} | "
                          f"{(row['reason'] or '')[:80]} |")
-    lines += ["", "## 逐样本报告", "",
+    lines += ["", "## 归档质检（报告 schema）", "",
+              f"- report schema 版本：`{metrics.get('report_schema_version')}`",
+              f"- 必备标记：{', '.join((metrics.get('archive_qc') or {}).get('markers_expected') or [])}",
+              f"- 标记齐全：{(metrics.get('archive_qc') or {}).get('markers_present')}",
+              f"- 结论：{'全部样本通过' if (metrics.get('archive_qc') or {}).get('all_pass') else '存在缺失（见 metrics.json.archive_qc）'}",
+              ""]
+    lines += ["## 逐样本报告", "",
               f"逐样本 JSON：`samples/<name>.json`（{len(records)} 份）；"
               f"逐样本明细：`per_sample.json`。", ""]
     return "\n".join(lines)
@@ -784,6 +878,9 @@ def print_table(metrics: dict, failures: list[dict]):
     for f in failures:
         by_type[f["failure_type"]] = by_type.get(f["failure_type"], 0) + 1
     print(f"失败案例  {by_type if by_type else '无'}（共 {len(failures)} 条，详见 failures.csv）")
+    qc = metrics.get("archive_qc") or {}
+    print(f"归档质检  schema={metrics.get('report_schema_version')} "
+          f"标记齐全={qc.get('markers_present')} all_pass={qc.get('all_pass')}")
     print("=" * 72)
 
 
@@ -828,6 +925,7 @@ def selftest(args) -> int:
     ns.labels = str(labels)
     ns.out = str(tmp / "out")
     ns.limit = None
+    ns.spread = False
     ns.recursive = False
     ns.video = False
     ns.ext = "png"
@@ -854,6 +952,19 @@ def selftest(args) -> int:
         and abs(c["tpr"] - r4(2 / 3)) < 1e-9 and abs(c["precision"] - r4(2 / 3)) < 1e-9
     checks["bootstrap"] = bootstrap_ci(y, p, draws=200)["accuracy_ci95"] is not None
     checks["auc"] = roc_auc(y, np.array([0.9, 0.3, 0.2, 0.6, 0.8, 0.1])) is not None
+    # 均匀抽样（--limit --spread）与归档 schema 质检（F9）单测
+    sp = spread_select(list(range(119)), 24)
+    checks["spread_select"] = (len(sp) == 24 and sp[0] == 0 and sp[-1] == 118
+                               and sp == sorted(set(sp)))
+    checks["marker_present"] = (
+        marker_present({"versions": {"artifact_sha256": {"a": 1}}}, "versions.artifact_sha256")
+        and marker_present({"latency_ms": {"L1b": 12.3}}, "latency_ms.L1b")
+        and not marker_present({"versions": {}}, "versions.artifact_sha256")
+        and not marker_present({}, "explanation"))
+    sv = report_schema_version()
+    checks["schema_version_readable"] = sv is None or bool(re.fullmatch(r"\d+\.\d+\.\d+", sv))
+    checks["archive_qc_stub_flag"] = (metrics.get("archive_qc", {}).get("applicable") is False
+                                      and metrics.get("report_schema_version") == sv)
     ok = all(checks.values())
     print("\n[selftest] " + json.dumps(checks, ensure_ascii=False))
     print(f"[selftest] {'通过' if ok else '失败'}；产物目录 {out}")
@@ -873,6 +984,8 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--ext", default=None, help="扩展名过滤，如 png,jpg")
     ap.add_argument("--recursive", action="store_true")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--spread", action="store_true",
+                    help="配合 --limit：在全部输入上均匀抽样（确定性、跨类均衡，便于可复现归档）")
     ap.add_argument("--video", action="store_true", help="评测视频（抽帧聚合）")
     ap.add_argument("--html", action="store_true", help="对 FP/FN 额外生成单文件 HTML 报告")
     ap.add_argument("--progress-every", type=int, default=20)

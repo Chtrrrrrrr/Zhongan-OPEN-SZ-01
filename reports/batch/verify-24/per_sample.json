@@ -1,0 +1,969 @@
+[
+ {
+  "seq": 1,
+  "file": "data\\images\\001.png",
+  "name": "001.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9657,
+  "fused_score": 0.9657,
+  "disagreement": 1.0439,
+  "model_scores": {
+   "forensic": 0.8659,
+   "combined": 0.9812
+  },
+  "latency_ms": {
+   "L0": 19.0,
+   "L1": 77.1,
+   "L1b": 351.6,
+   "L2_clip": 76.4,
+   "L2_clip_tiles": 434.9,
+   "explain": 395.2,
+   "L3": 23.9,
+   "fusion": 0.3,
+   "total": 1379.7,
+   "batch_wall": 1382.6
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.966 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "f40204f5571717278b8c50b481458caa73cfd9f46fc7ac6db30e86e95747b889",
+  "resolution": "1238x1704",
+  "wall_ms": 1382.6
+ },
+ {
+  "seq": 2,
+  "file": "data\\images\\006.png",
+  "name": "006.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9779,
+  "fused_score": 0.9779,
+  "disagreement": 1.7947,
+  "model_scores": {
+   "forensic": 0.7783,
+   "combined": 0.9922
+  },
+  "latency_ms": {
+   "L0": 19.0,
+   "L1": 86.1,
+   "L1b": 225.0,
+   "L2_clip": 76.3,
+   "L2_clip_tiles": 418.6,
+   "explain": 277.0,
+   "L3": 23.5,
+   "fusion": 0.2,
+   "total": 1127.0,
+   "batch_wall": 1130.1
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.978 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "1a99b5357889f17a424bd3bcdd5881d3348b36e67f1ad02a024f70735eb14189",
+  "resolution": "870x1001",
+  "wall_ms": 1130.1
+ },
+ {
+  "seq": 3,
+  "file": "data\\images\\011.png",
+  "name": "011.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9899,
+  "fused_score": 0.9899,
+  "disagreement": 0.0663,
+  "model_scores": {
+   "forensic": 0.9908,
+   "combined": 0.9895
+  },
+  "latency_ms": {
+   "L0": 136.0,
+   "L1": 78.2,
+   "L1b": 526.3,
+   "L2_clip": 76.2,
+   "L2_clip_tiles": 431.5,
+   "explain": 467.8,
+   "L3": 28.6,
+   "fusion": 0.2,
+   "total": 1746.1,
+   "batch_wall": 1750.2
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.990 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "8e757843f7e369126d1327e74e3d010e398f8dbdf56c37b716374fc677e10819",
+  "resolution": "2250x3000",
+  "wall_ms": 1750.2
+ },
+ {
+  "seq": 4,
+  "file": "data\\images\\016.png",
+  "name": "016.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9771,
+  "fused_score": 0.9771,
+  "disagreement": 2.4389,
+  "model_scores": {
+   "forensic": 0.5769,
+   "combined": 0.9944
+  },
+  "latency_ms": {
+   "L0": 13.4,
+   "L1": 82.2,
+   "L1b": 207.5,
+   "L2_clip": 76.3,
+   "L2_clip_tiles": 414.2,
+   "explain": 392.1,
+   "L3": 29.3,
+   "fusion": 0.2,
+   "total": 1216.7,
+   "batch_wall": 1219.9
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.977 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "f4ffb739aa7e3ddbab109ddb1d1301bbe46f982213809ccc6f6f2c56089c920d",
+  "resolution": "960x1136",
+  "wall_ms": 1219.9
+ },
+ {
+  "seq": 5,
+  "file": "data\\images\\022.png",
+  "name": "022.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9761,
+  "fused_score": 0.9761,
+  "disagreement": 1.1794,
+  "model_scores": {
+   "forensic": 0.8854,
+   "combined": 0.9879
+  },
+  "latency_ms": {
+   "L0": 10.1,
+   "L1": 63.7,
+   "L1b": 232.9,
+   "L2_clip": 75.1,
+   "L2_clip_tiles": 427.1,
+   "explain": 229.0,
+   "L3": 19.5,
+   "fusion": 0.2,
+   "total": 1059.1,
+   "batch_wall": 1062.4
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.976 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "a5c9526d86af8e9ab329ee9f0152e6600f7830db6ae3a3e18db16b6e7e3913ba",
+  "resolution": "1284x766",
+  "wall_ms": 1062.4
+ },
+ {
+  "seq": 6,
+  "file": "data\\images\\027.png",
+  "name": "027.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9732,
+  "fused_score": 0.9732,
+  "disagreement": 0.3837,
+  "model_scores": {
+   "forensic": 0.9547,
+   "combined": 0.9785
+  },
+  "latency_ms": {
+   "L0": 116.4,
+   "L1": 68.7,
+   "L1b": 422.1,
+   "L2_clip": 30.4,
+   "L2_clip_tiles": 335.2,
+   "explain": 454.7,
+   "L3": 24.5,
+   "fusion": 0.2,
+   "total": 1453.6,
+   "batch_wall": 1457.3
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.973 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "70a0390a1b2645d529b4c6e148f548243319b586450ed4c8800295f8b18fafbc",
+  "resolution": "3000x2028",
+  "wall_ms": 1457.3
+ },
+ {
+  "seq": 7,
+  "file": "data\\images\\032.png",
+  "name": "032.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9713,
+  "fused_score": 0.9713,
+  "disagreement": 0.2517,
+  "model_scores": {
+   "forensic": 0.9595,
+   "combined": 0.9751
+  },
+  "latency_ms": {
+   "L0": 20.8,
+   "L1": 32.0,
+   "L1b": 214.8,
+   "L2_clip": 30.3,
+   "L2_clip_tiles": 306.9,
+   "explain": 448.3,
+   "L3": 15.3,
+   "fusion": 0.2,
+   "total": 1069.9,
+   "batch_wall": 1073.0
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.971 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "1a267dca440d28b2eb51d8902d7c916c6c12ed106b36b35004985b39807c9490",
+  "resolution": "886x1920",
+  "wall_ms": 1073.0
+ },
+ {
+  "seq": 8,
+  "file": "data\\images\\037.png",
+  "name": "037.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9881,
+  "fused_score": 0.9881,
+  "disagreement": 1.5295,
+  "model_scores": {
+   "forensic": 0.9053,
+   "combined": 0.9951
+  },
+  "latency_ms": {
+   "L0": 50.4,
+   "L1": 38.8,
+   "L1b": 248.3,
+   "L2_clip": 41.1,
+   "L2_clip_tiles": 423.4,
+   "explain": 453.3,
+   "L3": 17.2,
+   "fusion": 0.2,
+   "total": 1273.9,
+   "batch_wall": 1277.2
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.988 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "fce9668d34951aea09b00ee84065ed0576494d488425e2af76e7e2710007e156",
+  "resolution": "1179x2556",
+  "wall_ms": 1277.2
+ },
+ {
+  "seq": 9,
+  "file": "data\\images\\042.png",
+  "name": "042.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9841,
+  "fused_score": 0.9841,
+  "disagreement": 1.5855,
+  "model_scores": {
+   "forensic": 0.8684,
+   "combined": 0.9937
+  },
+  "latency_ms": {
+   "L0": 36.7,
+   "L1": 83.3,
+   "L1b": 422.1,
+   "L2_clip": 75.4,
+   "L2_clip_tiles": 435.5,
+   "explain": 235.9,
+   "L3": 27.0,
+   "fusion": 0.2,
+   "total": 1317.4,
+   "batch_wall": 1320.7
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.984 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "9cbc7374d944fd9830138ea22c3bb4018257da469d1e49d8f2788b82419a93a8",
+  "resolution": "1536x1950",
+  "wall_ms": 1320.7
+ },
+ {
+  "seq": 10,
+  "file": "data\\images\\047.png",
+  "name": "047.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9791,
+  "fused_score": 0.9791,
+  "disagreement": 1.1582,
+  "model_scores": {
+   "forensic": 0.9015,
+   "combined": 0.9893
+  },
+  "latency_ms": {
+   "L0": 63.8,
+   "L1": 44.6,
+   "L1b": 251.6,
+   "L2_clip": 76.9,
+   "L2_clip_tiles": 280.7,
+   "explain": 405.9,
+   "L3": 17.3,
+   "fusion": 0.2,
+   "total": 1142.3,
+   "batch_wall": 1145.6
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.979 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "382aca55c54d16454cc046dcb8cae1de86081585fe95884dac125def88925519",
+  "resolution": "2368x1088",
+  "wall_ms": 1145.6
+ },
+ {
+  "seq": 11,
+  "file": "data\\images\\052.png",
+  "name": "052.png",
+  "kind": "image",
+  "label": "ai",
+  "verdict": "suspect",
+  "verdict_cn": "疑似生成/篡改",
+  "confidence": 0.9697,
+  "fused_score": 0.9697,
+  "disagreement": 1.0932,
+  "model_scores": {
+   "forensic": 0.8722,
+   "combined": 0.9838
+  },
+  "latency_ms": {
+   "L0": 81.1,
+   "L1": 75.6,
+   "L1b": 483.6,
+   "L2_clip": 75.4,
+   "L2_clip_tiles": 435.4,
+   "explain": 426.6,
+   "L3": 27.8,
+   "fusion": 0.2,
+   "total": 1607.2,
+   "batch_wall": 1611.5
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.970 >= high threshold 0.674"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "f0668b0603d678d3310d041bc83e9a8fd0ee96a0247ea5239dc53812eb9d7c93",
+  "resolution": "2250x3000",
+  "wall_ms": 1611.5
+ },
+ {
+  "seq": 12,
+  "file": "data\\images\\057.png",
+  "name": "057.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0637,
+  "fused_score": 0.0637,
+  "disagreement": 1.4326,
+  "model_scores": {
+   "forensic": 0.3395,
+   "combined": 0.0284
+  },
+  "latency_ms": {
+   "L0": 284.8,
+   "L1": 75.7,
+   "L1b": 599.9,
+   "L2_clip": 75.7,
+   "L2_clip_tiles": 440.6,
+   "explain": 408.6,
+   "L3": 30.2,
+   "fusion": 0.2,
+   "total": 1917.4,
+   "batch_wall": 1921.9
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.064 in uncertainty band (0.036, 0.674)",
+   "model disagreement 1.43 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "857e9e3e1683a7b44d2fe05a8f41a23ffbdfe20e1a23fc215de147bffcf4e01b",
+  "resolution": "3024x4032",
+  "wall_ms": 1921.9
+ },
+ {
+  "seq": 13,
+  "file": "data\\images\\063.png",
+  "name": "063.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0265,
+  "fused_score": 0.0265,
+  "disagreement": 1.4312,
+  "model_scores": {
+   "forensic": 0.1705,
+   "combined": 0.0116
+  },
+  "latency_ms": {
+   "L0": 19.6,
+   "L1": 43.7,
+   "L1b": 213.5,
+   "L2_clip": 76.5,
+   "L2_clip_tiles": 439.2,
+   "explain": 277.5,
+   "L3": 14.3,
+   "fusion": 0.2,
+   "total": 1086.3,
+   "batch_wall": 1089.4
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.027 <= low threshold 0.036",
+   "model disagreement 1.43 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "9d81a7fe687166628a7afedf0d256bc7095182a7c53cf4e65e7f1a398fe19e09",
+  "resolution": "864x1920",
+  "wall_ms": 1089.4
+ },
+ {
+  "seq": 14,
+  "file": "data\\images\\068.png",
+  "name": "068.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0467,
+  "fused_score": 0.0467,
+  "disagreement": 1.399,
+  "model_scores": {
+   "forensic": 0.261,
+   "combined": 0.0211
+  },
+  "latency_ms": {
+   "L0": 46.2,
+   "L1": 54.3,
+   "L1b": 293.8,
+   "L2_clip": 76.7,
+   "L2_clip_tiles": 228.3,
+   "explain": 388.1,
+   "L3": 20.8,
+   "fusion": 0.2,
+   "total": 1110.0,
+   "batch_wall": 1113.2
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.047 in uncertainty band (0.036, 0.674)",
+   "model disagreement 1.40 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "f65c216ba862a59b76cf6e53af4b71b045316f9d4301dda1aeb96427e0013324",
+  "resolution": "1080x1920",
+  "wall_ms": 1113.2
+ },
+ {
+  "seq": 15,
+  "file": "data\\images\\073.png",
+  "name": "073.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "normal",
+  "verdict_cn": "正常",
+  "confidence": 0.025,
+  "fused_score": 0.025,
+  "disagreement": 0.1037,
+  "model_scores": {
+   "forensic": 0.0289,
+   "combined": 0.0236
+  },
+  "latency_ms": {
+   "L0": 47.3,
+   "L1": 36.5,
+   "L1b": 237.9,
+   "L2_clip": 54.7,
+   "L2_clip_tiles": 284.2,
+   "explain": 477.6,
+   "L3": 18.6,
+   "fusion": 0.2,
+   "total": 1158.6,
+   "batch_wall": 1161.6
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.025 <= low threshold 0.036"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "926fffc475bddfa379e708a82ef701da0730718fd7fa0f725e70c85f2abc932d",
+  "resolution": "916x1920",
+  "wall_ms": 1161.6
+ },
+ {
+  "seq": 16,
+  "file": "data\\images\\078.png",
+  "name": "078.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "normal",
+  "verdict_cn": "正常",
+  "confidence": 0.0175,
+  "fused_score": 0.0175,
+  "disagreement": 0.1289,
+  "model_scores": {
+   "forensic": 0.0209,
+   "combined": 0.0162
+  },
+  "latency_ms": {
+   "L0": 8.9,
+   "L1": 65.5,
+   "L1b": 126.9,
+   "L2_clip": 30.7,
+   "L2_clip_tiles": 229.7,
+   "explain": 449.3,
+   "L3": 19.9,
+   "fusion": 0.2,
+   "total": 932.0,
+   "batch_wall": 934.8
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.017 <= low threshold 0.036"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "f49ce8183f9f05dcc0f88a8c84ba8f73c340b43e488c2c88c8659359ec89ff41",
+  "resolution": "898x600",
+  "wall_ms": 934.8
+ },
+ {
+  "seq": 17,
+  "file": "data\\images\\083.png",
+  "name": "083.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0508,
+  "fused_score": 0.0508,
+  "disagreement": 2.1012,
+  "model_scores": {
+   "forensic": 0.5097,
+   "combined": 0.0153
+  },
+  "latency_ms": {
+   "L0": 30.3,
+   "L1": 71.2,
+   "L1b": 368.9,
+   "L2_clip": 67.8,
+   "L2_clip_tiles": 433.7,
+   "explain": 482.3,
+   "L3": 23.3,
+   "fusion": 0.2,
+   "total": 1480.0,
+   "batch_wall": 1483.9
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.051 in uncertainty band (0.036, 0.674)",
+   "model disagreement 2.10 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "b91343a8ca77c16844ab0b94f206e19e29492fb159bd5fed33151ea44a50108b",
+  "resolution": "1920x1360",
+  "wall_ms": 1483.9
+ },
+ {
+  "seq": 18,
+  "file": "data\\images\\088.png",
+  "name": "088.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0366,
+  "fused_score": 0.0366,
+  "disagreement": 1.1778,
+  "model_scores": {
+   "forensic": 0.1668,
+   "combined": 0.0186
+  },
+  "latency_ms": {
+   "L0": 43.6,
+   "L1": 78.0,
+   "L1b": 412.4,
+   "L2_clip": 75.4,
+   "L2_clip_tiles": 431.5,
+   "explain": 249.1,
+   "L3": 26.8,
+   "fusion": 0.2,
+   "total": 1318.3,
+   "batch_wall": 1321.5
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.037 in uncertainty band (0.036, 0.674)"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "4fe256b2423e96559346b6a9f408b4275704bc9f383a071aa4e460557c9bf055",
+  "resolution": "1920x1440",
+  "wall_ms": 1321.5
+ },
+ {
+  "seq": 19,
+  "file": "data\\images\\093.png",
+  "name": "093.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "normal",
+  "verdict_cn": "正常",
+  "confidence": 0.0107,
+  "fused_score": 0.0107,
+  "disagreement": 0.198,
+  "model_scores": {
+   "forensic": 0.0142,
+   "combined": 0.0096
+  },
+  "latency_ms": {
+   "L0": 45.8,
+   "L1": 56.4,
+   "L1b": 267.1,
+   "L2_clip": 76.9,
+   "L2_clip_tiles": 238.2,
+   "explain": 430.6,
+   "L3": 19.2,
+   "fusion": 0.2,
+   "total": 1135.9,
+   "batch_wall": 1139.4
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.011 <= low threshold 0.036"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "343fff9c78879f72b3a7ac4a1372f869b5e7dd994279ba30e06e6ffc8f4d9ff6",
+  "resolution": "1080x1920",
+  "wall_ms": 1139.4
+ },
+ {
+  "seq": 20,
+  "file": "data\\images\\098.png",
+  "name": "098.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.016,
+  "fused_score": 0.016,
+  "disagreement": 1.4643,
+  "model_scores": {
+   "forensic": 0.1142,
+   "combined": 0.0068
+  },
+  "latency_ms": {
+   "L0": 25.6,
+   "L1": 67.0,
+   "L1b": 322.8,
+   "L2_clip": 30.5,
+   "L2_clip_tiles": 287.1,
+   "explain": 462.2,
+   "L3": 21.6,
+   "fusion": 0.2,
+   "total": 1218.4,
+   "batch_wall": 1221.2
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.016 <= low threshold 0.036",
+   "model disagreement 1.46 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "b004e955d32be085b873e1273f2c69db7862c34d14230224a1b1a4b63013b070",
+  "resolution": "1615x1079",
+  "wall_ms": 1221.2
+ },
+ {
+  "seq": 21,
+  "file": "data\\images\\104.png",
+  "name": "104.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0138,
+  "fused_score": 0.0138,
+  "disagreement": 1.4845,
+  "model_scores": {
+   "forensic": 0.1022,
+   "combined": 0.0058
+  },
+  "latency_ms": {
+   "L0": 44.3,
+   "L1": 71.5,
+   "L1b": 404.2,
+   "L2_clip": 75.5,
+   "L2_clip_tiles": 445.1,
+   "explain": 395.3,
+   "L3": 25.7,
+   "fusion": 0.2,
+   "total": 1463.1,
+   "batch_wall": 1466.7
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.014 <= low threshold 0.036",
+   "model disagreement 1.48 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "f8a41fbc86da5339fc34e8258b048500b27c5381e28ca7b3650d7f229d5f6397",
+  "resolution": "1440x1920",
+  "wall_ms": 1466.7
+ },
+ {
+  "seq": 22,
+  "file": "data\\images\\109.png",
+  "name": "109.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "normal",
+  "verdict_cn": "正常",
+  "confidence": 0.0078,
+  "fused_score": 0.0078,
+  "disagreement": 0.5248,
+  "model_scores": {
+   "forensic": 0.0163,
+   "combined": 0.0058
+  },
+  "latency_ms": {
+   "L0": 35.1,
+   "L1": 39.9,
+   "L1b": 231.3,
+   "L2_clip": 76.0,
+   "L2_clip_tiles": 431.0,
+   "explain": 239.8,
+   "L3": 19.3,
+   "fusion": 0.2,
+   "total": 1074.1,
+   "batch_wall": 1077.9
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.008 <= low threshold 0.036"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "45eaf35c0fe50f741c7a3d56d81bd7000fbbaa57b752352d92f4bd6bdd40d6b1",
+  "resolution": "880x1920",
+  "wall_ms": 1077.9
+ },
+ {
+  "seq": 23,
+  "file": "data\\images\\114.png",
+  "name": "114.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "review",
+  "verdict_cn": "待复核",
+  "confidence": 0.0114,
+  "fused_score": 0.0114,
+  "disagreement": 1.3411,
+  "model_scores": {
+   "forensic": 0.0711,
+   "combined": 0.0052
+  },
+  "latency_ms": {
+   "L0": 9.1,
+   "L1": 83.6,
+   "L1b": 154.7,
+   "L2_clip": 77.7,
+   "L2_clip_tiles": 440.3,
+   "explain": 233.5,
+   "L3": 20.9,
+   "fusion": 0.2,
+   "total": 1021.3,
+   "batch_wall": 1024.3
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.011 <= low threshold 0.036",
+   "model disagreement 1.34 >= 1.25"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": "review",
+  "reason": null,
+  "input_hash": "50b1fac228955521cb8dc158d2bad6769c6a2bb92abefce3ad741a9af07d9f23",
+  "resolution": "898x600",
+  "wall_ms": 1024.3
+ },
+ {
+  "seq": 24,
+  "file": "data\\images\\119.png",
+  "name": "119.png",
+  "kind": "image",
+  "label": "real",
+  "verdict": "normal",
+  "verdict_cn": "正常",
+  "confidence": 0.0153,
+  "fused_score": 0.0153,
+  "disagreement": 0.1321,
+  "model_scores": {
+   "forensic": 0.0184,
+   "combined": 0.0142
+  },
+  "latency_ms": {
+   "L0": 9.5,
+   "L1": 66.9,
+   "L1b": 211.0,
+   "L2_clip": 79.6,
+   "L2_clip_tiles": 357.1,
+   "explain": 263.2,
+   "L3": 23.2,
+   "fusion": 0.2,
+   "total": 1012.1,
+   "batch_wall": 1015.3
+  },
+  "uncertainty": [
+   "Grad-CAM 不可用（combined 头为 joblib/sklearn 逻辑回归包（dict keys=clf,features,scaler），属线性模型：无卷积/注意力特征图、无反向传播路径，Grad-CAM 结构性不可用）；关注区域解释改由块级贡献归因提供",
+   "fused score 0.015 <= low threshold 0.036"
+  ],
+  "status": "ok",
+  "error": null,
+  "report": null,
+  "failure_type": null,
+  "reason": null,
+  "input_hash": "a9050d1d0dbd5f917543f74293d3258910ef42a6a7667d209caf073d057f14f9",
+  "resolution": "716x1033",
+  "wall_ms": 1015.3
+ }
+]

@@ -46,6 +46,7 @@ python api/server.py --selftest --no-model
 | `--time-budget` | `5.0` | 流水线内部时间预算（秒），超预算的 L2 通道自动跳过 |
 | `--no-path-input` | 关 | 禁用 `application/json` 的 `path`/`dir` 服务端路径输入 |
 | `--report-dir` | `<reports>/api` | API 落盘报告目录 |
+| `--extra-reports-dir` | 空（可重复） | 额外报告查找目录；默认已含仓库与工作区 `reports/`，用于回取逐样本 `0xx.json` |
 | `--log` | `<reports>/api/requests.jsonl` | 请求日志（JSONL） |
 
 ### 服务化三种形态的关系
@@ -75,7 +76,7 @@ python api/server.py --selftest --no-model
 | GET | `/api/v1/reports` | 已落盘报告列表 |
 | GET | `/api/v1/metrics` | 返回 `reports/metrics.json` |
 | GET | `/api/v1/openapi.json` | OpenAPI 3.0.3 描述 |
-| GET | `/reports/{file}` | 历史报告静态访问（`reports/` 目录） |
+| GET | `/reports/{file}` | 报告静态访问（按 §3.6 的目录顺序回退，含工作区逐样本报告） |
 | GET | `/demo/{file}` | WebUI 静态资源（`demo/` 目录） |
 
 兼容别名（便于既有脚本/页面平滑迁移）：`GET /api/health` = `/api/v1/health`，
@@ -120,6 +121,8 @@ python api/server.py --selftest --no-model
  "models_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models",
  "data_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\data",
  "reports_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\reports",
+ "report_search_dirs": ["...\\repo\\reports\\api", "...\\repo\\reports", "...\\reports"],
+ "report_schema_version": "1.1.0",
  "warmup": {
   "done": true, "ms": 11901.0,
   "sample": "...\\data\\images\\001.png",
@@ -154,6 +157,10 @@ python api/server.py --selftest --no-model
 health 采用**只读探测**（不会因访问而触发一次惰性加载），因此刚启动、未预热时
 `loaded=false, available=true` 是正常状态。
 
+`report_search_dirs` 为报告查找目录（按优先级），`report_schema_version` 为当前报告 schema
+版本（与 `src/report.py: REPORT_VERSION` 同一真源，1.1.0 含 `explanation` /
+`versions.artifact_sha256` / `latency_ms.L1b` 等字段）—— 评审可用这两项直接确认接口与归档口径一致。
+
 ```bash
 curl.exe -s http://127.0.0.1:8080/api/v1/health
 # PowerShell 等价：Invoke-RestMethod http://127.0.0.1:8080/api/v1/health | ConvertTo-Json -Depth 5
@@ -166,7 +173,7 @@ curl.exe -s http://127.0.0.1:8080/api/v1/health
 ```json
 {
  "service": "open-sz-01-api", "service_version": "1.0.0",
- "api_version": "v1", "report_schema_version": "1.0.0",
+ "api_version": "v1", "report_schema_version": "1.1.0",
  "pipeline": {"version": "open-sz-01 v0.3", "mode": "full", "device": "cuda",
               "time_budget_s": 5.0, "stub_reason": null},
  "code": {"root": "...\\repo", "n_source_files": 39,
@@ -320,11 +327,21 @@ curl.exe -s -X POST -H "Content-Type: application/json" \
 
 ### 3.6 `GET /api/v1/report/{report_id}`
 
-按 `report_id` 回取已落盘报告；先查 `<reports>/api/<id>.json`，再查 `<reports>/<id>.json`
-（历史报告如 `001.json` 亦可回取），最后回退到同名 `.html`（返回 `text/html`）。
+按 `report_id` 回取报告，查找顺序（可用 `GET /api/v1/health` 的 `report_search_dirs` 查看实际生效目录）：
+
+1. `<reports>/api/<id>.json` —— REST 服务自己落盘的运行时报告；
+2. `<reports>/<id>.json` —— 仓库内 `reports/`（聚合指标、batch 归档）；
+3. 工作区 `reports/<id>.json` —— 流水线生成的逐样本报告（`001.json`…`119.json`）；
+4. 同名 `.html`（单文件 HTML 报告，`Content-Type: text/html`）。
+
+> 之所以跨目录查找：仓库内的 `reports/` 只保留聚合指标与 `reports/batch/` 归档，逐样本
+> `0xx.json` 由流水线写在仓库上一级的工作区 `reports/`。WebUI 样本库因此可以直接用
+> `GET /api/v1/report/001`（或用静态路径 `/reports/001.json`，同样按上述顺序回退）取到
+> 当前 schema（1.1.0）的逐样本报告；未命中时返回 `404` 且 `details.searched` 列出查找过的路径。
 
 ```bash
 curl.exe -s -o report.json http://127.0.0.1:8080/api/v1/report/20261011T110405-476d072a
+curl.exe -s http://127.0.0.1:8080/api/v1/report/001     # 工作区逐样本报告（schema 1.1.0）
 ```
 
 `GET /api/v1/reports?limit=50` 列出已落盘报告（`report_id` / `bytes` / `modified` / `url`）。
@@ -496,35 +513,46 @@ python scripts/batch_evaluate.py --dir data/images --no-model --limit 4
 - 另附：`decided_only`（排除弃权样本的严格口径）、`coverage`（非弃权占比）、
   `accuracy_conservative_review_as_error`（**保守下界**：弃权按最不利方向计）、`auc_confidence`
   （连续置信度 AUC）、三档分布，以及 Accuracy/FPR 的 bootstrap 95% CI（默认 2000 次重采样，seed 固定）。
-- 真实运行示例 A（**全部 119 套，一键评测**，CUDA；CUDA 预热 12.4 s，总耗时 137.4 s）：
+- 真实运行示例 A（**入库归档：24 套均匀抽样**，`--limit 24 --spread`，CUDA 预热 13.7 s，总耗时 46.4 s）：
+
+```
+批量评测：24 样本（带标签 24）  耗时 46.44 s
+Accuracy (review→real) 1.0000    Accuracy 95% CI [1.0, 1.0]
+FPR 0.0000    FPR 95% CI [0.0, 0.0]    TPR / Recall 1.0000    Precision 1.0000
+AUC (连续置信度) 1.0000
+覆盖率 (非弃权) 0.6667（16/24）    保守下界 (弃权=错误) 0.6667
+混淆矩阵  TP=11  FP=0  FN=0  TN=13     (AI=11 / real=13)
+三档分布  suspect=11  normal=5  review=8   成因={'model_disagreement': 7, 'uncertainty_band': 1}
+耗时      p50=1187.7 ms  p95=1725.3 ms  max=1917.4 ms  mean_wall=1266.7 ms
+归档质检  schema=1.1.0 标记齐全={'explanation': 24, 'localization.available': 24,
+          'versions.artifact_sha256': 24, 'latency_ms.L1b': 24} all_pass=True
+```
+
+- 真实运行示例 B（**全部 119 套，一键评测**，CUDA 预热 12.4 s，总耗时 137.4 s；按需复现、不入库）：
 
 ```
 批量评测：119 样本（带标签 119）  耗时 137.44 s
-Accuracy (review→real)     1.0000      Accuracy 95% CI [1.0, 1.0]
-FPR (误报率)                 0.0000      FPR 95% CI [0.0, 0.0]
-TPR / Recall               1.0000      Precision  1.0000
-AUC (连续置信度)             1.0000
-覆盖率 (非弃权)               0.7899      （94/119）
-保守下界 (弃权=错误)           0.7899
-混淆矩阵  TP=56  FP=0  FN=0  TN=63      (AI=56 / real=63)
-已决样本  Acc=1.0000 FPR=0.0000 TPR=1.0000 (n=94)
+Accuracy (review→real) 1.0000   FPR 0.0000   TPR 1.0000   Precision 1.0000   AUC 1.0000
+覆盖率 (非弃权) 0.7899（94/119）  保守下界 (弃权=错误) 0.7899
+混淆矩阵  TP=56  FP=0  FN=0  TN=63     (AI=56 / real=63)
 三档分布  suspect=56  normal=38  review=25   成因={'model_disagreement': 22, 'uncertainty_band': 3}
 耗时      p50=980.7 ms  p95=1482.4 ms  max=1719.6 ms  mean_wall=1027.5 ms
-失败案例  {'review': 25}（共 25 条，均来自 real 侧弃权，详见 failures.csv）
 ```
 
-- 真实运行示例 B（24 套均衡子集：12 张 AI + 12 张 real，用 `--list` 指定）：
+**入库归档：`reports/batch/verify-24/`**（24 份逐样本报告，report schema **1.1.0**，
+`metrics.json.archive_qc.markers_present` 四类标记均为 24/24、`all_pass=true`，
+体量 11.7 MB / 28 文件）。生成命令、时间、环境与口径见
+[`reports/batch/README.md`](batch/README.md)：
 
-```
-批量评测：24 样本（带标签 24）  耗时 44.03 s
-Accuracy (review→real) 1.0000   FPR 0.0000   TPR 1.0000   AUC 1.0000
-覆盖率 (非弃权) 0.7083（17/24）  保守下界 0.7083
-混淆矩阵  TP=12  FP=0  FN=0  TN=12      成因={'model_disagreement': 7}
-三档分布  suspect=12  normal=5  review=7
+```bash
+python scripts/batch_evaluate.py --dir data/images --labels data/labels.csv \
+       --limit 24 --spread --out reports/batch/verify-24
 ```
 
-产物：`reports/batch/verify-119/`（119 套）、`reports/batch/verify-balanced24/`（均衡子集），
-含 `metrics.json` / `metrics.md` / `failures.csv` / `per_sample.json` / `samples/*.json`（逐样本 119 份）。
+`reports/api/`（REST 运行时报告与请求日志）与 119 套全量运行目录**不入库**（`.gitignore`：
+`reports/batch/*` 仅放行 `README.md` 与 `verify-24/`）；归档 schema 由
+`tests/test_api.py` 的 `archive.schema_markers` 检查与 `batch_evaluate.py --selftest`
+的标记单测持续守护。
 
 > 口径差异说明：本脚本用**模型侧冻结阈值**（`models/fusion.json` 的 `low=0.0364 / high=0.6743`）
 > 直接在全部样本上推理，而 `reports/metrics.json` 的 `accuracy=0.958 / fpr=0.0317 / tpr=0.9464`
@@ -550,15 +578,23 @@ python tests/test_api.py --base-url http://127.0.0.1:8080   # 对已运行实例
 python api/server.py --selftest --no-model                  # 进程内自测
 ```
 
-覆盖 65 项检查：health/version/openapi/metrics/reports/report 回取/静态托管、三种输入方式、
-视频、批量（multipart 与 JSON 路径）、统一错误体与错误码、报告 id 路径穿越防护、静态资源穿越
-防护、越界路径拒绝、3 路并发、单请求超时降级、multipart 解析器二进制安全单测。
-实测结果：
+覆盖 73 项检查（t8/F9 起新增 8 项）：health/version/openapi/metrics/reports/report 回取/静态托管、
+三种输入方式、视频、批量（multipart 与 JSON 路径）、统一错误体与错误码、报告 id 路径穿越防护、
+静态资源穿越防护、越界路径拒绝、3 路并发、单请求超时降级、multipart 解析器二进制安全单测，
+以及本次新增的报告目录回退与 schema 回归：`health.report_search_dirs`、
+`health.report_schema_version`、`version.report_schema_consistency`、`report.sample_library`
+（`GET /api/v1/report/001` 回取工作区逐样本报告）、`report.sample_library.new_schema`
+（四类 schema 标记齐全）、`static.reports_fallback`（`/reports/001.json` 同样回退）、
+`error.static_missing`、`archive.schema_markers`（逐份校验 `reports/batch/verify-24/samples/*.json`
+的 schema 1.1.0 标记）。实测结果：
 
 | 套件 | 结果 |
 | --- | --- |
-| stub（`--no-model`，无权重环境） | **57 passed / 0 failed** |
-| full（真实模型 + 预热 10.1 s） | **65 passed / 0 failed** |
+| stub（`--no-model`，无权重环境） | **65 passed / 0 failed / 0 skipped** |
+| full（真实模型 + 预热 12.2 s） | **73 passed / 0 failed / 0 skipped** |
+
+（t8 之前该套件为 stub 57 / full 65，本次在原有全部检查保持通过的基础上新增 8 项，
+因此计数由 65 变为 73。）
 
 ---
 

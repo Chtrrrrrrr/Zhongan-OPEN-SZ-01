@@ -1,0 +1,9 @@
+﻿seq,file,name,kind,label,verdict,confidence,fused_score,failure_type,reason
+12,data\images\057.png,057.png,image,real,review,0.0637,0.0637,review,"fused score 0.064 in uncertainty band (0.036, 0.674)"
+13,data\images\063.png,063.png,image,real,review,0.0265,0.0265,review,fused score 0.027 <= low threshold 0.036
+14,data\images\068.png,068.png,image,real,review,0.0467,0.0467,review,"fused score 0.047 in uncertainty band (0.036, 0.674)"
+17,data\images\083.png,083.png,image,real,review,0.0508,0.0508,review,"fused score 0.051 in uncertainty band (0.036, 0.674)"
+18,data\images\088.png,088.png,image,real,review,0.0366,0.0366,review,"fused score 0.037 in uncertainty band (0.036, 0.674)"
+20,data\images\098.png,098.png,image,real,review,0.016,0.016,review,fused score 0.016 <= low threshold 0.036
+21,data\images\104.png,104.png,image,real,review,0.0138,0.0138,review,fused score 0.014 <= low threshold 0.036
+23,data\images\114.png,114.png,image,real,review,0.0114,0.0114,review,fused score 0.011 <= low threshold 0.036

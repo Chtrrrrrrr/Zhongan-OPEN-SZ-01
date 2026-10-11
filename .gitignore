@@ -75,16 +75,22 @@ reports/*
 !reports/error_analysis.csv
 !reports/npr_ablation.json
 !reports/robustness_matrix.json
+# 运行时产物：API 落盘报告与请求日志不入库；batch 只入库 verify-24 归档（见 reports/batch/README.md）
 reports/api/
-reports/batch/
-!reports/robustness_smoke.json
-!reports/video_smoke.json
+!reports/batch/
+reports/batch/*
+!reports/batch/README.md
+!reports/batch/verify-24/
+# F7: robustness_smoke.json（早期 6 样本探针，非有效证据）与 video_smoke.json 已不存在，
+# 其白名单行一并移除，避免误放行无效证据。
 # metrics pack (manual ch.12.1 / 13.1 / 15.1 / 16.2)
 !reports/calibration.json
 !reports/member_analysis.json
 !reports/threshold_stability.json
 !reports/stratified_analysis.json
 !reports/resource_profile.json
+# compliance-audit F3c: frozen-split vs out-of-fold protocol reconciliation
+!reports/protocol_reconciliation.json
 *.log
 outputs/
 runs/

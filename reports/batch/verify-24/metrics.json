@@ -1,0 +1,154 @@
+{
+ "n_records": 24,
+ "n_labelled": 24,
+ "statuses": {
+  "ok": 24,
+  "stub": 0,
+  "error": 0
+ },
+ "three_tier": {
+  "normal": 5,
+  "review": 8,
+  "suspect": 11
+ },
+ "latency_ms": {
+  "p50": 1187.7,
+  "p95": 1725.3,
+  "max": 1917.4,
+  "mean_wall": 1266.7
+ },
+ "per_channel_mean_score": {
+  "combined": 0.4601,
+  "forensic": 0.4747
+ },
+ "per_channel_n": {
+  "combined": 24,
+  "forensic": 24
+ },
+ "review_causes": {
+  "model_disagreement": 7,
+  "uncertainty_band": 1
+ },
+ "supervised": {
+  "binary_review_as_negative": {
+   "tp": 11,
+   "fp": 0,
+   "fn": 0,
+   "tn": 13,
+   "n": 24,
+   "n_pos_ai": 11,
+   "n_neg_real": 13,
+   "accuracy": 1.0,
+   "fpr": 0.0,
+   "tpr": 1.0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "specificity": 1.0,
+   "fnr": 0.0,
+   "note": null
+  },
+  "binary_review_as_negative_ci95": {
+   "accuracy_ci95": [
+    1.0,
+    1.0
+   ],
+   "fpr_ci95": [
+    0.0,
+    0.0
+   ],
+   "draws": 2000,
+   "seed": 7
+  },
+  "auc_confidence": 1.0,
+  "coverage": 0.6667,
+  "coverage_n": 16,
+  "abstain_review_n": 8,
+  "decided_only": {
+   "tp": 11,
+   "fp": 0,
+   "fn": 0,
+   "tn": 5,
+   "n": 16,
+   "n_pos_ai": 11,
+   "n_neg_real": 5,
+   "accuracy": 1.0,
+   "fpr": 0.0,
+   "tpr": 1.0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "specificity": 1.0,
+   "fnr": 0.0,
+   "note": null
+  },
+  "accuracy_conservative_review_as_error": 0.6667,
+  "review_breakdown": {
+   "real_abstain": 8,
+   "ai_abstain": 0
+  },
+  "reference_offline_oof": {
+   "accuracy": 0.958,
+   "fpr": 0.0317,
+   "tpr": 0.9464,
+   "source": "reports/metrics.json#oof_overall"
+  }
+ },
+ "generated_at": "2026-10-11T03:41:57Z",
+ "inputs": [
+  "data\\images"
+ ],
+ "n_files": 24,
+ "detector": "device=auto clip=yes forensic=yes fusion=yes",
+ "warmup": {
+  "done": true,
+  "ms": 13658.5,
+  "sample": "data\\images\\001.png"
+ },
+ "elapsed_s": 46.44,
+ "report_schema_version": "1.1.0",
+ "archive_qc": {
+  "applicable": true,
+  "n_samples": 24,
+  "markers_expected": [
+   "explanation",
+   "latency_ms.L1b",
+   "localization.available",
+   "versions.artifact_sha256"
+  ],
+  "markers_present": {
+   "explanation": 24,
+   "localization.available": 24,
+   "versions.artifact_sha256": 24,
+   "latency_ms.L1b": 24
+  },
+  "missing_examples": {},
+  "unreadable": [],
+  "all_pass": true,
+  "note": null
+ },
+ "generator": {
+  "script": "scripts/batch_evaluate.py",
+  "argv": [
+   "batch_evaluate.py",
+   "--dir",
+   "data/images",
+   "--labels",
+   "data/labels.csv",
+   "--limit",
+   "24",
+   "--spread",
+   "--out",
+   "repo/reports/batch/verify-24"
+  ],
+  "generated_at": "2026-10-11T03:41:57Z",
+  "python": "3.14.7"
+ },
+ "protocol": {
+  "positive_class": "ai（AI 生成/篡改）",
+  "negative_class": "real（真实拍摄）",
+  "three_tier": "normal→real，suspect→ai，review→弃权（另计覆盖率与保守下界）",
+  "note": "本脚本仅做评测聚合，不训练/不选阈值；阈值来自模型侧冻结配置",
+  "report_schema_version": "1.1.0"
+ },
+ "out_dir": "repo\\reports\\batch\\verify-24",
+ "models_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models"
+}
