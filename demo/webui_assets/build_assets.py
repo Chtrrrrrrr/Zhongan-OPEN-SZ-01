@@ -184,9 +184,24 @@ def main() -> int:
         if not out_json.is_file():
             print("[check] 缺少 %s" % out_json)
             return 1
-        cur = out_json.read_text(encoding="utf-8")
-        same = cur.strip() == text.strip()
-        print("[check] oof_119.json %s" % ("与来源一致" if same else "与来源不一致（需重建）"))
+        cur = json.loads(out_json.read_text(encoding="utf-8"))
+        # 判定只看**数据内容**（samples/counts/deployed_metrics/protocol/...）；
+        # sources 里的 sha256 只是生成时的来源指纹：来源文件可能被重新生成（重跑
+        # evaluate_system.py、批处理归档刷新等），且仓库 core.autocrlf=true 时磁盘字节
+        # sha 与 git blob sha 会因 CRLF/LF 不同（内容一致）。因此指纹漂移只作提示、
+        # 不判失败；需要刷新记录时重跑本脚本即可。
+        cur_src = cur.pop("sources", {})
+        fresh_src = payload.get("sources", {})
+        fresh = {k: v for k, v in payload.items() if k != "sources"}
+        same = json.dumps(cur, ensure_ascii=False, sort_keys=True) == \
+            json.dumps(fresh, ensure_ascii=False, sort_keys=True)
+        print("[check] oof_119.json 数据内容 %s" % ("与来源一致" if same else "与来源不一致（需重建）"))
+        drifted = [k for k in fresh_src
+                   if fresh_src[k].get("sha256") != (cur_src.get(k) or {}).get("sha256")]
+        if drifted:
+            print("[check] 提示：来源指纹已漂移 %s（不影响页面；运行本脚本即可刷新记录）" % drifted)
+        else:
+            print("[check] 来源指纹未漂移（oof_bundle / manifest / metrics 三个来源 sha256 一致）")
         missing = [s["seq"] for s in payload["samples"]
                    if not (DEMO_ASSETS / "thumbs" / ("%03d.svg" % s["seq"])).is_file()]
         print("[check] 缩略图 %d/%d，缺失 %s"

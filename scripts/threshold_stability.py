@@ -333,6 +333,7 @@ def main():
     }
     for pname, budget_of in policies.items():
         cal_thr, hold_fpr, hold_fpr_frozen = [], [], []
+        extreme_in_calib_flags, hold_fpr_by_flag = [], {True: [], False: []}
         for _ in range(HALVING_DRAWS):
             perm = rng.permutation(n_real)
             calib, hold = real_deployed[perm[:n_real // 2]], real_deployed[perm[n_real // 2:]]
@@ -341,6 +342,14 @@ def main():
             cal_thr.append(t)
             hold_fpr.append(empirical_fpr(hold, t))
             hold_fpr_frozen.append(empirical_fpr(hold, thr_fixed))
+            if pname.startswith("absolute"):
+                # composition diagnostic: do the samples that DETERMINE the threshold
+                # (the fp_budget+1 highest real scores) sit in the calibration half?
+                top = set(np.argsort(real_deployed)[-(args.fp_budget + 1):].tolist())
+                cal_idx, hold_idx = set(perm[:n_real // 2].tolist()), set(perm[n_real // 2:].tolist())
+                flag = bool(len(top & cal_idx) == len(top))
+                extreme_in_calib_flags.append(flag)
+                hold_fpr_by_flag[flag].append(empirical_fpr(hold, t))
         cal_thr, hold_fpr = np.array(cal_thr), np.array(hold_fpr)
         repeated["policies"][pname] = {
             "budget_rule": ("2 false positives regardless of calibration size (deployed rule)"
@@ -367,6 +376,32 @@ def main():
                 "share_above_3pct": round(float((np.array(hold_fpr_frozen) > 0.03).mean()), 4),
             },
         }
+        if pname.startswith("absolute"):
+            hi, lo = hold_fpr_by_flag[True], hold_fpr_by_flag[False]
+            repeated["policies"][pname]["composition_dependence_diagnostic"] = {
+                "rule": f"does the calibration half contain ALL of the {args.fp_budget + 1} "
+                        f"real samples with the highest scores (the samples that determine the "
+                        f"order statistic)?",
+                "splits_with_all_extreme_samples_in_calibration": len(hi),
+                "splits_without": len(lo),
+                "fraction_with_all_extreme_in_calibration": round(
+                    len(hi) / max(1, len(hi) + len(lo)), 4),
+                "holdout_fpr_when_extreme_in_calibration": (round(float(np.mean(hi)), 4)
+                                                            if hi else None),
+                "holdout_fpr_when_extreme_split_or_in_holdout": (round(float(np.mean(lo)), 4)
+                                                                 if lo else None),
+                "reading": "the held-out FPR depends on where the two or three highest real "
+                           "scores land. That dependence is exactly what an internal hold-out "
+                           "cannot remove: calibration and validation still share one small "
+                           "pool's idiosyncrasy.",
+            }
+            repeated["policies"][pname]["holdout_size"] = {
+                "n_calibration": n_real // 2, "n_holdout": n_real - n_real // 2,
+                "binomial_ci95_width_of_a_like_sized_external_holdout": (
+                    f"for a true FPR of {round(float(hold_fpr.mean()), 4)}, the 95% interval of "
+                    f"an independent {n_real - n_real // 2}-sample hold-out spans about "
+                    f"{round(float(2 * 1.96 * np.sqrt(max(hold_fpr.mean() * (1 - hold_fpr.mean()), 1e-9) / (n_real - n_real // 2))), 4)}"),
+            }
         r = repeated["policies"][pname]
         print(f"[thr] repeated calibration {pname}: thr std={r['calibrated_threshold']['std']} "
               f"holdout FPR mean={r['holdout_empirical_fpr']['mean']} "
@@ -378,6 +413,105 @@ def main():
         "positives on a 31-sample half (6.5%), which is why its hold-out FPR reads higher "
         "than the scaled-budget policy - both are reported rather than picking the "
         "flattering one.")
+
+    # ---------------- F2 (compliance-audit): independent pure-real hold-out status ----
+    # Clopper-Pearson (exact binomial) upper bounds tell us what sample size could
+    # actually CERTIFY the 3% acceptance level, given integral false-positive counts.
+    from scipy.stats import beta as _beta
+
+    def cp_upper(k, n, conf=0.95):
+        return float(_beta.ppf(conf, k + 1, max(1, n - k)))
+
+    sizing, grid_n, grid_k = {}, (63, 100, 150, 200, 300, 500, 1000), (0, 1, 2, 3, 5, 10)
+    for n in grid_n:
+        sizing[f"n={n}"] = {
+            "one_false_positive_equals_fpr": round(1 / n, 4),
+            "upper95_by_observed_fp": {
+                f"fp={k}": {"empirical_fpr": round(k / n, 4),
+                            "cp_upper95": round(cp_upper(k, n), 4),
+                            "meets_3pct": bool(cp_upper(k, n) <= 0.03)}
+                for k in grid_k if k <= max(1, int(0.1 * n))},
+        }
+    min_n_zero_fp = min((n for n in grid_n if cp_upper(0, n) <= 0.03), default=None)
+    rec_n = 300
+    pure_real_holdout = {
+        "audit_reference": "docs/compliance-audit.md F2 / A8.6 / B11.2（手册 13.1 步骤 1 与步骤 6）",
+        "status": "no_external_independent_corpus_available_internal_holdout_substituted",
+        "current_practice": {
+            "what_is_used": f"在 {n_real} 张真实折外分数内部做「纯真实子集留出」："
+                            f"{HALVING_DRAWS} 次随机对半切分，一半标定阈值、另一半测经验 FPR"
+                            f"（repeated_calibration，manual 表 13-1 步骤 6 的替代做法）",
+            "holdout_fpr_mean_scaled_budget": repeated["policies"][
+                "scaled_budget_floor_3pct"]["holdout_empirical_fpr"]["mean"],
+            "holdout_fpr_mean_absolute_budget": repeated["policies"][
+                "absolute_budget_2"]["holdout_empirical_fpr"]["mean"],
+            "threshold_std_across_recalibrations": repeated["policies"][
+                "absolute_budget_2"]["calibrated_threshold"]["std"],
+            "empirical_fpr_point_estimate_on_full_pool": threshold_distribution[
+                "empirical_fpr_of_frozen_threshold"]["empirical_fpr_calibration_set"],
+            "holdout_size": {"n_calibration": n_real // 2, "n_holdout": n_real - n_real // 2},
+            "explicitly_not": "这不是手册 13.1 要求的「独立真实留出集」：两半来自同一批 "
+                              f"{n_real} 张真实样本，既无外部语料，也无来源分布差异，"
+                              "属内部留出（internal hold-out）。",
+        },
+        "approximation_bias": {
+            "direction": "乐观（低估不确定性与部署 FPR 的波动）",
+            "two_separate_effects": {
+                "score_level": "无偏：每个样本的分数是自己的折外分数，样本不参与自己的打分，"
+                               "因此不存在分数层面的泄漏",
+                "threshold_level": "有偏：阈值由同一批真实分数选出，又用同一批分数验证；"
+                                   "池内的偶发高分样本（决定顺序统计量的那 2–3 个）同时"
+                                   "影响阈值与验证读数",
+            },
+            "measured_magnitude": {
+                "granularity_floor": round(1 / n_real, 4),
+                "composition_dependence": repeated["policies"]["absolute_budget_2"].get(
+                    "composition_dependence_diagnostic"),
+                "holdout_fpr_ci95_scaled_budget": repeated["policies"][
+                    "scaled_budget_floor_3pct"]["holdout_empirical_fpr"]["ci95"],
+                "frozen_threshold_fpr_ci95": threshold_distribution[
+                    "empirical_fpr_of_frozen_threshold"]["bootstrap_ci95"],
+                "reading": "偏向方向为乐观、量级无法在无外部数据时精确测出；可用下界是"
+                           f"粒度 1/{n_real}={round(1 / n_real, 4)}，可用上界是同一池内"
+                           "bootstrap 的 95% 上界（见 frozen_threshold_fpr），两者都远宽于"
+                           "3% 与 1% 的口径，说明当前无法用内部数据证否/证实 3% 护栏",
+            },
+            "consequence_for_current_claims": "在拿到外部独立纯真实语料之前，"
+                                              "FPR 只能表述为「同批折外估计」，"
+                                              "不得表述为「已在独立真实留出集上验证」",
+        },
+        "sample_size_for_manual_13_1_compliance": {
+            "method": "精确二项（Clopper-Pearson）95% 上界；上界 ≤3% 才算通过验收口径",
+            "sizing_table": sizing,
+            "minimum_n_to_certify_3pct_with_zero_fp": min_n_zero_fp,
+            "minimum_n_rationale": f"n={min_n_zero_fp} 时 0 个误报的 95% 上界为 "
+                                   f"{round(cp_upper(0, min_n_zero_fp or 1), 4)} ≤ 3%"
+                                   if min_n_zero_fp else "网格内未找到",
+            "recommended_n": rec_n,
+            "recommended_n_rationale": (
+                f"n={rec_n}：0 误报上界 {round(cp_upper(0, rec_n), 4)}；1 误报（"
+                f"{round(1 / rec_n, 4)}）上界 {round(cp_upper(1, rec_n), 4)}；2 误报（"
+                f"{round(2 / rec_n, 4)}）上界 {round(cp_upper(2, rec_n), 4)} ≤ 3%。"
+                f"即 1% 粒度有 3 倍余量，且允许 1–2 个真实误报仍能通过 3% 验收"),
+            "composition_requirements": [
+                "与校准集严格互斥（不同样本，最好不同批次/来源）",
+                "按手册 13.1 步骤 1 的难点负样本分层：数字原生真实单据（渲染态）≥30%、"
+                "手机翻拍件、低照度、反光、模糊、纸张褶皱、屏幕截图，每层 ≥50 张",
+                "若同时要证 1% 护栏，需 ≥300 张（1 FP = 0.33%）",
+            ],
+            "acceptance_rule_proposed": [
+                "冻结阈值在独立纯真实留出集上的经验 FPR 点估计 ≤ 3%",
+                "同时 Clopper-Pearson 95% 上界 ≤ 3%（n=100 需 0 误报；n=300 允许 ≤2 误报）",
+                "报告 1% 粒度：1 FP = 1/n，并用 n≥100 才能把 1% 变成可读数字",
+                "留出集在测量前冻结（记录 sha256 清单），只测一次，不用于任何调参",
+            ],
+            "interim_labelling_before_the_corpus_exists": "现行 FPR/ECE 标注为"
+                                                          "「同批折外估计；3% 护栏的上界尚未"
+                                                          "被独立语料证实」",
+        },
+    }
+    print(f"[thr] pure-real holdout sizing: min n for 3% with 0 FP = {min_n_zero_fp}, "
+          f"recommended n = {rec_n}", flush=True)
 
     payload = {
         "report": "threshold_stability",
@@ -391,6 +525,7 @@ def main():
         "frozen_threshold_fpr": threshold_distribution,
         "sensitivity": sensitivity,
         "repeated_calibration": repeated,
+        "pure_real_holdout": pure_real_holdout,
         "granularity": {
             "n_real": int(n_real),
             "one_false_positive_equals_fpr": round(1 / n_real, 4),

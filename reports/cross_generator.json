@@ -1,0 +1,115 @@
+{
+  "protocol": {
+    "task": "cross-generator generalisation of the frozen-CLIP linear probe",
+    "why": "all benchmark shards contain the SAME 18 sources, so a shard holdout is NOT a cross-generator test; whole generators are removed from training here",
+    "features": "frozen CLIP-L/14 pooled, common-codec preprocessing (JPEG q90) for every sample",
+    "classifier": "L2 logistic regression on standardised features"
+  },
+  "dataset": {
+    "n_samples": 3326,
+    "generator_counts": {
+      "Real": 200,
+      "ADM": 184,
+      "BigGAN": 184,
+      "CycleGAN": 184,
+      "DALLE2": 184,
+      "GauGAN": 184,
+      "GLIDE": 184,
+      "Midjourney": 184,
+      "ProGAN": 184,
+      "SD14": 184,
+      "SD15": 184,
+      "SDXL": 184,
+      "StarGAN": 184,
+      "StyleGAN": 184,
+      "StyleGAN2": 184,
+      "VQDM": 184,
+      "WhichFaceIsReal": 183,
+      "Wukong": 183
+    }
+  },
+  "folds": {
+    "diffusion_holdout": {
+      "held_out_generators": [
+        "Midjourney",
+        "SDXL"
+      ],
+      "n_train": 2958,
+      "n_holdout": 568,
+      "n_real_in_holdout": 200,
+      "overall_auc_on_holdout": 0.9785,
+      "threshold_from_real_2fp_budget": 0.0407,
+      "per_generator_recall_at_threshold": {
+        "Midjourney": {
+          "n": 184,
+          "recall": 0.9293
+        },
+        "SDXL": {
+          "n": 184,
+          "recall": 0.9402
+        }
+      },
+      "holdout_at_2fp_real_budget": {
+        "fpr": 0.015,
+        "tpr": 0.9348,
+        "accuracy": 0.9525
+      }
+    },
+    "gan_holdout": {
+      "held_out_generators": [
+        "BigGAN",
+        "StyleGAN2"
+      ],
+      "n_train": 2958,
+      "n_holdout": 568,
+      "n_real_in_holdout": 200,
+      "overall_auc_on_holdout": 0.9932,
+      "threshold_from_real_2fp_budget": 0.0472,
+      "per_generator_recall_at_threshold": {
+        "BigGAN": {
+          "n": 184,
+          "recall": 0.9946
+        },
+        "StyleGAN2": {
+          "n": 184,
+          "recall": 0.9728
+        }
+      },
+      "holdout_at_2fp_real_budget": {
+        "fpr": 0.015,
+        "tpr": 0.9837,
+        "accuracy": 0.9842
+      }
+    },
+    "chinese_and_glide": {
+      "held_out_generators": [
+        "Wukong",
+        "GLIDE"
+      ],
+      "n_train": 2959,
+      "n_holdout": 567,
+      "n_real_in_holdout": 200,
+      "overall_auc_on_holdout": 1.0,
+      "threshold_from_real_2fp_budget": 0.0514,
+      "per_generator_recall_at_threshold": {
+        "GLIDE": {
+          "n": 184,
+          "recall": 1.0
+        },
+        "Wukong": {
+          "n": 183,
+          "recall": 1.0
+        }
+      },
+      "holdout_at_2fp_real_budget": {
+        "fpr": 0.015,
+        "tpr": 1.0,
+        "accuracy": 0.9947
+      }
+    }
+  },
+  "same_generator_control": {
+    "auc": 0.9807,
+    "note": "5-fold OOF over all data; every generator appears in training"
+  }
+}

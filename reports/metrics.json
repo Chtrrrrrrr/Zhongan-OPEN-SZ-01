@@ -228,10 +228,10 @@
   },
   "latency_image": {
     "n": 30,
-    "p50_ms": 1007.9,
-    "p95_ms": 1300.6,
-    "mean_ms": 1054.2,
-    "max_ms": 1392.7,
+    "p50_ms": 809.4,
+    "p95_ms": 1216.8,
+    "mean_ms": 912.1,
+    "max_ms": 1258.1,
     "budget_ms": 5000,
     "p95_within_budget": true
   },

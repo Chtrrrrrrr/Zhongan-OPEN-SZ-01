@@ -1,0 +1,1302 @@
+{
+  "report": "aeroblade_ablation",
+  "manual_sections": [
+    "8.2 可选成员与消融",
+    "12.1 多模型组合与错误相关性实验",
+    "3.6 冻结骨干纪律"
+  ],
+  "generated_at": "2026-10-11T03:47:25+00:00",
+  "script": "repo/scripts/aeroblade_ablation.py",
+  "member_under_test": {
+    "name": "aeroblade",
+    "method": "AEROBLADE (Ricker et al., CVPR 2024) - frozen SD-VAE reconstruction error, training-free",
+    "score_direction": "direction=-1 (lower reconstruction error => more likely latent-diffusion generated)",
+    "implementation": "repo/src/l2_aeroblade.py (AerobladeScorer)"
+  },
+  "dependency": {
+    "vae_repo": "stabilityai/sd-vae-ft-mse",
+    "vae_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\hf_cache\\hub\\models--stabilityai--sd-vae-ft-mse\\snapshots\\31f26fdeee1355a5c34592e401dd41e45d25a493",
+    "vae_dir_relative": "hf_cache\\hub\\models--stabilityai--sd-vae-ft-mse\\snapshots\\31f26fdeee1355a5c34592e401dd41e45d25a493",
+    "source": "local cache",
+    "downloaded_during_run": false,
+    "weight_sha256": {
+      "config.json": "sha256:92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+      "diffusion_pytorch_model.bin": "sha256:1b4889b6b1d4ce7ae320a02dedaeff1780ad77d415ea0d744b476155c6377ddc",
+      "diffusion_pytorch_model.safetensors": "sha256:a1d993488569e928462932c8c38a0760b874d166399b14414135bd9c42df5815"
+    },
+    "size_note": "~334 MB safetensors; cached in the workspace, never in the user-level HF cache"
+  },
+  "not_verified": [
+    {
+      "member": "effort",
+      "method": "Effort (Koutlis & Papadopoulos, CVPR 2024) - requires a low-rank adaptation of an EDM diffusion model",
+      "status": "未在预算内验证 (not verified within budget)",
+      "reason": "the low-rank fine-tuning step needs an EDM checkpoint and GPU training time that exceed this task's budget; no score was produced, so no ablation number is claimed for it"
+    }
+  ],
+  "data": {
+    "n_samples": 119,
+    "class_balance": {
+      "ai": 56,
+      "real": 63
+    },
+    "images": "data/images/*.png (competition set)",
+    "score_matrix_source": {
+      "cv": "stratified 5-fold outer (random_state=42); 4-fold inner for calibration fitting (random_state=100+fold)",
+      "note": "identical folds/seed/features as scripts/evaluate_system.py; no hyper-parameter or threshold selection on held-out folds",
+      "calibration": "per-member temperature scaling (Guo et al. 2017); the temperature of a fold is fitted on inner-CV logits of the training fold, then applied to the held-out fold",
+      "n_samples": 119,
+      "class_balance": {
+        "ai": 56,
+        "real": 63
+      }
+    },
+    "calibration": "fold-safe single-parameter temperature scaling fitted on training-fold raw scores (random_state=42 folds, identical to scripts/evaluate_system.py)",
+    "temperatures_per_fold": [
+      3.536,
+      6.7833,
+      4.324,
+      5.6723,
+      3.3118
+    ],
+    "cost": {
+      "vae_load_s": 11.0,
+      "median_ms_per_image": 468.6,
+      "images_per_s_median": 2.13,
+      "device": "cuda",
+      "recon_side": 512,
+      "note": "the AEROBLADE member costs ~0.6 s/image, i.e. roughly half of the whole 5-route evidence budget, which is why a route that adds no TPR is also a latency liability"
+    }
+  },
+  "preset_decision_rule": {
+    "min_auc": 0.65,
+    "min_auc_rationale": "same admission bar evaluate_system.py applies to the other frozen external member (EXT_MIN_AUC=0.65); AUC ~ 0.5 means the route carries no ranking information",
+    "min_delta_tpr_at_primary_fpr": 0.02,
+    "delta_rationale": "1/56 AI samples = 1.79 pp, so a route must correct at least about one AI sample to justify its inference cost (manual ch.12.1)",
+    "primary_fpr_level": 0.05,
+    "primary_fpr_rationale": "with 63 real samples 1 FP = 1.59%, so the 1% guardrail is granularity-degenerate; the retention decision follows scripts/member_analysis.py and uses FPR=5%",
+    "min_delta_accuracy": 0.0,
+    "declared_before_measurement": true,
+    "verdict_key": "retain only if AUC >= min_auc AND (best-case ΔTPR@FPR=5% >= 0.02 OR (ΔTPR@FPR=1% > 0 AND Δaccuracy > 0)); otherwise 剔除 (negative result, manual ch.12.1)"
+  },
+  "single_route_table": {
+    "multiscale_mse_512_256_128": {
+      "definition": "shipped implementation (task-specified multi-scale MSE)",
+      "components": [
+        "mse@512",
+        "mse@256",
+        "mse@128"
+      ],
+      "weights": [
+        0.5,
+        0.3,
+        0.2
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5096,
+      "auc_5pct_operating_point": 0.5096,
+      "accuracy": 0.563,
+      "fpr": 0.0317,
+      "tpr": 0.1071,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0179,
+        "tpr_empirical": 0.0179,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.1071,
+        "tpr_empirical": 0.1071,
+        "achieved_fpr_empirical": 0.0159
+      },
+      "threshold": -0.068346,
+      "in_deployed_fusion": false
+    },
+    "mse_512": {
+      "definition": "single-scale full resolution",
+      "components": [
+        "mse@512"
+      ],
+      "weights": [
+        1.0
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5128,
+      "auc_5pct_operating_point": 0.5128,
+      "accuracy": 0.563,
+      "fpr": 0.0317,
+      "tpr": 0.1071,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0179,
+        "tpr_empirical": 0.0179,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.125,
+        "tpr_empirical": 0.125,
+        "achieved_fpr_empirical": 0.0476
+      },
+      "threshold": -0.098554,
+      "in_deployed_fusion": false
+    },
+    "mse_256": {
+      "definition": "paper-like resolution",
+      "components": [
+        "mse@256"
+      ],
+      "weights": [
+        1.0
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5045,
+      "auc_5pct_operating_point": 0.5045,
+      "accuracy": 0.563,
+      "fpr": 0.0317,
+      "tpr": 0.1071,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0179,
+        "tpr_empirical": 0.0179,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.1071,
+        "tpr_empirical": 0.1071,
+        "achieved_fpr_empirical": 0.0159
+      },
+      "threshold": -0.050115,
+      "in_deployed_fusion": false
+    },
+    "mse_128": {
+      "definition": "coarse structure only",
+      "components": [
+        "mse@128"
+      ],
+      "weights": [
+        1.0
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5167,
+      "auc_5pct_operating_point": 0.5167,
+      "accuracy": 0.563,
+      "fpr": 0.0317,
+      "tpr": 0.1071,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0357,
+        "tpr_empirical": 0.0357,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.125,
+        "tpr_empirical": 0.125,
+        "achieved_fpr_empirical": 0.0317
+      },
+      "threshold": -0.019867,
+      "in_deployed_fusion": false
+    },
+    "l1_512": {
+      "definition": "L1 instead of MSE (original stub)",
+      "components": [
+        "l1@512"
+      ],
+      "weights": [
+        1.0
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5414,
+      "auc_5pct_operating_point": 0.5414,
+      "accuracy": 0.521,
+      "fpr": 0.0317,
+      "tpr": 0.0179,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0179,
+        "tpr_empirical": 0.0179,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.1786,
+        "tpr_empirical": 0.1786,
+        "achieved_fpr_empirical": 0.0476
+      },
+      "threshold": -1.090217,
+      "in_deployed_fusion": false
+    },
+    "l1_256": {
+      "definition": "paper's 256 with L1",
+      "components": [
+        "l1@256"
+      ],
+      "weights": [
+        1.0
+      ],
+      "direction": "AI score = -(reconstruction error); lower error => more LD-like",
+      "oof_auc": 0.5445,
+      "auc_5pct_operating_point": 0.5445,
+      "accuracy": 0.521,
+      "fpr": 0.0317,
+      "tpr": 0.0179,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0179,
+        "tpr_empirical": 0.0179,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.1607,
+        "tpr_empirical": 0.1607,
+        "achieved_fpr_empirical": 0.0476
+      },
+      "threshold": -0.878432,
+      "in_deployed_fusion": false
+    }
+  },
+  "calibrated_route": {
+    "oof_auc_of_calibrated_probability": 0.5105,
+    "note": "monotone temperature scaling cannot change the AUC; the value is reported as a consistency check"
+  },
+  "score_correlation": {
+    "forensic": {
+      "pearson_calibrated": 0.1385,
+      "pearson_calibrated_p": 0.133,
+      "spearman_calibrated": 0.1,
+      "spearman_calibrated_p": 0.279,
+      "pearson_rawlogit": 0.2337
+    },
+    "combined": {
+      "pearson_calibrated": 0.0782,
+      "pearson_calibrated_p": 0.398,
+      "spearman_calibrated": 0.1232,
+      "spearman_calibrated_p": 0.182,
+      "pearson_rawlogit": 0.1011
+    },
+    "clip_domain": {
+      "pearson_calibrated": 0.1794,
+      "pearson_calibrated_p": 0.0509,
+      "spearman_calibrated": 0.1954,
+      "spearman_calibrated_p": 0.0332,
+      "pearson_rawlogit": 0.1893
+    },
+    "clip_external": {
+      "pearson_calibrated": 0.2837,
+      "pearson_calibrated_p": 0.00177,
+      "spearman_calibrated": 0.4386,
+      "spearman_calibrated_p": 6.07e-07,
+      "pearson_rawlogit": 0.3392
+    },
+    "npr": {
+      "pearson_calibrated": 0.5474,
+      "pearson_calibrated_p": 1.18e-10,
+      "spearman_calibrated": 0.608,
+      "spearman_calibrated_p": 2.24e-13,
+      "pearson_rawlogit": 0.6395
+    }
+  },
+  "add_to_deployed_fusion": {
+    "incumbent": {
+      "members": [
+        "forensic",
+        "combined"
+      ],
+      "weights": {
+        "combined": 0.6,
+        "forensic": 0.25
+      },
+      "weights_source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json",
+      "thr_high_frozen": 0.6742875975794557,
+      "operating_point": "threshold = order statistic on real OOF scores, fp_budget=2 (target FPR 3%)",
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "auc": 0.966,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0,
+        "tpr_empirical": 0.0,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=5%": {
+        "target_fpr": 0.05,
+        "tpr_interp": 0.9464,
+        "tpr_empirical": 0.9464,
+        "achieved_fpr_empirical": 0.0317
+      },
+      "error_n": 7,
+      "error_seqs": [
+        3,
+        9,
+        29,
+        30,
+        31,
+        57,
+        58
+      ]
+    },
+    "weight_sweep": {
+      "w_aeroblade=0.05": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "aeroblade": 0.05
+        },
+        "members": [
+          "combined",
+          "forensic",
+          "aeroblade"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.966,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": {
+          "target_fpr": 0.05,
+          "tpr_interp": 0.9464,
+          "tpr_empirical": 0.9464,
+          "achieved_fpr_empirical": 0.0317
+        },
+        "delta_accuracy": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "delta_tpr_at_fpr5": 0.0,
+        "delta_auc": 0.0,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      },
+      "w_aeroblade=0.10": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "aeroblade": 0.1
+        },
+        "members": [
+          "combined",
+          "forensic",
+          "aeroblade"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.966,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": {
+          "target_fpr": 0.05,
+          "tpr_interp": 0.9464,
+          "tpr_empirical": 0.9464,
+          "achieved_fpr_empirical": 0.0317
+        },
+        "delta_accuracy": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "delta_tpr_at_fpr5": 0.0,
+        "delta_auc": 0.0,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      },
+      "w_aeroblade=0.15": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "aeroblade": 0.15
+        },
+        "members": [
+          "combined",
+          "forensic",
+          "aeroblade"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.9657,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": {
+          "target_fpr": 0.05,
+          "tpr_interp": 0.9464,
+          "tpr_empirical": 0.9464,
+          "achieved_fpr_empirical": 0.0317
+        },
+        "delta_accuracy": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "delta_tpr_at_fpr5": 0.0,
+        "delta_auc": -0.0003,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      },
+      "w_aeroblade=0.20": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "aeroblade": 0.2
+        },
+        "members": [
+          "combined",
+          "forensic",
+          "aeroblade"
+        ],
+        "accuracy": 0.9244,
+        "fpr": 0.0317,
+        "tpr": 0.875,
+        "auc": 0.9657,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": {
+          "target_fpr": 0.05,
+          "tpr_interp": 0.9464,
+          "tpr_empirical": 0.9464,
+          "achieved_fpr_empirical": 0.0317
+        },
+        "delta_accuracy": -0.0168,
+        "delta_tpr_at_fpr1": 0.0,
+        "delta_tpr_at_fpr5": 0.0,
+        "delta_auc": -0.0003,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 2,
+        "errors_introduced_seqs": [
+          33,
+          54
+        ],
+        "net_errors": 2
+      },
+      "w_aeroblade=0.30": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "aeroblade": 0.3
+        },
+        "members": [
+          "combined",
+          "forensic",
+          "aeroblade"
+        ],
+        "accuracy": 0.9244,
+        "fpr": 0.0317,
+        "tpr": 0.875,
+        "auc": 0.9657,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": {
+          "target_fpr": 0.05,
+          "tpr_interp": 0.9643,
+          "tpr_empirical": 0.9643,
+          "achieved_fpr_empirical": 0.0476
+        },
+        "delta_accuracy": -0.0168,
+        "delta_tpr_at_fpr1": 0.0,
+        "delta_tpr_at_fpr5": 0.0179,
+        "delta_auc": -0.0003,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 2,
+        "errors_introduced_seqs": [
+          33,
+          54
+        ],
+        "net_errors": 2
+      }
+    },
+    "reading": "a candidate route must either fix incumbent errors at the same operating point or lift TPR at the frozen FPR level; a route that only reshuffles errors inside the fusion is not evidence of value"
+  },
+  "conclusions": {
+    "verdict": "剔除 (remove；负面结果)",
+    "retained": false,
+    "basis": "pre-registered rule (see preset_decision_rule)",
+    "conditions": {
+      "auc_gate_passed": false,
+      "delta_gate_passed": false
+    },
+    "failed_conditions": [
+      "单路 AUC=0.5096 < 预注册门槛 0.65（AUC≈0.5 表示该路无排序信息）；最佳变体 l1_256 AUC=0.5445",
+      "加入 deployed 融合后最佳 ΔTPR@FPR=5%=+0.0179 < 门槛 0.02，且 ΔTPR@FPR=1%=+0.0000 / ΔAccuracy=-0.0168 未同时为正"
+    ],
+    "primary_variant": "multiscale_mse_512_256_128",
+    "primary_variant_auc": 0.5096,
+    "best_variant": {
+      "name": "l1_256",
+      "auc": 0.5445,
+      "note": "steelman: the best-separating variant, reported so the verdict does not depend on one arbitrary preprocessing"
+    },
+    "best_add_in": {
+      "weights": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "aeroblade": 0.3
+      },
+      "accuracy": 0.9244,
+      "delta_accuracy": -0.0168,
+      "delta_tpr_at_fpr1": 0.0,
+      "delta_tpr_at_fpr5": 0.0179,
+      "delta_auc": -0.0003,
+      "errors_fixed_n": 0,
+      "errors_introduced_n": 2
+    },
+    "negative_result_note": "A negative result is reported as evidence, not hidden: the audit (F4) only requires the optional member to be *decided by an ablation*; 'not verifiable within budget' or 'verified and rejected' both close the finding.",
+    "deployment_consequence": "the member stays out of the default fusion: PipelineConfig.enable_aeroblade defaults to False and models/fusion.json carries neither a weight nor a temperature for it"
+  },
+  "limitations": [
+    "All numbers are out-of-fold on the 119 competition samples; the two routes clip_domain/npr are not in the deployed fusion, so the incumbent here is the shipped combined+forensic table.",
+    "TPR@FPR=1% is granularity-degenerate with 63 real samples (1 FP = 1.59%); the retention decision is taken at FPR=5%, the 1% column is informational.",
+    "The paper's LPIPS reconstruction loss is not available offline; multi-scale MSE/L1 is the documented substitute, and every variant is reported rather than only the shipped one.",
+    "AEROBLADE is a general-purpose 'is this latent-diffusion output' signal; the competition real class contains scanned/photographed documents whose noise profile differs from the camera photos the method was validated on, so a negative outcome here does not refute the paper."
+  ],
+  "per_sample": [
+    {
+      "seq": 1,
+      "label": "ai",
+      "recon_error_multiscale": 0.00495896,
+      "ms": 666.7
+    },
+    {
+      "seq": 2,
+      "label": "ai",
+      "recon_error_multiscale": 0.00537888,
+      "ms": 573.2
+    },
+    {
+      "seq": 3,
+      "label": "ai",
+      "recon_error_multiscale": 0.00518243,
+      "ms": 422.8
+    },
+    {
+      "seq": 4,
+      "label": "ai",
+      "recon_error_multiscale": 0.00523269,
+      "ms": 465.6
+    },
+    {
+      "seq": 5,
+      "label": "ai",
+      "recon_error_multiscale": 0.00646395,
+      "ms": 550.0
+    },
+    {
+      "seq": 6,
+      "label": "ai",
+      "recon_error_multiscale": 0.00410563,
+      "ms": 284.0
+    },
+    {
+      "seq": 7,
+      "label": "ai",
+      "recon_error_multiscale": 0.00236888,
+      "ms": 627.1
+    },
+    {
+      "seq": 8,
+      "label": "ai",
+      "recon_error_multiscale": 0.00117105,
+      "ms": 368.2
+    },
+    {
+      "seq": 9,
+      "label": "ai",
+      "recon_error_multiscale": 0.00288115,
+      "ms": 457.7
+    },
+    {
+      "seq": 10,
+      "label": "ai",
+      "recon_error_multiscale": 0.00871348,
+      "ms": 441.9
+    },
+    {
+      "seq": 11,
+      "label": "ai",
+      "recon_error_multiscale": 0.00363238,
+      "ms": 343.6
+    },
+    {
+      "seq": 12,
+      "label": "ai",
+      "recon_error_multiscale": 0.00198118,
+      "ms": 545.3
+    },
+    {
+      "seq": 13,
+      "label": "ai",
+      "recon_error_multiscale": 0.00178963,
+      "ms": 278.2
+    },
+    {
+      "seq": 14,
+      "label": "ai",
+      "recon_error_multiscale": 0.00190937,
+      "ms": 598.1
+    },
+    {
+      "seq": 15,
+      "label": "ai",
+      "recon_error_multiscale": 0.0027652,
+      "ms": 426.4
+    },
+    {
+      "seq": 16,
+      "label": "ai",
+      "recon_error_multiscale": 0.0029067,
+      "ms": 284.9
+    },
+    {
+      "seq": 17,
+      "label": "ai",
+      "recon_error_multiscale": 0.00268763,
+      "ms": 507.9
+    },
+    {
+      "seq": 18,
+      "label": "ai",
+      "recon_error_multiscale": 0.00461989,
+      "ms": 392.0
+    },
+    {
+      "seq": 19,
+      "label": "ai",
+      "recon_error_multiscale": 0.00361526,
+      "ms": 493.3
+    },
+    {
+      "seq": 20,
+      "label": "ai",
+      "recon_error_multiscale": 0.0029842,
+      "ms": 538.4
+    },
+    {
+      "seq": 21,
+      "label": "ai",
+      "recon_error_multiscale": 0.00981238,
+      "ms": 384.9
+    },
+    {
+      "seq": 22,
+      "label": "ai",
+      "recon_error_multiscale": 0.00752189,
+      "ms": 661.4
+    },
+    {
+      "seq": 23,
+      "label": "ai",
+      "recon_error_multiscale": 0.00755302,
+      "ms": 288.7
+    },
+    {
+      "seq": 24,
+      "label": "ai",
+      "recon_error_multiscale": 0.00213519,
+      "ms": 614.9
+    },
+    {
+      "seq": 25,
+      "label": "ai",
+      "recon_error_multiscale": 0.00213407,
+      "ms": 442.4
+    },
+    {
+      "seq": 26,
+      "label": "ai",
+      "recon_error_multiscale": 0.00364,
+      "ms": 630.0
+    },
+    {
+      "seq": 27,
+      "label": "ai",
+      "recon_error_multiscale": 0.00350856,
+      "ms": 309.7
+    },
+    {
+      "seq": 28,
+      "label": "ai",
+      "recon_error_multiscale": 0.00486727,
+      "ms": 537.0
+    },
+    {
+      "seq": 29,
+      "label": "ai",
+      "recon_error_multiscale": 0.00972964,
+      "ms": 509.7
+    },
+    {
+      "seq": 30,
+      "label": "ai",
+      "recon_error_multiscale": 0.01667455,
+      "ms": 374.0
+    },
+    {
+      "seq": 31,
+      "label": "ai",
+      "recon_error_multiscale": 0.0084497,
+      "ms": 646.3
+    },
+    {
+      "seq": 32,
+      "label": "ai",
+      "recon_error_multiscale": 0.00361073,
+      "ms": 286.1
+    },
+    {
+      "seq": 33,
+      "label": "ai",
+      "recon_error_multiscale": 0.0149617,
+      "ms": 634.9
+    },
+    {
+      "seq": 34,
+      "label": "ai",
+      "recon_error_multiscale": 0.00210475,
+      "ms": 384.2
+    },
+    {
+      "seq": 35,
+      "label": "ai",
+      "recon_error_multiscale": 0.00165107,
+      "ms": 506.3
+    },
+    {
+      "seq": 36,
+      "label": "ai",
+      "recon_error_multiscale": 0.00056225,
+      "ms": 505.1
+    },
+    {
+      "seq": 37,
+      "label": "ai",
+      "recon_error_multiscale": 0.00084742,
+      "ms": 435.2
+    },
+    {
+      "seq": 38,
+      "label": "ai",
+      "recon_error_multiscale": 0.00199781,
+      "ms": 609.7
+    },
+    {
+      "seq": 39,
+      "label": "ai",
+      "recon_error_multiscale": 0.00230789,
+      "ms": 338.9
+    },
+    {
+      "seq": 40,
+      "label": "ai",
+      "recon_error_multiscale": 0.00202008,
+      "ms": 687.3
+    },
+    {
+      "seq": 41,
+      "label": "ai",
+      "recon_error_multiscale": 0.00053656,
+      "ms": 318.3
+    },
+    {
+      "seq": 42,
+      "label": "ai",
+      "recon_error_multiscale": 0.01203096,
+      "ms": 657.5
+    },
+    {
+      "seq": 43,
+      "label": "ai",
+      "recon_error_multiscale": 0.00038199,
+      "ms": 289.9
+    },
+    {
+      "seq": 44,
+      "label": "ai",
+      "recon_error_multiscale": 0.01133644,
+      "ms": 628.2
+    },
+    {
+      "seq": 45,
+      "label": "ai",
+      "recon_error_multiscale": 0.00017823,
+      "ms": 370.7
+    },
+    {
+      "seq": 46,
+      "label": "ai",
+      "recon_error_multiscale": 0.00035242,
+      "ms": 550.0
+    },
+    {
+      "seq": 47,
+      "label": "ai",
+      "recon_error_multiscale": 0.00036409,
+      "ms": 459.2
+    },
+    {
+      "seq": 48,
+      "label": "ai",
+      "recon_error_multiscale": 0.00429257,
+      "ms": 401.6
+    },
+    {
+      "seq": 49,
+      "label": "ai",
+      "recon_error_multiscale": 0.00121899,
+      "ms": 477.4
+    },
+    {
+      "seq": 50,
+      "label": "ai",
+      "recon_error_multiscale": 0.00116033,
+      "ms": 584.5
+    },
+    {
+      "seq": 51,
+      "label": "ai",
+      "recon_error_multiscale": 0.01395745,
+      "ms": 408.1
+    },
+    {
+      "seq": 52,
+      "label": "ai",
+      "recon_error_multiscale": 0.00213606,
+      "ms": 446.8
+    },
+    {
+      "seq": 53,
+      "label": "ai",
+      "recon_error_multiscale": 0.00257173,
+      "ms": 601.7
+    },
+    {
+      "seq": 54,
+      "label": "ai",
+      "recon_error_multiscale": 0.00086842,
+      "ms": 290.9
+    },
+    {
+      "seq": 55,
+      "label": "ai",
+      "recon_error_multiscale": 0.0021225,
+      "ms": 643.6
+    },
+    {
+      "seq": 56,
+      "label": "ai",
+      "recon_error_multiscale": 0.00112294,
+      "ms": 328.1
+    },
+    {
+      "seq": 57,
+      "label": "real",
+      "recon_error_multiscale": 0.00572616,
+      "ms": 472.7
+    },
+    {
+      "seq": 58,
+      "label": "real",
+      "recon_error_multiscale": 0.00022172,
+      "ms": 468.6
+    },
+    {
+      "seq": 59,
+      "label": "real",
+      "recon_error_multiscale": 0.00533339,
+      "ms": 574.0
+    },
+    {
+      "seq": 60,
+      "label": "real",
+      "recon_error_multiscale": 0.00160789,
+      "ms": 288.7
+    },
+    {
+      "seq": 61,
+      "label": "real",
+      "recon_error_multiscale": 0.00107318,
+      "ms": 307.1
+    },
+    {
+      "seq": 62,
+      "label": "real",
+      "recon_error_multiscale": 0.00141209,
+      "ms": 521.8
+    },
+    {
+      "seq": 63,
+      "label": "real",
+      "recon_error_multiscale": 0.00190386,
+      "ms": 526.1
+    },
+    {
+      "seq": 64,
+      "label": "real",
+      "recon_error_multiscale": 0.00772067,
+      "ms": 284.7
+    },
+    {
+      "seq": 65,
+      "label": "real",
+      "recon_error_multiscale": 0.00121626,
+      "ms": 294.7
+    },
+    {
+      "seq": 66,
+      "label": "real",
+      "recon_error_multiscale": 0.0018286,
+      "ms": 504.8
+    },
+    {
+      "seq": 67,
+      "label": "real",
+      "recon_error_multiscale": 0.00515837,
+      "ms": 523.2
+    },
+    {
+      "seq": 68,
+      "label": "real",
+      "recon_error_multiscale": 0.00231749,
+      "ms": 285.4
+    },
+    {
+      "seq": 69,
+      "label": "real",
+      "recon_error_multiscale": 0.00296279,
+      "ms": 305.3
+    },
+    {
+      "seq": 70,
+      "label": "real",
+      "recon_error_multiscale": 0.0010135,
+      "ms": 573.7
+    },
+    {
+      "seq": 71,
+      "label": "real",
+      "recon_error_multiscale": 0.00706203,
+      "ms": 498.6
+    },
+    {
+      "seq": 72,
+      "label": "real",
+      "recon_error_multiscale": 0.0093482,
+      "ms": 304.3
+    },
+    {
+      "seq": 73,
+      "label": "real",
+      "recon_error_multiscale": 0.00129467,
+      "ms": 674.9
+    },
+    {
+      "seq": 74,
+      "label": "real",
+      "recon_error_multiscale": 0.00221957,
+      "ms": 310.4
+    },
+    {
+      "seq": 75,
+      "label": "real",
+      "recon_error_multiscale": 0.00254547,
+      "ms": 304.3
+    },
+    {
+      "seq": 76,
+      "label": "real",
+      "recon_error_multiscale": 0.00169183,
+      "ms": 644.5
+    },
+    {
+      "seq": 77,
+      "label": "real",
+      "recon_error_multiscale": 0.00131346,
+      "ms": 353.9
+    },
+    {
+      "seq": 78,
+      "label": "real",
+      "recon_error_multiscale": 0.00849974,
+      "ms": 539.8
+    },
+    {
+      "seq": 79,
+      "label": "real",
+      "recon_error_multiscale": 0.00181845,
+      "ms": 486.8
+    },
+    {
+      "seq": 80,
+      "label": "real",
+      "recon_error_multiscale": 0.00983451,
+      "ms": 444.3
+    },
+    {
+      "seq": 81,
+      "label": "real",
+      "recon_error_multiscale": 0.00172943,
+      "ms": 578.0
+    },
+    {
+      "seq": 82,
+      "label": "real",
+      "recon_error_multiscale": 0.01572832,
+      "ms": 463.0
+    },
+    {
+      "seq": 83,
+      "label": "real",
+      "recon_error_multiscale": 0.01457699,
+      "ms": 562.3
+    },
+    {
+      "seq": 84,
+      "label": "real",
+      "recon_error_multiscale": 0.00341234,
+      "ms": 288.3
+    },
+    {
+      "seq": 85,
+      "label": "real",
+      "recon_error_multiscale": 0.00258112,
+      "ms": 308.8
+    },
+    {
+      "seq": 86,
+      "label": "real",
+      "recon_error_multiscale": 0.00345196,
+      "ms": 413.1
+    },
+    {
+      "seq": 87,
+      "label": "real",
+      "recon_error_multiscale": 0.00229753,
+      "ms": 611.0
+    },
+    {
+      "seq": 88,
+      "label": "real",
+      "recon_error_multiscale": 0.00254716,
+      "ms": 285.9
+    },
+    {
+      "seq": 89,
+      "label": "real",
+      "recon_error_multiscale": 0.00110795,
+      "ms": 282.9
+    },
+    {
+      "seq": 90,
+      "label": "real",
+      "recon_error_multiscale": 0.00441328,
+      "ms": 285.5
+    },
+    {
+      "seq": 91,
+      "label": "real",
+      "recon_error_multiscale": 0.0078708,
+      "ms": 580.3
+    },
+    {
+      "seq": 92,
+      "label": "real",
+      "recon_error_multiscale": 0.00604905,
+      "ms": 469.8
+    },
+    {
+      "seq": 93,
+      "label": "real",
+      "recon_error_multiscale": 0.00697868,
+      "ms": 293.8
+    },
+    {
+      "seq": 94,
+      "label": "real",
+      "recon_error_multiscale": 0.01010534,
+      "ms": 538.0
+    },
+    {
+      "seq": 95,
+      "label": "real",
+      "recon_error_multiscale": 0.01062487,
+      "ms": 496.9
+    },
+    {
+      "seq": 96,
+      "label": "real",
+      "recon_error_multiscale": 0.01036057,
+      "ms": 284.0
+    },
+    {
+      "seq": 97,
+      "label": "real",
+      "recon_error_multiscale": 0.01082109,
+      "ms": 484.8
+    },
+    {
+      "seq": 98,
+      "label": "real",
+      "recon_error_multiscale": 0.01062781,
+      "ms": 550.8
+    },
+    {
+      "seq": 99,
+      "label": "real",
+      "recon_error_multiscale": 0.00265049,
+      "ms": 335.2
+    },
+    {
+      "seq": 100,
+      "label": "real",
+      "recon_error_multiscale": 0.0014022,
+      "ms": 677.5
+    },
+    {
+      "seq": 101,
+      "label": "real",
+      "recon_error_multiscale": 0.00318177,
+      "ms": 310.9
+    },
+    {
+      "seq": 102,
+      "label": "real",
+      "recon_error_multiscale": 0.00776755,
+      "ms": 638.1
+    },
+    {
+      "seq": 103,
+      "label": "real",
+      "recon_error_multiscale": 0.00814412,
+      "ms": 381.0
+    },
+    {
+      "seq": 104,
+      "label": "real",
+      "recon_error_multiscale": 0.00169662,
+      "ms": 541.2
+    },
+    {
+      "seq": 105,
+      "label": "real",
+      "recon_error_multiscale": 0.00222714,
+      "ms": 506.3
+    },
+    {
+      "seq": 106,
+      "label": "real",
+      "recon_error_multiscale": 0.00645713,
+      "ms": 481.8
+    },
+    {
+      "seq": 107,
+      "label": "real",
+      "recon_error_multiscale": 0.0010093,
+      "ms": 560.0
+    },
+    {
+      "seq": 108,
+      "label": "real",
+      "recon_error_multiscale": 0.00102542,
+      "ms": 293.2
+    },
+    {
+      "seq": 109,
+      "label": "real",
+      "recon_error_multiscale": 0.00182298,
+      "ms": 292.5
+    },
+    {
+      "seq": 110,
+      "label": "real",
+      "recon_error_multiscale": 0.00168779,
+      "ms": 655.6
+    },
+    {
+      "seq": 111,
+      "label": "real",
+      "recon_error_multiscale": 0.00066324,
+      "ms": 348.1
+    },
+    {
+      "seq": 112,
+      "label": "real",
+      "recon_error_multiscale": 0.00070367,
+      "ms": 338.9
+    },
+    {
+      "seq": 113,
+      "label": "real",
+      "recon_error_multiscale": 0.00133516,
+      "ms": 661.4
+    },
+    {
+      "seq": 114,
+      "label": "real",
+      "recon_error_multiscale": 0.00612329,
+      "ms": 328.6
+    },
+    {
+      "seq": 115,
+      "label": "real",
+      "recon_error_multiscale": 0.00097575,
+      "ms": 625.0
+    },
+    {
+      "seq": 116,
+      "label": "real",
+      "recon_error_multiscale": 0.00641265,
+      "ms": 460.4
+    },
+    {
+      "seq": 117,
+      "label": "real",
+      "recon_error_multiscale": 0.00708503,
+      "ms": 307.4
+    },
+    {
+      "seq": 118,
+      "label": "real",
+      "recon_error_multiscale": 0.00665077,
+      "ms": 590.5
+    },
+    {
+      "seq": 119,
+      "label": "real",
+      "recon_error_multiscale": 0.00080322,
+      "ms": 497.1
+    }
+  ]
+}

@@ -117,6 +117,8 @@ def main():
             "step 8c/9  threshold bootstrap CI + sensitivity + hold-out FPR")
         run([py, "repo/scripts/stratified_analysis.py"],
             "step 8d/9  per-content-class / per-capture-mode breakdown (proxy labels)")
+        run([py, "repo/scripts/protocol_reconciliation.py"],
+            "step 8e/9  frozen-split vs out-of-fold protocol reconciliation + signature")
 
     if "9" in steps:
         run([py, "repo/scripts/resource_profile.py", "--device", args.device],
@@ -131,7 +133,7 @@ def main():
           "reports/*.html, repo/assets/*.png, demo_assets/smoke_test.mp4")
     print("Metrics pack: reports/calibration.json, reports/member_analysis.json, "
           "reports/threshold_stability.json, reports/stratified_analysis.json, "
-          "reports/resource_profile.json")
+          "reports/resource_profile.json, reports/protocol_reconciliation.json")
 
 
 if __name__ == "__main__":

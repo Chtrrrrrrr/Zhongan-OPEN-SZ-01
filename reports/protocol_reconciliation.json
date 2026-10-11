@@ -1,0 +1,599 @@
+{
+  "report": "protocol_reconciliation",
+  "manual_sections": [
+    "10.1–10.3 数据划分与泄漏防护",
+    "D1–D8（data/splits.json.protocol）",
+    "13.1 阈值标定（val 只用于标定）",
+    "15.2 验收标准的验证方式（多次随机划分的稳定性验证）",
+    "17.3 数据划分冻结"
+  ],
+  "generated_at": "2026-10-11T03:42:53+00:00",
+  "script": "repo/scripts/protocol_reconciliation.py",
+  "audit_reference": "docs/compliance-audit.md F3c / F3 / A6.5 / B3.8 / B11.3",
+  "question": "冻结划分（0.6/0.2/0.2 单次切分）与最终评测协议（119 张分层 5 折折外）不是同一套协议，审计判为「部分符合」。本文件给出两者的关系、评测协议的可复现签名，以及建议的最小改动。",
+  "two_protocols": {
+    "frozen_split": {
+      "file": "data/splits_frozen.json",
+      "status": "frozen",
+      "created": "2026-10-10T17:20:33Z",
+      "seed": 42,
+      "ratios": {
+        "train": 0.6,
+        "val": 0.2,
+        "test": 0.2
+      },
+      "signatures": {
+        "train": "68878660214c501a68be0d704577cb2af6a52d5be6442c3154a9d6893a67d7c9",
+        "val": "5930150ed497e7daa01d58a861a72e5aa1061e6416520e29a293d911675d383c",
+        "test": "52240ce6ecc463f2872ca5fdc80eba76164819abe28d5a20c1150a3506546410"
+      },
+      "signature_construction": "sha256 of the newline-joined, sorted member sha256 values (scripts/split_dataset.py::split_signature)",
+      "verification": {
+        "method": "recomputed from data/splits.json's member sha256 lists using the same construction",
+        "per_part_match": {
+          "train": true,
+          "val": true,
+          "test": true
+        },
+        "all_match": true
+      },
+      "part_sizes": {
+        "train": {
+          "n": 71,
+          "ai": 33,
+          "real": 38
+        },
+        "val": {
+          "n": 24,
+          "ai": 12,
+          "real": 12
+        },
+        "test": {
+          "n": 24,
+          "ai": 11,
+          "real": 13
+        }
+      },
+      "governance": {
+        "D1": "划分前以 seed=42 对各分层桶内分组执行随机打乱",
+        "D2": "占位：缺生成器元数据，退化为按 label 分层（提供 --meta 后自动启用）",
+        "D3": "占位：缺采集方式元数据，退化为按 label 分层（提供 --meta 后自动启用）",
+        "D4": "内容哈希 sha256 去重并组；感知哈希为占位接口 compute_phash()（--phash 启用）",
+        "D5": "同源组（同 sha256 / pHash 近重复）原子分配，已断言无跨划分",
+        "D6": "阈值标定仅允许使用 val；test 冻结，禁止用于阈值标定",
+        "D7": "融合权重与模型选择仅允许在 val 上搜索；test 冻结，禁止用于任何搜索",
+        "D8": "最终报告只使用冻结模型与阈值；用 --freeze/--verify-frozen 固化并校验本划分"
+      },
+      "leakage_protection": {
+        "near_duplicate_groups": {
+          "total": 119,
+          "multi_member": 0,
+          "mixed_label_groups": []
+        },
+        "phash": {
+          "enabled": false,
+          "threshold": 6,
+          "decoded": 0,
+          "failed": 0,
+          "near_dup_pairs": 0
+        }
+      },
+      "purpose": "项目期数据划分规范与 D1–D8 纪律（去重并组、同源组不跨划分、val 只用于阈值/权重/模型选择、test 禁用于搜索）；用于演示与审计，不作为最终指标的计算协议",
+      "not_used_for": [
+        "最终指标（reports/metrics.json 的 oof_overall）",
+        "本次指标包的任何数字（calibration/member/threshold/resource/stratified）"
+      ]
+    },
+    "out_of_fold_cv": {
+      "files": [
+        "repo/scripts/evaluate_system.py",
+        "repo/scripts/metrics_common.py",
+        "repo/scripts/calibration_analysis.py",
+        "repo/scripts/member_analysis.py",
+        "repo/scripts/threshold_stability.py"
+      ],
+      "used_for": "最终指标与全部诊断指标（本指标包）",
+      "headline_metrics": {
+        "accuracy": 0.9412,
+        "fpr": 0.0317,
+        "tpr": 0.9107,
+        "precision": 0.9623,
+        "confusion": {
+          "tp": 51,
+          "tn": 61,
+          "fp": 2,
+          "fn": 5
+        }
+      },
+      "no_selection_on_held_out_folds": true,
+      "protocol_sha256": "1e598726bcb656e268b6ddf5c99486958adf30cbca6af22c37462402e845ec37"
+    }
+  },
+  "authority_relationship": {
+    "both_anchor_to": {
+      "sample_set": "data/labels.csv（119 张，data/images/*.png）",
+      "seed": 42,
+      "contents_hash": "data/manifest.json 的 sha256 清单"
+    },
+    "difference": "划分单元不同：冻结划分是「一次三方切分」（71/24/24）；评测协议是「5 折轮转折外」（每张样本恰好被 hold out 一次，n=119）",
+    "how_D8_is_satisfied": "D8 的实质是「最终报告只使用冻结的模型与阈值，且不得在 test 上搜索」。模型/权重/阈值冻结于 models/fusion.json（本次修补未改动）；折外协议比冻结划分满足更强的纪律：任何样本都不参与自己的打分，也不参与自己所在折的阈值选择，因而不存在 test 泄漏的可能",
+    "residual_gap_closed_by_this_file": "此前折切分没有独立签名文件（审计 B11.3）；本文件给出 fold_assignment_sha256 + 特征/产物 SHA-256 + protocol_sha256",
+    "must_not_be_confused": "冻结划分上的读数（下方 frozen_split_metrics）仅作参考，不是验收指标；它们由同一批折外分数与冻结阈值计算，样本量小（train 71 / val 24 / test 24）"
+  },
+  "why_out_of_fold_for_the_headline": {
+    "reason": "119 张样本下 20% 测试集只有 24 张，指标方差过大；手册 15.2 也要求「多次随机划分的稳定性验证」，折外协议即其实现",
+    "measured_single_split_variance": {
+      "rule": "2000 draws of a 24-sample test set with the frozen split's class ratio (13 real / 11 ai), scored with the frozen weights and the frozen threshold",
+      "accuracy": {
+        "mean": 0.941,
+        "std": 0.0422,
+        "ci95": [
+          0.8333,
+          1.0
+        ],
+        "min": 0.7917,
+        "max": 1.0
+      },
+      "fpr": {
+        "mean": 0.0323,
+        "std": 0.0434,
+        "ci95": [
+          0.0,
+          0.1538
+        ]
+      },
+      "tpr": {
+        "mean": 0.9096,
+        "std": 0.0784,
+        "ci95": [
+          0.7273,
+          1.0
+        ]
+      },
+      "share_of_draws_reaching_95pct_accuracy": 0.564,
+      "reading": "a single 20% test set of 24 samples produces accuracy readings from 0.7917 to 1.0000 (95% interval [0.8333, 1.0000]) on the same frozen model: it cannot separate the 95% acceptance level from 83%. The 5-fold out-of-fold protocol scores every one of the 119 samples exactly once and is therefore used for the reported metrics."
+    },
+    "frozen_split_metrics_reference_only": {
+      "train": {
+        "n": 71,
+        "accuracy": 0.9296,
+        "fpr": 0.0263,
+        "tpr": 0.8788,
+        "precision": 0.9667,
+        "confusion": {
+          "tp": 29,
+          "tn": 37,
+          "fp": 1,
+          "fn": 4
+        },
+        "auc": 0.9753,
+        "false_positives_seq": [
+          58
+        ],
+        "false_negatives_seq": [
+          9,
+          29,
+          30,
+          31
+        ]
+      },
+      "val": {
+        "n": 24,
+        "accuracy": 0.9583,
+        "fpr": 0.0,
+        "tpr": 0.9167,
+        "precision": 1.0,
+        "confusion": {
+          "tp": 11,
+          "tn": 12,
+          "fp": 0,
+          "fn": 1
+        },
+        "auc": 0.9861,
+        "false_positives_seq": [],
+        "false_negatives_seq": [
+          3
+        ]
+      },
+      "test": {
+        "n": 24,
+        "accuracy": 0.9583,
+        "fpr": 0.0769,
+        "tpr": 1.0,
+        "precision": 0.9167,
+        "confusion": {
+          "tp": 11,
+          "tn": 12,
+          "fp": 1,
+          "fn": 0
+        },
+        "auc": 0.9231,
+        "false_positives_seq": [
+          57
+        ],
+        "false_negatives_seq": []
+      }
+    },
+    "full_set_out_of_fold": {
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "precision": 0.9623,
+      "confusion": {
+        "tp": 51,
+        "tn": 61,
+        "fp": 2,
+        "fn": 5
+      }
+    }
+  },
+  "evaluation_protocol_signature": {
+    "protocol_sha256": "1e598726bcb656e268b6ddf5c99486958adf30cbca6af22c37462402e845ec37",
+    "cv": {
+      "n_folds": 5,
+      "shuffle": true,
+      "random_state": 42,
+      "stratification_key": "label (ai/real)",
+      "implementation": "sklearn.model_selection.StratifiedKFold over all 119 samples",
+      "inner": {
+        "n_folds": 4,
+        "random_state": "100 + outer fold",
+        "purpose": "unbiased in-training score scale for the per-member temperature scalers and the fold thresholds"
+      }
+    },
+    "fold_assignment_sha256": "021c8fe2ef6637676364653874bf9cb3dbd74f06d1cdbd94b9f01a75fa7b6740",
+    "fold_assignment_by_seq": {
+      "1": 0,
+      "2": 0,
+      "3": 2,
+      "4": 1,
+      "5": 1,
+      "6": 4,
+      "7": 3,
+      "8": 2,
+      "9": 3,
+      "10": 1,
+      "11": 4,
+      "12": 0,
+      "13": 3,
+      "14": 2,
+      "15": 0,
+      "16": 1,
+      "17": 0,
+      "18": 0,
+      "19": 3,
+      "20": 2,
+      "21": 4,
+      "22": 4,
+      "23": 4,
+      "24": 1,
+      "25": 0,
+      "26": 1,
+      "27": 2,
+      "28": 2,
+      "29": 4,
+      "30": 4,
+      "31": 2,
+      "32": 0,
+      "33": 2,
+      "34": 4,
+      "35": 3,
+      "36": 2,
+      "37": 3,
+      "38": 0,
+      "39": 1,
+      "40": 0,
+      "41": 3,
+      "42": 3,
+      "43": 3,
+      "44": 2,
+      "45": 4,
+      "46": 0,
+      "47": 1,
+      "48": 1,
+      "49": 4,
+      "50": 1,
+      "51": 0,
+      "52": 3,
+      "53": 1,
+      "54": 2,
+      "55": 4,
+      "56": 3,
+      "57": 3,
+      "58": 3,
+      "59": 4,
+      "60": 1,
+      "61": 3,
+      "62": 0,
+      "63": 1,
+      "64": 4,
+      "65": 3,
+      "66": 1,
+      "67": 4,
+      "68": 3,
+      "69": 0,
+      "70": 0,
+      "71": 2,
+      "72": 2,
+      "73": 0,
+      "74": 4,
+      "75": 2,
+      "76": 4,
+      "77": 0,
+      "78": 2,
+      "79": 2,
+      "80": 0,
+      "81": 2,
+      "82": 1,
+      "83": 3,
+      "84": 1,
+      "85": 3,
+      "86": 2,
+      "87": 3,
+      "88": 1,
+      "89": 1,
+      "90": 1,
+      "91": 1,
+      "92": 4,
+      "93": 4,
+      "94": 1,
+      "95": 2,
+      "96": 4,
+      "97": 4,
+      "98": 0,
+      "99": 2,
+      "100": 4,
+      "101": 2,
+      "102": 1,
+      "103": 2,
+      "104": 4,
+      "105": 3,
+      "106": 0,
+      "107": 0,
+      "108": 0,
+      "109": 3,
+      "110": 3,
+      "111": 2,
+      "112": 1,
+      "113": 1,
+      "114": 2,
+      "115": 3,
+      "116": 0,
+      "117": 4,
+      "118": 3,
+      "119": 0
+    },
+    "holdout_seqs_by_fold": {
+      "0": [
+        1,
+        2,
+        12,
+        15,
+        17,
+        18,
+        25,
+        32,
+        38,
+        40,
+        46,
+        51,
+        62,
+        69,
+        70,
+        73,
+        77,
+        80,
+        98,
+        106,
+        107,
+        108,
+        116,
+        119
+      ],
+      "1": [
+        4,
+        5,
+        10,
+        16,
+        24,
+        26,
+        39,
+        47,
+        48,
+        50,
+        53,
+        60,
+        63,
+        66,
+        82,
+        84,
+        88,
+        89,
+        90,
+        91,
+        94,
+        102,
+        112,
+        113
+      ],
+      "2": [
+        3,
+        8,
+        14,
+        20,
+        27,
+        28,
+        31,
+        33,
+        36,
+        44,
+        54,
+        71,
+        72,
+        75,
+        78,
+        79,
+        81,
+        86,
+        95,
+        99,
+        101,
+        103,
+        111,
+        114
+      ],
+      "3": [
+        7,
+        9,
+        13,
+        19,
+        35,
+        37,
+        41,
+        42,
+        43,
+        52,
+        56,
+        57,
+        58,
+        61,
+        65,
+        68,
+        83,
+        85,
+        87,
+        105,
+        109,
+        110,
+        115,
+        118
+      ],
+      "4": [
+        6,
+        11,
+        21,
+        22,
+        23,
+        29,
+        30,
+        34,
+        45,
+        49,
+        55,
+        59,
+        64,
+        67,
+        74,
+        76,
+        92,
+        93,
+        96,
+        97,
+        100,
+        104,
+        117
+      ]
+    },
+    "members": [
+      "combined",
+      "forensic"
+    ],
+    "member_weights": {
+      "combined": 0.6,
+      "forensic": 0.25
+    },
+    "threshold_source": {
+      "rule": "order statistic on the training-fold REAL scores (fpr_capped_threshold)",
+      "target_fpr": 0.03,
+      "absolute_fp_budget": 2,
+      "frozen_thresholds": {
+        "thr_low": 0.036440409414102856,
+        "thr_high": 0.6742875975794557
+      },
+      "source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json"
+    },
+    "external_member_admission": {
+      "rule": "clip_external joins a fold only if its training-fold AUC >= 0.65",
+      "threshold": 0.65
+    },
+    "artifacts_sha256": {
+      "features.csv": "bf717e44f8232735c3b0f32fd42baf1b9bf5255791df16190b8a2b9545ec2630",
+      "data/labels.csv": "3136c3d02bd213ae2cbcb4795c5dea81a2c7abb814294649cb1bd897ec247e36",
+      "models/l1b_feats_119.npy": "02897baad9bc6e12c071ed0538bbb70dc0bbe26865dbff2791c043a463204b21",
+      "models/clip_feats_119.npy": "544399a697f2b9c9b9b434f45908e5f3ac6ed81125aea046ba68bf822371851d",
+      "models/clip_feats_norm_119.npy": "a24abd270e79b882c4cb6b5d520f81a1fd7555ee5b025f4bedf2f764c8780364",
+      "models/clip_tiles_119.npy": "46b66a02d28f0ef585303c35ac6c4382a28dd67a0c76bfa0506b6bd04c798356",
+      "models/npr_scores_119.npy": "721702940d2f9007ad861bd9358bc795a8b1ad781c14ed36a8c15788ffe9d2d4",
+      "models/clip_probe_norm.pt": "d040ca02207f478d547c79cae27c198e430779c0e71fa8dc7a80315b717adbde",
+      "models/npr.pt": "d9fcd961806f38f41339fa203ef7a11b4fd9c793b1bb23311fd73681f44c574e",
+      "models/fusion.json": "d7062fe5198eb38c58211d76ef178b6a65196c055b7f426277f249586190a011",
+      "repo/scripts/evaluate_system.py": "5c24674b31e65c6a0aac1f52fb9e9a9996390097be3189a6c3d32a4cd73e9889",
+      "repo/scripts/metrics_common.py": "533ec0a1054677d9cd2b0745d0082086abac94aa4d2e52349487638ad7732199",
+      "repo/scripts/calibration_analysis.py": "1a4aeab4722b8cc83dde647c4664500ab66ba7c2307464af6c58275ee632a7ad",
+      "repo/scripts/member_analysis.py": "b85106ee8e414627b9dc89d28231e37a87eccf068f814dbecaafa8f78b788b0e",
+      "repo/scripts/threshold_stability.py": "2993a2e418d15cec928db13c4fb80081053ad50d571d434c794dcda3186b7c39",
+      "repo/scripts/resource_profile.py": "08d1651bd256ab9094136a86c3b261252b407844d43ab5d4212e78ab9f301d2f",
+      "repo/scripts/stratified_analysis.py": "a17cd13832681a18eb205756b309115e7badc5cff90a503795320e9cfffc0cdf",
+      "data/splits_frozen.json": "a42c43a2baeec23a6bd20059d14c31035ed2c1853b855fc6fa0a2fec4c070d37",
+      "data/splits.json": "14695cea1a95dd755dfc6b6f5aee1262aecd3e8f9f7a437b1e938bd4372de7f0"
+    },
+    "oof_cache": {
+      "path": "models/oof_bundle_119.json",
+      "sha256": "9f97ed1c5f03a9993a248f45d7d234b89a04fe385cef8f21f91c51b85c8fd5be"
+    },
+    "headline_metrics_on_this_signature": {
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "precision": 0.9623,
+      "confusion": {
+        "tp": 51,
+        "tn": 61,
+        "fp": 2,
+        "fn": 5
+      }
+    }
+  },
+  "reproducibility_checks": {
+    "fold_assignment_recomputed_matches_bundle": true,
+    "fold_assignment_sha256": "021c8fe2ef6637676364653874bf9cb3dbd74f06d1cdbd94b9f01a75fa7b6740",
+    "frozen_split_signatures_reproduce": true,
+    "notes": [
+      "折切分只依赖 (样本顺序, 标签, n_folds=5, seed=42)，因此可在任意机器上逐位复现；上面的 sha256 是逐样本折号向量的指纹",
+      "artifacts_sha256 覆盖特征文件、探针/网络权重、融合配置与全部评测脚本，可用于确认「同一签名 = 同一批输入」"
+    ]
+  },
+  "recommendation": {
+    "should_the_cv_protocol_also_be_frozen": true,
+    "conclusion": "建议把评测协议一并冻结；但不要改动 data/splits_frozen.json 的既有字段——它的 train/val/test 签名是 split_dataset.py --verify-frozen 的校验对象，改动该文件会使既有冻结签名与文件内容不一致。",
+    "minimal_change": {
+      "option_a_recommended": {
+        "action": "新增 data/eval_protocol_frozen.json（不修改既有冻结文件）",
+        "content_source": "本文件 evaluation_protocol_signature 块可直接作为初版内容（去掉 artifacts_sha256 中与产出无关的项即可）",
+        "why": "零侵入：既满足 D8/17.3「划分与协议冻结」，又保持 splits_frozen.json 的签名校验有效",
+        "verify_command": "python -c \"import json,hashlib,sys;d=json.load(open('data/eval_protocol_frozen.json',encoding='utf-8'));core={k:v for k,v in d.items() if k!='protocol_sha256'};print(hashlib.sha256(json.dumps(core,sort_keys=True,ensure_ascii=False).encode()).hexdigest())\"   # 与文件内 protocol_sha256 比对",
+        "owner": "scripts/split_dataset.py 的负责人（data/ 与划分脚本不在本指标包的改动范围内）"
+      },
+      "option_b_not_recommended": {
+        "action": "在 data/splits_frozen.json 顶层增加 evaluation_protocol 键",
+        "why_not": "会改变此前被引用/记录的冻结文件内容与其 sha256；需要同时更新所有引用该哈希的位置，收益与风险不成比例"
+      }
+    },
+    "immutable_parts_of_the_protocol": [
+      "119 张样本清单与标签",
+      "n_folds=5、shuffle、random_state=42、分层键=label",
+      "逐折 clip_external 准入规则（train-fold AUC ≥ 0.65）",
+      "阈值来源（训练折真实分数的顺序统计量，目标 FPR 3%、绝对预算 2 个误报）",
+      "内层 4 折与 random_state=100+fold（温度标定的无偏分数尺度）"
+    ]
+  },
+  "handoff": [
+    "docs/results.md §3 需说明「最终验收采用折外协议而非冻结划分」的理由与二者关系（该文件属 docs-verifier，本指标包只提供证据）",
+    "若采纳 option_a，需由 data/ 负责人落盘 data/eval_protocol_frozen.json 并在 docs/reproduce.md 增加校验命令"
+  ],
+  "limitations": [
+    "frozen_split_metrics_reference_only 中的三段读数用「单一冻结阈值」计算以保持子集可比；部署路径实际使用逐折阈值，因此这些数字与 reports/metrics.json 的 oof_overall 不可直接比较。",
+    "本文件只调和协议关系，不改变任何已发布的指标：metrics.json 与指标包全部沿用分层 5 折折外协议。",
+    "冻结划分签名只证明「活跃划分文件与冻结文件的成员集合一致」，不证明划分算法本身无泄漏；泄漏防护由 D4/D5 的并组断言与 groups.multi_member=0 提供。"
+  ]
+}

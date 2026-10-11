@@ -28,7 +28,7 @@
     "15.1 诊断指标",
     "2.3 多路信号的必要性"
   ],
-  "generated_at": "2026-10-11T03:18:51+00:00",
+  "generated_at": "2026-10-11T03:42:48+00:00",
   "script": "repo/scripts/member_analysis.py",
   "data": {
     "n_samples": 119,
@@ -2622,5 +2622,148 @@
     "All numbers are out-of-fold on the 119 competition samples; the analysis tables that include clip_domain/npr are analysis configurations, not the deployed fusion (models/fusion.json uses combined+forensic only).",
     "TPR@FPR=1% cannot be measured exactly with 63 real samples (1 FP = 1.59%); the interpolated ROC value is reported and the integer granularity is noted wherever a Δ of one sample is discussed.",
     "Error-set overlap is computed at a fixed operating point; a route that is redundant under one threshold can be complementary under another, so both conventions are reported."
-  ]
+  ],
+  "degradation_path_exception": {
+    "status": "registered",
+    "exception_id": "E1-forensic-degradation-path",
+    "conflict_resolved": [
+      "manual ch.12.1 保留判据（ΔTPR@FPR=1% 低于事前门槛 -> 应移除）",
+      "manual ch.16.3 降级模式（深度模型全部不可用 -> L1 线索 + 阈值）"
+    ],
+    "retained_member": {
+      "name": "forensic",
+      "frozen_weight": 0.25,
+      "frozen_weights": {
+        "combined": 0.6,
+        "forensic": 0.25
+      },
+      "frozen_weights_source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json",
+      "in_deployed_fusion": true,
+      "definition": "LR on L1(47)+L1b(20) forensic/domain features (trainable, deployed)"
+    },
+    "pre_registered_gate": {
+      "field": "preset_decision_rule.delta_tpr_at_fpr1_min",
+      "value": 0.02,
+      "primary_fpr_level": 0.05,
+      "declared_before_measurement": true
+    },
+    "actual_measurement": {
+      "convention": "leave_one_out.deployed_frozen (frozen weight table {'combined': 0.6, 'forensic': 0.25}, threshold = order statistic on the real OOF scores with an absolute false-positive budget of 2)",
+      "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+      "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+      "delta_curve_tpr_at_fpr": {
+        "fpr=0.005": 0.0,
+        "fpr=0.010": 0.0,
+        "fpr=0.020": 0.0714,
+        "fpr=0.030": 0.0714,
+        "fpr=0.050": 0.0,
+        "fpr=0.100": 0.0
+      },
+      "delta_accuracy_kept_minus_removed": 0.0252,
+      "delta_auc_kept_minus_removed": 0.0026,
+      "mean_fp_iou_vs_other_routes": 0.1805,
+      "passes_overlap_gate": true,
+      "before_removal": {
+        "members": [
+          "combined",
+          "forensic"
+        ],
+        "accuracy": 0.9412,
+        "auc": 0.966,
+        "fpr": 0.0317,
+        "tpr": 0.9107
+      },
+      "after_removal": {
+        "members": [
+          "combined"
+        ],
+        "accuracy": 0.916,
+        "auc": 0.9634,
+        "fpr": 0.0317,
+        "tpr": 0.8571
+      },
+      "gate_verdict_for_the_1pct_metric": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+    },
+    "retention_basis": [
+      "manual 16.3 降级路径的唯一实现载体：forensic 不依赖 CLIP 与 GPU 即可出分，移除它等于删掉降级模式（见 fallback_evidence）",
+      "保留带来可测的整体收益：准确率 +2.52 pp（0.9412 -> 0.9160）、ΔAUC +0.0026",
+      "在可分辨的操作点上同样有增益：ΔTPR@FPR=2% 与 3% = +0.0714（+7.14 pp，即多召回 4 个 AI 样本）",
+      "错误不冗余：mean FP-IoU vs 其余各路 = 0.1805 ≪ 0.5（passes_overlap_gate=True），不构成 12.1 要打击的「重复误报」情形",
+      "唯一低于门槛的指标是 ΔTPR@FPR=1%，而该指标在 63 张真实样本上不可分辨（1 FP = 1.59% > 1%），其 0.0 的读数是量化粒度产物而非能力缺失（三种口径中另两种均为正）"
+    ],
+    "fallback_evidence": {
+      "requirement": "manual ch.16.3: 深度模型全部不可用 -> 退化为「L1 线索 + 阈值」模式，明确标注为降级模式",
+      "code_reference": "repo/src/detector.py (forensic is scored from feature_vector(feat) (+) feature_vector_b(extract_l1b_features(parsed)) before any deep member; when clip/npr weights are absent only that member enters `scores` and fusion.py renormalises the weight to 1.0)",
+      "requires_clip_or_gpu": false,
+      "why_it_is_the_only_carrier": "combined needs the CLIP backbone, clip_external and clip_domain need CLIP features, npr needs the NPR ResNet-18 on GPU; forensic is the only deployed-fusion member whose inputs are the CPU L1/L1b features, so removing it empties the 16.3 fallback of its only implemented route",
+      "standalone_fallback_operating_points": {
+        "same_absolute_fp_budget_as_deployment_2_of_63": {
+          "accuracy": 0.6387,
+          "fpr": 0.0317,
+          "tpr": 0.2679,
+          "threshold": 0.961202,
+          "confusion": {
+            "tp": 15,
+            "tn": 61,
+            "fp": 2,
+            "fn": 41
+          }
+        },
+        "looser_operating_points_where_the_fallback_is_usable": {
+          "tpr@fpr=5%": 0.5357,
+          "tpr@fpr=10%": 0.8393,
+          "tpr@fpr=20%": 0.875
+        },
+        "auc": 0.9082,
+        "reading": "the fallback is not competitive with the full fusion, but it is a real detector (AUC 0.9082; TPR 0.8393 at FPR 10%): degraded mode returns a usable, explicitly-marked verdict instead of no verdict"
+      }
+    },
+    "registration": {
+      "registered_at": "2026-10-11T03:42:48+00:00",
+      "registered_before_final_freeze": false,
+      "declaration": "该豁免的判定依据（事前登记门槛 + 冻结产物上的留一法/重叠度实测）全部来自最终版本所依据的同一批冻结产物：本登记不修改任何冻结内容（成员清单、权重、阈值、温度均不变），也不引入任何新调参。文字登记的落盘时点晚于 models/fusion.json 的冻结时刻，因此「例外登记必须早于冻结」这一流程性要求在本次无法回溯满足，如实标记为 process_order_gap，只能在下一次版本冻结前完成。",
+      "what_pre_dates_the_freeze": {
+        "gate": "preset_decision_rule（Δ≥0.02、FP-IoU≤0.5、primary_fpr_level=5%）在本脚本源码中写死，先于其数值被读取（declared_before_measurement=true）",
+        "deployed_weights_decision": "combined 0.6 + forensic 0.25 在最终一次性评测前即已冻结于 models/fusion.json",
+        "frozen_artifacts_used": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json"
+      },
+      "what_is_new_in_this_patch": [
+        "本次书面登记条目本身（member_analysis.json.degradation_path_exception）",
+        "forensic 的留一法 Δaccuracy/ΔAUC/FP-IoU/降级路径实测值（本指标包首次计算）"
+      ],
+      "frozen_artifacts_unchanged": {
+        "members": [
+          "combined",
+          "forensic"
+        ],
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25
+        },
+        "thr_high": 0.6742875975794557,
+        "thr_low": 0.036440409414102856,
+        "note": "本次登记前后 models/fusion.json 未改动"
+      },
+      "process_order_gap": "登记落盘晚于冻结；若审计要求事前登记，需在下一次冻结流程中把「例外登记」列为冻结前置项"
+    },
+    "insufficient_evidence": {
+      "substantive_justification": false,
+      "process_order_claim_registered_before_freeze": true,
+      "why": "实质依据（16.3 唯一降级载体 + 准确率/AUC 正增益 + FP-IoU 0.1805 不冗余 + 1% 指标在 n=63 下不可分辨）可在冻结产物上复算，判定为充分；唯一不成立的是「登记早于冻结」的流程顺序声明。"
+    },
+    "if_the_exception_is_rejected": {
+      "action": "移除 forensic，融合退化为 combined 单路",
+      "cost": {
+        "accuracy": "0.9160（-2.52 pp）",
+        "auc": "0.9634（-0.0026）",
+        "degraded_mode": "消失：无 CLIP/GPU 时不再有任何可出分的成员，手册 16.3 降级路径不再成立"
+      },
+      "team_recommendation": "保留并登记（本审计亦不建议删模型，见 docs/compliance-audit.md F1 / 第 4 节问题②）"
+    },
+    "additional_experiments_if_challenged": [
+      "用一组只有 L1/L1b 输入的真实困难负样本（渲染态单据/翻拍件）复测降级模式的 FPR 上界，量化 16.3 路径的业务可用性",
+      "在更大真实语料（≥100 张独立纯真实）上重算 ΔTPR@FPR=1%，确认该门槛在可分辨样本量下的真实读数（当前 63 张下 1% 目标不可达）"
+    ],
+    "audit_reference": "docs/compliance-audit.md F1 / 第 4 节问题②（修补建议：补登记而非删模型）"
+  }
 }

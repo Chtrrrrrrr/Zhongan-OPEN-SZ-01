@@ -27,6 +27,7 @@ import urllib.request
 from pathlib import Path
 
 WS = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[2]
 
 PASS, FAIL = [], []
 
@@ -132,16 +133,51 @@ def main() -> int:
             d = json.loads(body)
             ok = key in d
         check("GET %s = 200 且含字段 %s" % (path, key), ok, "status=%s" % st)
+    check("health 报告回取链与报告 schema 版本（report_search_dirs / report_schema_version）",
+          isinstance((warmup or {}).get("report_search_dirs"), list)
+          and bool((warmup or {}).get("report_schema_version")),
+          "dirs=%s schema=%s" % ((warmup or {}).get("report_search_dirs"),
+                                 (warmup or {}).get("report_schema_version")))
 
-    # ---- 4. 样本详情数据源 -------------------------------------------------------
-    found = 0
-    for seq in (1, 57):
-        for stem in ("verify-balanced24", "verify-24", "verify-119"):
-            st, body, _ = get(base, "/reports/batch/%s/samples/%03d.json" % (stem, seq))
-            if st == 200 and json.loads(body).get("verdict"):
+    # 页面首选「服务端报告回退链」，不依赖 batch 归档是否入库（与 api/server.py 解耦）
+    page_src = (REPO / "demo" / "webui.html").read_text(encoding="utf-8")
+    check("首页报告数据源首选 /api/v1/report/{id} 回退链，batch 归档仅作兜底",
+          '"/api/v1/report/" + p' in page_src and "/reports/batch/verify-119/samples/" in page_src
+          and page_src.index('"/api/v1/report/" + p') < page_src.index("/reports/batch/verify-119/samples/"))
+
+    # ---- 4. 样本详情数据源（复刻页面 REPORT_SOURCES 的 6 级探测顺序） --------------
+    REPORT_SOURCES = [
+        "/api/v1/report/%s",
+        "/reports/%s.json",
+        "/reports/batch/verify-119/samples/%s.json",
+        "/reports/batch/verify-24/samples/%s.json",
+        "/reports/batch/verify-balanced24/samples/%s.json",
+        "/reports/batch/full119/samples/%s.json",
+    ]
+    found, used = 0, []
+    for seq in (1, 57, 119):
+        pad = "%03d" % seq
+        for tpl in REPORT_SOURCES:
+            st, body, _ = get(base, tpl % pad)
+            if st != 200:
+                continue
+            try:
+                d = json.loads(body)
+            except Exception:  # noqa: BLE001
+                d = {}
+            if d.get("verdict"):
                 found += 1
+                used.append("#%s←%s" % (pad, tpl))
                 break
-    check("样本完整报告数据源可达（抽查 #001/#057）", found == 2, "命中 %d/2" % found)
+    check("样本完整报告 6 级回退链覆盖 #001/#057/#119", found == 3, "命中 %d/3：%s" % (found, used))
+    if found:
+        st, body, _ = get(base, REPORT_SOURCES[0] % "001")
+        d = json.loads(body) if st == 200 else {}
+        check("回取到的报告是新 schema（localization.available / explanation / artifact_sha256）",
+              bool((d.get("localization") or {}).get("available") is not None
+                   and d.get("explanation") and ((d.get("versions") or {}).get("artifact_sha256"))),
+              "keys=%s" % (sorted((d.get("explanation") or {}).keys())[:6],))
+
     st, _, _ = get(base, "/api/v1/report/does-not-exist")
     check("报告回取对不存在 id 返回 404 + 统一错误体", st == 404, "status=%s" % st)
 

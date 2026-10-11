@@ -5,7 +5,7 @@
     "15.1 护栏与操作点指标",
     "3.2 误报硬护栏"
   ],
-  "generated_at": "2026-10-11T03:18:49+00:00",
+  "generated_at": "2026-10-11T03:42:46+00:00",
   "script": "repo/scripts/calibration_analysis.py",
   "data": {
     "n_samples": 119,

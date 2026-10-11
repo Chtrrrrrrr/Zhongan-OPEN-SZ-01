@@ -28,7 +28,11 @@ class PipelineConfig:
     clip_domain_lr: str | None = None    # joblib-dumped {scaler, clf} on CLIP features
     combined_lr: str | None = None       # joblib-dumped {scaler, clf} on [L1 (+) L1b (+) CLIP (+ tiles)]
     forensic_lr: str | None = None       # joblib-dumped {scaler, clf} on [L1 (+) L1b]
-    enable_aeroblade: bool = True
+    enable_aeroblade: bool = False       # AEROBLADE was REMOVED by its ablation
+                                         # (reports/aeroblade_ablation.json: AUC 0.51,
+                                         # ΔTPR@FPR=5% below the gate) - off by default,
+                                         # and it only loads when the frozen fusion table
+                                         # actually carries a weight for it (manual ch.12.1)
     time_budget_s: float = 5.0
     device: str | None = None
 
@@ -47,6 +51,7 @@ class AIGCDetector:
         self._clip_head = None
         self._npr = None
         self._blade = None
+        self._blade_skipped = False      # AEROBLADE gate: report the reason only once
         self._l1_pack = None
         self._clip_domain_pack = None
         self._combined_pack = None
@@ -91,7 +96,23 @@ class AIGCDetector:
 
     @property
     def blade(self):
+        """AEROBLADE (optional, training-free VAE reconstruction error).
+
+        Off by default. The member's ablation (repo/reports/aeroblade_ablation.json)
+        measured a single-route AUC of ~0.51 and a non-positive Δ when added to the
+        deployed fusion, so per manual ch.12.1 it is REMOVED from the default
+        pipeline: an optional member only enters when it has passed the ablation and
+        therefore has a frozen weight in models/fusion.json. Gating on the weight
+        also avoids paying its cost (frozen SD-VAE: ~11 s load, ~0.6 s per image)
+        for evidence the decision layer would discard anyway.
+        """
         if self._blade is None and self.cfg.vae_dir and self.cfg.enable_aeroblade:
+            if self.fusion.weights.get("aeroblade", 0.0) <= 0:
+                if not self._blade_skipped:
+                    print("[degrade] AEROBLADE enabled but has no frozen fusion weight "
+                          "(see repo/reports/aeroblade_ablation.json) -> not loaded")
+                    self._blade_skipped = True
+                return None
             t_load = time.perf_counter()
             try:
                 from l2_aeroblade import AerobladeScorer
@@ -381,9 +402,12 @@ class AIGCDetector:
 
         if self.blade is not None and _elapsed() < budget - 0.5:
             t = time.perf_counter()
-            err = self.blade.recon_error(parsed.bgr)
-            # AEROBLADE: low error -> AI. Convert to a raw score with direction=-1
-            scores.append(ModelScore("aeroblade", err, direction=-1))
+            # AI-side logit from the frozen SD-VAE round trip: higher = more likely
+            # latent-diffusion generated - the same scale and direction the ablation
+            # (repo/scripts/aeroblade_ablation.py) measured. Using the raw error with
+            # direction=-1 would leave this member uncalibratable (no temperature in
+            # models/fusion.json -> sigmoid(error) ~= 0.5 for every image).
+            scores.append(ModelScore("aeroblade", self.blade.logit(parsed.bgr)))
             latency["L2_aeroblade"] = (time.perf_counter() - t) * 1000
 
         # Classifier attention explanation (manual ch.9.2 "Grad-CAM (if available)").

@@ -1,0 +1,38 @@
+{
+  "script": "repo/scripts/build_meta.py",
+  "purpose": "D2/D3 stratification keys for scripts/split_dataset.py",
+  "proxy_rule": {
+    "b_nearWhiteFrac >= ": 0.05,
+    "b_flatNoise < ": 0.9,
+    "source_features": "models/l1b_feats_119.npy",
+    "note": "rule is measurable and reproducible, but it is still a proxy"
+  },
+  "acquisition_proxy_x_label": {
+    "rendered/ai": 17,
+    "rendered/real": 19,
+    "photo/ai": 39,
+    "photo/real": 44
+  },
+  "content_proxy_counts": {
+    "document": 44,
+    "scene": 75
+  },
+  "validation": {
+    "expected_from_data_audit": {
+      "scene_photos_total": "about 10 (a few property-loss/food photos); the rest are documents",
+      "ai_mostly": "digitally rendered documents",
+      "real_mostly": "phone captures of paper"
+    },
+    "rendered_share_ai": 0.3036,
+    "rendered_share_real": 0.3016,
+    "bias_gap": 0.002,
+    "scene_fraction": 0.6303
+  },
+  "verdict": "rejected",
+  "reasons": [
+    "rendered share is nearly equal across classes (ai 0.30 vs real 0.30; gap +0.00), so the proxy does not reproduce the documented 'AI mostly rendered / real mostly photographed' bias",
+    "the content proxy labels 75/119 (63%) as scene photos, contradicting the documented audit (about 10 (a few property-loss/food photos); the rest are documents)"
+  ],
+  "consequence": "data/meta.csv keeps generator/acquisition/content as 'unavailable'; D2/D3 stratification in scripts/split_dataset.py therefore degrades to label-only with its built-in warning. Compliance audit records D2/D3 as PARTIAL: labels are not provided by the brief and the in-project proxy was validated and rejected rather than shipped.",
+  "how_to_close": "hand-label acquisition/content for the 119 samples (or obtain the brief's metadata) and re-run scripts/split_dataset.py --meta data/meta.csv; the 18-generator cross-generator evidence in reports/cross_generator.json independently covers D2's generalisation intent."
+}

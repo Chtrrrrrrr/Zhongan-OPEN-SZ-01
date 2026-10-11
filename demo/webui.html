@@ -13,10 +13,13 @@
         - /api/v1/health, /api/v1/version          -> 功能矩阵 / 通道加载状态 / 阈值与哈希
         - POST /api/v1/detect/image|video|batch    -> 实时检测（拖拽上传，真跑推理）
         - /demo/webui_assets/oof_119.json          -> 样本库 119 套折外判定（离线资产，来源可溯）
-        - /reports/batch/...</samples/NNN.json>    -> 样本详情：已落盘的完整检测报告
+        - /api/v1/report/{id} → /reports/{id}.json → /reports/batch/*/samples/NNN.json
+                                                   -> 样本详情：已落盘的完整检测报告（6 级回退探测）
         - /api/v1/metrics + /reports/*.json        -> 指标看板与消融证据
-        - /api/v1/report/{id}, /api/v1/reports     -> 落盘报告回取
+        - /api/v1/reports, /reports/{id}.html      -> 落盘报告列表 / HTML 报告
       资产缺失/端点不可用时逐块降级并明确标注「未生成 / 不可用」，不引用不存在的资源。
+    * 报告回取不假设归档布局：首选服务端回退链（与 /api/v1/health 的 report_search_dirs 同源），
+      batch 归档仅作兜底，因此 batch 目录被清理/重建后页面无需改动。
     * 风格与 demo/app.py 一致：深色卡片。
   说明：页面只做展示与调用，不修改任何服务端行为；服务端契约见 docs/api.md。
 -->
@@ -458,11 +461,16 @@ function renderMatrix() {
     Object.keys(fw).sort().map((k) => '<div class="barRow"><span class="mut">' + esc(k) + "</span>" + bar(fw[k] / wsum) + "<span>" + fixed(fw[k], 3) + "</span></div>").join("") +
     '<p class="mut" style="margin-top:8px">阈值/温度来源：<span class="mono">' + esc(th.source || "—") + "</span><br>sha256：<span class='mono'>" + esc(th.source_sha256 || "—") + "</span></p>";
   const vp = v.pipeline || {}, vc = v.code || {}, vm = v.models || {};
+  const schemaVer = v.report_schema_version || h.report_schema_version;
+  const rdirs = h.report_search_dirs;
   tiers += "<h4>系统版本（GET /api/v1/version）</h4>" + kvTable([
     ["服务 / API", (v.service || "—") + " " + (v.service_version || "") + " · API " + (v.api_version || "—") +
-      " · 报告 schema " + (v.report_schema_version || "—")],
+      " · 报告 schema " + (schemaVer || "—")],
     ["检测管线", (vp.version || "—") + " · mode=" + (vp.mode || "—") + " · device=" + (vp.device || "—") +
       (vp.time_budget_s ? " · 内部时间预算 " + vp.time_budget_s + " s" : "")],
+    ["报告回取链", Array.isArray(rdirs) && rdirs.length
+      ? rdirs.length + " 级回退：" + rdirs.map((d) => String(d).split(/[\\/]/).slice(-2).join("/")).join(" → ")
+      : "—（health 未报告 report_search_dirs）"],
     ["代码版本", String(vc.code_hash || "—").slice(0, 24) + "…（git " + String(vc.git_commit || "—").slice(0, 10) +
       (vc.git_dirty ? "，工作区有未提交改动" : "") + "，源文件 " + (vc.n_source_files || "—") + " 个）"],
     ["模型权重 sha256", Object.keys(vm).map((k) => k + "=" + String((vm[k] || {}).sha256 || "—").slice(0, 14) + "…").join("　")],
@@ -714,8 +722,9 @@ function renderSamples() {
     "</code>（sha256 <span class='mono'>" + esc(String((src.oof_bundle || {}).sha256 || "").slice(0, 16)) + "…</span>）；口径说明："
     + esc(o.protocol && o.protocol.cv ? o.protocol.cv : "") + "；缩略图由 <code>data/images/NNN.png</code> 离线生成（150 px）。"
     + "按评测口径 <b>review 计入负类</b>，故 AI 侧的 review 同时计入漏报。"
-    + "点击任意卡片可载入该样本的完整落盘报告（按顺序探测 reports/batch/*/samples/NNN.json，"
-    + "当前 <code>verify-119</code> 覆盖全部 119 个序号）。";
+    + "点击任意卡片可载入该样本的完整落盘报告：优先走服务端报告回退链 "
+    + "<code>GET /api/v1/report/{id}</code>（reports/api → repo/reports → 工作区 reports → 同名 .html，与 health.report_search_dirs 同源），"
+    + "再回退到各批量评测归档 reports/batch/*/samples/NNN.json；页面不引用不存在的资源，全部探测失败时给出说明与复跑命令。";
 }
 window.setSampleFilter = (btn) => { SAMPLE_FILTER = btn.getAttribute("data-f"); applySampleFilter(); };
 function applySampleFilter() {
@@ -742,24 +751,30 @@ function applySampleFilter() {
       '<div class="meta"><span>' + fixed(s.fused_score, 4) + "</span><span>fold " + esc(s.fold) + "</span></div></figure>";
   }).join("") : '<div class="mut">没有符合条件的样本。</div>';
 }
-/* 逐样本完整报告的候选数据源（页面不做假设，逐个探测；404 = 该源没有这份样本）。
-   顺序 = 覆盖面优先：119 套全量批量产物 > 均衡子集 > 其他子集。 */
+/* 逐样本完整报告的候选数据源：按“可用面”从大到小逐个探测（404 = 该源没有这份样本；
+   页面不做任何假设，也不引用不存在的资源）。
+   首选**服务端报告回退链** GET /api/v1/report/{id}：它自身依次查找
+   reports/api/<id>.json → reports/<id>.json → 工作区 ../reports/<id>.json → 同名 .html
+   （与 GET /api/v1/health 的 report_search_dirs 同源），因此不依赖 batch 归档是否入库；
+   其余为各批量评测归档，作为兜底。 */
 const REPORT_SOURCES = [
-  "reports/batch/verify-119/samples/",        // 119 套全量批量评测产物（覆盖全部序号）
-  "reports/batch/verify-balanced24/samples/", // 12 AI + 12 real 均衡子集
-  "reports/batch/verify-24/samples/",
-  "reports/batch/full119/samples/"
+  { label: "/api/v1/report/{NNN}（服务端报告回退链）", url: (p) => "/api/v1/report/" + p },
+  { label: "/reports/{NNN}.json（静态回退）", url: (p) => "/reports/" + p + ".json" },
+  { label: "/reports/batch/verify-119/samples/{NNN}.json", url: (p) => "/reports/batch/verify-119/samples/" + p + ".json" },
+  { label: "/reports/batch/verify-24/samples/{NNN}.json", url: (p) => "/reports/batch/verify-24/samples/" + p + ".json" },
+  { label: "/reports/batch/verify-balanced24/samples/{NNN}.json", url: (p) => "/reports/batch/verify-balanced24/samples/" + p + ".json" },
+  { label: "/reports/batch/full119/samples/{NNN}.json", url: (p) => "/reports/batch/full119/samples/" + p + ".json" }
 ];
 const reportCache = new Map();
 const REPORT_CACHE_MAX = 12;   // 单份完整报告含 L3 定位图与归因图（约 2 MB），只保留最近若干份
 async function loadFullReport(seq) {
   if (reportCache.has(seq)) return reportCache.get(seq);
   const pad = String(seq).padStart(3, "0");
-  for (const base of REPORT_SOURCES) {
-    const url = "/" + base + pad + ".json";
+  for (const src of REPORT_SOURCES) {
+    const url = src.url(pad);
     const r = await getJSON(url);
     if (r.ok && r.data && r.data.verdict) {
-      const out = { url: url, data: r.data };
+      const out = { url: url, data: r.data, source: src.label.replace("{NNN}", pad) };
       reportCache.set(seq, out);
       while (reportCache.size > REPORT_CACHE_MAX) {
         reportCache.delete(reportCache.keys().next().value);
@@ -803,12 +818,13 @@ window.openSample = async (seq) => {
   if (!box) return;
   if (full) {
     box.className = "";
-    box.innerHTML = '<div class="note ok">已载入落盘完整报告：<a href="' + esc(full.url) + '" target="_blank">' + esc(full.url) + "</a>（含 L3 定位图与关注区域解释）</div>" +
+    box.innerHTML = '<div class="note ok">已载入落盘完整报告：<a href="' + esc(full.url) + '" target="_blank">' + esc(full.url) +
+      "</a>（来源：" + esc(full.source || full.url) + "；含 L3 定位图与关注区域解释）</div>" +
       renderReport(full.data, {});
   } else {
     box.className = "";
     box.innerHTML = '<div class="note warn">该样本暂时没有可回取的落盘完整报告：页面已按顺序探测 ' +
-      esc(REPORT_SOURCES.map((u) => "/" + u + pad + ".json").join("、")) + " 均未命中。上方折外记录来自权威评测产物 "
+      esc(REPORT_SOURCES.map((s) => s.label.replace("{NNN}", pad)).join("、")) + " 均未命中。上方折外记录来自权威评测产物 "
       + '<code>models/oof_bundle_119.json</code>，数字真实可用；如需完整报告请用下方命令复跑，或在②中上传同一样本实时检测。</div>';
   }
 };
