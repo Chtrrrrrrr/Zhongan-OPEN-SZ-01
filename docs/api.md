@@ -365,6 +365,79 @@ JSON 三种媒体类型、错误响应、以及 `ErrorEnvelope`/`Health`/`Versio
 curl.exe -s -o openapi.json http://127.0.0.1:8080/api/v1/openapi.json
 ```
 
+### 3.9 哈希口径与跨平台复现
+
+**结论先说**：本服务所有 sha256 都是「**签出字节**」哈希，但**文本类文件先做 `CRLF→LF`
+归一化**，二进制保持原始字节。因此同一份提交内容在 `core.autocrlf=true` 的 Windows 工作区
+与 LF 签出（Linux / 干净 clone）上得到**同一个摘要**，评审可直接比对；无需复现对方的
+换行设置。
+
+**为什么需要这条规则**：仓库 `core.autocrlf=true` 且没有 `.gitattributes`，被跟踪文本文件的
+工作区字节与 git blob 字节不同，但 `git diff` 为空。实测 `reports/metrics.json`：
+
+| 口径 | 字节数 | sha256 |
+| --- | --- | --- |
+| 工作区原始字节（CRLF×245） | 4848 | `4906df2f5dadb0eb…`（旧口径 = 现在的 `sha256_raw`） |
+| CRLF→LF 归一化后（= `git show HEAD:reports/metrics.json`） | 4603 | `72f789ad68d714f1…`（新口径 = `sha256`） |
+
+若不做归一化，评审拿文档/报告里的哈希去干净副本比对会看到"值不同但 `git diff` 为空"，
+容易被误判为证据篡改。
+
+**受影响 / 不受影响的字段**
+
+| 字段（端点） | 是否受行尾影响 | 说明 |
+| --- | --- | --- |
+| `GET /api/v1/version` → `code.code_hash` | 归一化后**不受影响** | 由 `api/src/scripts/tests` 下全部跟踪文本文件（49 个）逐个归一化摘要拼接而成；另给 `n_text_normalised` / `code_hash_algorithm` 自描述 |
+| `GET /api/v1/version` → `metrics.sha256` | 归一化后**不受影响** | 文本口径；同时给 `metrics.sha256_raw`（原始字节）便于与旧值/`src/` 侧交叉核对 |
+| `GET /api/v1/version` → `models.*.sha256` | 二进制不受影响；`.json` 归一化 | `*.pt/*.joblib` 为二进制（原样）；`fusion_json` 等 `.json` 走文本口径，若与原始字节不同会附 `sha256_raw` |
+| `GET /api/v1/version` → `thresholds.value_sha256` | **不受影响** | 决策参数的 canonical-JSON 哈希（与 `src/report.py:thresholds_sha256` 同构造），与任何文件行尾无关，可直接与归档报告比对 |
+| 报告 `versions.input_sha256` / `input_hash` | **不受影响** | 图片/视频原始字节哈希（二进制） |
+| 报告 `versions.artifact_sha256`（`*.pt/*.joblib`） | **不受影响** | 二进制权重 |
+| 报告 `versions.artifact_sha256`（`fusion.json`、`oof_bundle_119.json`） | 受行尾影响——**但由 `src/report.py` 以原始字节计算**（不在本服务范围） | 这两个文件未被 git 跟踪（`models/*` 忽略），没有签出换行转换；本机实测 `fusion.json` 为 CRLF，故归档值 = 原始字节值 `d7062fe5…`，可用本服务的 `sha256_raw` 交叉核对 |
+| 报告 `versions.thresholds_sha256` | **不受影响** | 同 `thresholds.value_sha256`（值哈希，非文件哈希） |
+
+`GET /api/v1/version` 返回自描述字段：
+
+```json
+{
+ "hash_convention": "text files hashed after CRLF->LF normalisation; binaries as raw bytes",
+ "hash_convention_note": "所有 sha256 都是「签出字节」哈希：文本类文件先做 CRLF->LF 归一化，二进制保持原始字节。与 src/ 侧（原始字节）历史值比对时用 sha256_raw；跨平台核对见 docs/api.md「哈希口径与跨平台复现」。",
+ "code": {"n_source_files": 49, "n_text_normalised": 49,
+          "code_hash_algorithm": "sha256(concat(sorted(rel_path_utf8, sha256_hex))), per-file digest normalised for text files",
+          "code_hash": "641c5185…"},
+ "metrics": {"sha256": "72f789ad68d714f1…", "sha256_raw": "4906df2f5dadb0eb…"},
+ "thresholds": {"value_sha256": "sha256:e9db1a93ac66363dd7e024883dc72f62be23643cea05c9756be3caa6c3c21450",
+                "source": "...\\models\\fusion.json",
+                "source_sha256": "fc99ab8bf9979571…", "source_sha256_raw": "d7062fe5198eb38c…"}
+}
+```
+
+**归档报告的 `thresholds_sha256` 不需要重算**（已实测验证）：它是对阈值/权重/温度**数值**做的
+canonical-JSON 哈希，与 `fusion.json` 的序列化与行尾无关。
+
+```bash
+# 验证方法 1（推荐，一条命令）：把归档报告的值与服务端值哈希比对
+curl.exe -s http://127.0.0.1:8080/api/v1/version | python -c "import sys,json;print(json.load(sys.stdin)['thresholds']['value_sha256'])"
+python -c "import json;print(json.load(open('reports/batch/verify-24/samples/001.json',encoding='utf-8'))['versions']['thresholds_sha256'])"
+# 两者应同为 sha256:e9db1a93ac66363dd7e024883dc72f62be23643cea05c9756be3caa6c3c21450
+
+# 验证方法 2：同一组参数的 LF / CRLF 两种序列化 → 值哈希不变（文件哈希才会变）
+python -c "import pathlib,sys,tempfile,os;sys.path[:0]=['repo/api','repo/src'];import server;from fusion import FusionEngine;svc=server.build_service(server.build_config(server.build_argparser().parse_args(['--no-model'])),lambda m:None);lf=pathlib.Path('models/fusion.json').read_bytes().replace(b'\r\n',b'\n');p=os.path.join(tempfile.gettempdir(),'fusion_crlf.json');pathlib.Path(p).write_bytes(lf.replace(b'\n',b'\r\n'));print('LF  ',svc._thresholds_value_sha256(FusionEngine.load('models/fusion.json')));print('CRLF',svc._thresholds_value_sha256(FusionEngine.load(p)))"
+# 两行输出相同（value_sha256 与行尾无关）
+```
+
+**评审如何自行跨平台核对（一条命令）**：先把两边都换算成同一口径（归一化换行）再比 sha256：
+
+```bash
+# 在 repo/ 目录下执行：本机(可能 CRLF) 与服务端(已归一化) 的 metrics.sha256 应一致
+python -c "import hashlib,subprocess,sys;p=sys.argv[1];b=subprocess.run(['git','show','HEAD:'+p],capture_output=True).stdout or open(p,'rb').read();print('local',hashlib.sha256(b.replace(b'\r\n',b'\n')).hexdigest())" reports/metrics.json
+curl -s http://127.0.0.1:8080/api/v1/version | python -c "import sys,json;print('api  ',json.load(sys.stdin)['metrics']['sha256'])"
+# 两行相同即通过；若想核对原始字节值，用响应里的 metrics.sha256_raw 与 git blob 之外的磁盘字节比对
+```
+
+要点：**先归一化（`git show HEAD:<path>` 或 `replace(b"\r\n", b"\n")`）再比 sha256**；
+原始字节值请用响应里的 `sha256_raw` 字段（它刻意保留旧口径，便于与 `src/` 侧历史值对照）。
+
 ---
 
 ## 4. 统一错误体与错误码表
@@ -446,10 +519,13 @@ curl.exe -s -X POST --data-binary "@data/images/001.png" \
 
 | 阶段 | 实测（RTX 5070 Laptop / CUDA） | 说明 |
 | --- | --- | --- |
-| 预热耗时 | 11.9 ~ 12.0 s | 冷启动含权重加载 + 首次推理 |
-| 预热后单张图片 | 总耗时 967.8 ms，`server_total` 971.6 ms（p50 ≈ 1.0 s） | 与 `reports/metrics.json` 的 `latency_image.p50=1007.9ms`、`smoke_test.json` 的 warm 1.23/1.64 s 一致 |
-| 视频（4 s / 10 帧） | 3.19 s 推理（`server_total` 4.14 s） | 5 s 预算内 |
+| 预热耗时 | 11.9 ~ 13.7 s | 冷启动含权重加载 + 首次推理（`reports/smoke_test.json` 记录 `cold_start_ms=12874.6`） |
+| 预热后单张图片 | 单次实测 `total` 967.8 ms / `server_total` 971.6 ms | 与 `reports/metrics.json` 的 `latency_image`（当前 `p50=809.4 / p95=1216.8 / max=1258.1 ms`，随机器负载波动）及 `smoke_test.json` 的 warm 1233.7/1636.6 ms 同量级 |
+| 视频（4 s / 10 帧） | 3.19 s 推理（`server_total` 4.14 s） | 5 s 预算内（`smoke_test.json` 记录 3705.8 ms） |
 | 预热状态 | `GET /api/v1/health` → `warmup.done=true, ms=…` | 未预热时 `warmup.skipped=true` |
+
+> 本节的 `versions.*sha256` / `code_hash` / `metrics.sha256` 等摘要遵循 §3.9 的哈希口径
+> （文本类 CRLF→LF 归一化、二进制原始字节），跨平台比对前请先归一化。
 
 **请求日志**：每个请求写一行 JSON（同时输出到 stderr），落盘到 `--log`（默认
 `<reports>/api/requests.jsonl`）：
@@ -528,16 +604,20 @@ AUC (连续置信度) 1.0000
           'versions.artifact_sha256': 24, 'latency_ms.L1b': 24} all_pass=True
 ```
 
-- 真实运行示例 B（**全部 119 套，一键评测**，CUDA 预热 12.4 s，总耗时 137.4 s；按需复现、不入库）：
+- 真实运行示例 B（**全部 119 套，一键评测**，本机留存不入库；当前 `reports/batch/verify-119/`
+  的一次运行：CUDA 预热 11.9 s，总耗时 139.4 s）：
 
 ```
-批量评测：119 样本（带标签 119）  耗时 137.44 s
+批量评测：119 样本（带标签 119）  耗时 139.41 s
 Accuracy (review→real) 1.0000   FPR 0.0000   TPR 1.0000   Precision 1.0000   AUC 1.0000
 覆盖率 (非弃权) 0.7899（94/119）  保守下界 (弃权=错误) 0.7899
 混淆矩阵  TP=56  FP=0  FN=0  TN=63     (AI=56 / real=63)
 三档分布  suspect=56  normal=38  review=25   成因={'model_disagreement': 22, 'uncertainty_band': 3}
-耗时      p50=980.7 ms  p95=1482.4 ms  max=1719.6 ms  mean_wall=1027.5 ms
+耗时      p50=1030.3 ms  p95=1522.2 ms  max=1958.8 ms  mean_wall=1051.0 ms
 ```
+
+（该目录被 `.gitignore` 忽略，只有 `verify-24/` 入库；重跑后的耗时数值与上面会有小幅波动，
+以本机 `reports/batch/verify-119/metrics.json` 为准。）
 
 **入库归档：`reports/batch/verify-24/`**（24 份逐样本报告，report schema **1.1.0**，
 `metrics.json.archive_qc.markers_present` 四类标记均为 24/24、`all_pass=true`，
@@ -578,23 +658,27 @@ python tests/test_api.py --base-url http://127.0.0.1:8080   # 对已运行实例
 python api/server.py --selftest --no-model                  # 进程内自测
 ```
 
-覆盖 73 项检查（t8/F9 起新增 8 项）：health/version/openapi/metrics/reports/report 回取/静态托管、
-三种输入方式、视频、批量（multipart 与 JSON 路径）、统一错误体与错误码、报告 id 路径穿越防护、
-静态资源穿越防护、越界路径拒绝、3 路并发、单请求超时降级、multipart 解析器二进制安全单测，
-以及本次新增的报告目录回退与 schema 回归：`health.report_search_dirs`、
-`health.report_schema_version`、`version.report_schema_consistency`、`report.sample_library`
-（`GET /api/v1/report/001` 回取工作区逐样本报告）、`report.sample_library.new_schema`
-（四类 schema 标记齐全）、`static.reports_fallback`（`/reports/001.json` 同样回退）、
-`error.static_missing`、`archive.schema_markers`（逐份校验 `reports/batch/verify-24/samples/*.json`
-的 schema 1.1.0 标记）。实测结果：
+覆盖 84 项检查（t8/F9 起新增 8 项，t10 起新增 11 项）：health/version/openapi/metrics/reports/report
+回取/静态托管、三种输入方式、视频、批量（multipart 与 JSON 路径）、统一错误体与错误码、
+报告 id 路径穿越防护、静态资源穿越防护、越界路径拒绝、3 路并发、单请求超时降级、
+multipart 解析器二进制安全单测；t8 新增的报告目录回退与 schema 回归
+（`health.report_search_dirs`、`health.report_schema_version`、`version.report_schema_consistency`、
+`report.sample_library`、`report.sample_library.new_schema`、`static.reports_fallback`、
+`error.static_missing`、`archive.schema_markers`）；t10 新增的哈希口径回归
+（`hash.convention_field`、`hash.metrics_normalised_matches`、`hash.metrics_raw_companion`、
+`hash.code_hash_platform_independent`、`hash.thresholds_value_matches_archive`、
+`hash.unit_text_crlf_equals_lf`、`hash.unit_binary_raw`、`hash.unit_dotfile_text`、
+`hash.unit_variants`、`hash.unit_cache_freshness`、`hash.unit_thresholds_value_lineending_free`）。
+
+实测结果：
 
 | 套件 | 结果 |
 | --- | --- |
-| stub（`--no-model`，无权重环境） | **65 passed / 0 failed / 0 skipped** |
-| full（真实模型 + 预热 12.2 s） | **73 passed / 0 failed / 0 skipped** |
+| stub（`--no-model`，无权重环境） | **75 passed / 0 failed / 1 skipped**（跳过项为 stub 模式无 fusion 阈值的归档比对） |
+| full（真实模型 + 预热 13.3 s） | **84 passed / 0 failed / 0 skipped** |
 
-（t8 之前该套件为 stub 57 / full 65，本次在原有全部检查保持通过的基础上新增 8 项，
-因此计数由 65 变为 73。）
+计数演进：t8 之前 stub 57 / full 65；t8 新增 8 项 → 65 / 73；t10 新增 11 项 → 75 / 84
+（原有检查全部保持通过）。
 
 ---
 

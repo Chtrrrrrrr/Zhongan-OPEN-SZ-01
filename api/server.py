@@ -67,6 +67,14 @@ PIPELINE_VERSION = "open-sz-01 v0.3"
 ROOT = Path(__file__).resolve().parent.parent          # <repo>/api/server.py -> <repo>
 DOCS_SRC_EXT = {".py", ".md", ".json", ".html", ".js", ".css", ".txt"}
 
+# t10：哈希口径。文本类文件先做 CRLF->LF 归一化再哈希，使同一份内容在
+# core.autocrlf=true 的 Windows 工作区与 LF 签出（Linux/干净 clone）得到同一摘要；
+# 二进制（权重、图片、视频）保持原始字节哈希。详见 docs/api.md「哈希口径与跨平台复现」。
+TEXT_HASH_EXTS = {".py", ".md", ".json", ".csv", ".txt", ".html", ".js", ".css",
+                  ".yml", ".yaml", ".cfg", ".ini", ".toml"}
+TEXT_HASH_NAMES = {".gitignore", ".gitattributes", ".gitkeep", ".editorconfig"}
+HASH_CONVENTION = ("text files hashed after CRLF->LF normalisation; binaries as raw bytes")
+
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tif", ".tiff", ".gif"}
 VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".m4v"}
 
@@ -109,22 +117,61 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def sha256_file(path: Path, _cache: dict | None = None) -> str | None:
-    """文件 sha256（带缓存；失败返回 None，绝不影响主流程）。"""
-    key = str(path)
+def is_text_hashed(path: Path) -> bool:
+    """该路径是否按文本口径哈希（CRLF->LF 归一化）。"""
+    p = Path(path)
+    return (p.suffix.lower() in TEXT_HASH_EXTS
+            or p.suffix.lower() in TEXT_HASH_NAMES
+            or p.name.lower() in TEXT_HASH_NAMES)
+
+
+def sha256_file(path: Path, _cache: dict | None = None, *, normalise_text: bool = True) -> str | None:
+    """文件 sha256（带缓存；失败返回 None，绝不影响主流程）。
+
+    t10 口径：文本类扩展名（TEXT_HASH_EXTS/TEXT_HASH_NAMES）先把 CRLF 归一化为 LF
+    再哈希，避免 `core.autocrlf=true` 的工作区与 LF 签出对同一份内容给出不同摘要
+    （工作区字节 ≠ git blob 字节，但 `git diff` 为空）——否则评审会把纯粹的行尾差异
+    误判成证据不一致。二进制文件不受影响，保持原始字节哈希。
+    """
+    p = Path(path)
+    text_mode = bool(normalise_text) and is_text_hashed(p)
+    try:
+        st = p.stat()
+    except OSError:
+        return None
+    # 缓存键含 size+mtime_ns：文件被重新生成（评测产物/报告刷新）后不会返回过期摘要
+    key = f"{'text' if text_mode else 'raw'}:{p}:{st.st_size}:{st.st_mtime_ns}"
     if _cache is not None and key in _cache:
         return _cache[key]
     try:
         h = hashlib.sha256()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(1 << 20), b""):
-                h.update(chunk)
+        with open(p, "rb") as f:
+            if text_mode:
+                # 文本文件通常很小；整体读入后归一化行尾再哈希
+                h.update(f.read().replace(b"\r\n", b"\n"))
+            else:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    h.update(chunk)
         digest = h.hexdigest()
     except OSError:
         return None
     if _cache is not None:
         _cache[key] = digest
     return digest
+
+
+def sha256_file_variants(path: Path, _cache: dict | None = None) -> dict:
+    """同时给出两种口径下的摘要，便于与 src/ 侧（原始字节）历史值交叉核对。
+
+    返回 {sha256, sha256_raw, convention, text, equal}；两个值相同时 sha256_raw 省略。
+    """
+    p = Path(path)
+    norm = sha256_file(p, _cache, normalise_text=True)
+    raw = sha256_file(p, _cache, normalise_text=False)
+    out = {"sha256": norm, "text": is_text_hashed(p), "convention": HASH_CONVENTION}
+    if norm is not None and raw is not None and norm != raw:
+        out["sha256_raw"] = raw
+    return out
 
 
 def is_within(path: Path, root: Path) -> bool:
@@ -647,12 +694,15 @@ class DetectorService:
             if p is None:
                 models[key] = {"path": None, "exists": False}
                 continue
-            models[key] = {
+            entry = {
                 "path": str(p),
                 "exists": Path(p).exists(),
                 "bytes": Path(p).stat().st_size if Path(p).exists() and Path(p).is_file() else None,
-                "sha256": sha256_file(Path(p), self.hash_cache) if Path(p).is_file() else None,
+                "sha256": None,
             }
+            if Path(p).is_file():
+                entry.update(sha256_file_variants(Path(p), self.hash_cache))
+            models[key] = entry
         fusion = getattr(self.detector, "fusion", None)
         thresholds = {}
         if fusion is not None:
@@ -662,27 +712,38 @@ class DetectorService:
                 "disagree_review": float(getattr(fusion, "disagree_review", 0.0)),
                 "weights": getattr(fusion, "weights", {}),
                 "temperatures": {k: v.temperature for k, v in getattr(fusion, "scalers", {}).items()},
+                # 阈值"值"的规范化哈希（与行尾无关，src/report.py:thresholds_sha256 同口径）
+                "value_sha256": self._thresholds_value_sha256(fusion),
                 "source": str(self.model_paths.get("fusion_json") or "") or None,
-                "source_sha256": sha256_file(self.model_paths["fusion_json"], self.hash_cache)
-                if self.model_paths.get("fusion_json") else None,
+                "source_sha256": None,
             }
+            if self.model_paths.get("fusion_json"):
+                variants = sha256_file_variants(self.model_paths["fusion_json"], self.hash_cache)
+                thresholds["source_sha256"] = variants.get("sha256")
+                if variants.get("sha256_raw"):
+                    thresholds["source_sha256_raw"] = variants["sha256_raw"]
         metrics_path = self.cfg.metrics_path
         metrics_summary = {"path": str(metrics_path), "exists": metrics_path.is_file()}
         if metrics_path.is_file():
             summary = read_metrics(metrics_path) or {}
             metrics_summary.update({
-                "sha256": sha256_file(metrics_path, self.hash_cache),
                 "n_samples": summary.get("n_samples"),
                 "oof_accuracy": (summary.get("oof_overall") or {}).get("accuracy"),
                 "oof_fpr": (summary.get("oof_overall") or {}).get("fpr"),
                 "oof_tpr": (summary.get("oof_overall") or {}).get("tpr"),
             })
+            metrics_summary.update(sha256_file_variants(metrics_path, self.hash_cache))
         code = code_fingerprint(self.cfg)
         return {
             "service": SERVICE_NAME,
             "service_version": SERVICE_VERSION,
             "api_version": API_VERSION,
             "report_schema_version": pipeline_report_schema_version(),
+            "hash_convention": HASH_CONVENTION,
+            "hash_convention_note": (
+                "所有 sha256 都是「签出字节」哈希：文本类文件先做 CRLF->LF 归一化，"
+                "二进制保持原始字节。与 src/ 侧（原始字节）历史值比对时用 sha256_raw；"
+                "跨平台核对见 docs/api.md「哈希口径与跨平台复现」。"),
             "pipeline": {"version": PIPELINE_VERSION, "mode": self.mode,
                          "device": getattr(self.detector, "device", None),
                          "time_budget_s": self.cfg.time_budget_s,
@@ -695,6 +756,28 @@ class DetectorService:
                         "executable": sys.executable},
             "generated_at": utc_now_iso(),
         }
+
+    @staticmethod
+    def _thresholds_value_sha256(fusion) -> str | None:
+        """决策参数的规范化哈希（canonical JSON of values，与任何文件行尾无关）。
+
+        与 src/report.py:thresholds_sha256 采用同一构造，便于把 /version 与归档报告的
+        versions.thresholds_sha256 直接比对。
+        """
+        try:
+            payload = {
+                "thr_low": round(float(fusion.thr_low), 10),
+                "thr_high": round(float(fusion.thr_high), 10),
+                "disagree_review": round(float(getattr(fusion, "disagree_review", 1.25)), 10),
+                "weights": {str(k): round(float(v), 10) for k, v in dict(fusion.weights).items()},
+                "temperatures": {str(k): round(float(getattr(v, "temperature", v)), 10)
+                                 for k, v in dict(getattr(fusion, "scalers", {})).items()},
+            }
+            blob = json.dumps(payload, sort_keys=True, ensure_ascii=False,
+                              separators=(",", ":")).encode("utf-8")
+            return "sha256:" + hashlib.sha256(blob).hexdigest()
+        except Exception:  # noqa: BLE001
+            return None
 
 
 def pipeline_report_schema_version() -> str:
@@ -731,7 +814,11 @@ def load_pipeline_modules(logger):
 
 
 def code_fingerprint(cfg: "ServerConfig") -> dict:
-    """代码版本与哈希：git commit（若有）+ 源文件内容 sha256。"""
+    """代码版本与哈希：git commit（若有）+ 源文件内容 sha256。
+
+    t10：逐文件摘要走文本口径（CRLF->LF 归一化），因此同一份提交内容在
+    Windows(CRLF 工作区) 与 LF 签出上得到同一个 code_hash，可用作跨平台证据比对。
+    """
     files: list[Path] = []
     for sub in ("api", "src", "scripts", "tests"):
         d = ROOT / sub
@@ -744,17 +831,23 @@ def code_fingerprint(cfg: "ServerConfig") -> dict:
             files.append(p)
     h = hashlib.sha256()
     entries = []
+    n_text = 0
     for p in files:
         digest = sha256_file(p)
         if digest is None:
             continue
         rel = p.relative_to(ROOT).as_posix()
         entries.append({"path": rel, "sha256": digest})
+        n_text += 1 if is_text_hashed(p) else 0
         h.update(rel.encode("utf-8"))
         h.update(digest.encode("ascii"))
     out = {
         "root": str(ROOT),
         "n_source_files": len(entries),
+        "n_text_normalised": n_text,
+        "hash_convention": HASH_CONVENTION,
+        "code_hash_algorithm": "sha256(concat(sorted(rel_path_utf8, sha256_hex))), "
+                               "per-file digest normalised for text files",
         "code_hash": h.hexdigest() if entries else None,
         "git_commit": None,
         "git_branch": None,
@@ -1255,6 +1348,9 @@ def build_openapi(cfg: ServerConfig, base_url: str, mode: str) -> dict:
                 "properties": {
                     "service": {"type": "string"}, "service_version": {"type": "string"},
                     "api_version": {"type": "string"}, "report_schema_version": {"type": "string"},
+                    "hash_convention": {"type": "string",
+                                        "description": "sha256 口径：文本类 CRLF->LF 归一化、二进制原始字节"},
+                    "hash_convention_note": {"type": "string"},
                     "pipeline": {"type": "object"}, "code": {"type": "object"},
                     "models": {"type": "object"}, "thresholds": {"type": "object"},
                     "metrics": {"type": "object"}, "runtime": {"type": "object"},

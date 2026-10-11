@@ -200,15 +200,27 @@ class Suite:
         }
 
 
+_SERVER_MODULE = None
+
+
+def server_module():
+    """加载 api/server.py（供哈希口径等纯函数单测复用；dataclasses 需要 sys.modules 注册）。"""
+    global _SERVER_MODULE
+    if _SERVER_MODULE is None:
+        spec = importlib.util.spec_from_file_location("open_sz_api_server",
+                                                      ROOT / "api" / "server.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        _SERVER_MODULE = mod
+    return _SERVER_MODULE
+
+
 def _unit_multipart_parser(s: Suite):
     """multipart 解析器直接单测：二进制安全（含 CRLF/零字节/近 boundary 内容）。"""
     name = "unit.multipart_parser"
     try:
-        spec = importlib.util.spec_from_file_location("open_sz_api_server",
-                                                      ROOT / "api" / "server.py")
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = mod      # dataclasses 需要模块已注册（_is_type 查 sys.modules）
-        spec.loader.exec_module(mod)
+        mod = server_module()
         boundary = "----unitboundary"
         payload = b"\x00\x01\r\n--not-the-boundary\r\n\xff" * 3
         body = multipart_body([("file", "a.png", payload, "image/png")], boundary)
@@ -218,6 +230,91 @@ def _unit_multipart_parser(s: Suite):
         s.check(name, ok, f"parts={len(parts)} binary_safe={ok}")
     except Exception as e:  # noqa: BLE001
         s.check(name, False, f"{type(e).__name__}: {e}")
+
+
+def _unit_hash_convention(s: Suite):
+    """t10 哈希口径单测：文本类 CRLF/LF 同值、二进制保持原始字节。"""
+    try:
+        mod = server_module()
+    except Exception as e:  # noqa: BLE001
+        s.check("hash.unit_text_crlf_equals_lf", False, f"{type(e).__name__}: {e}")
+        return
+    tmp = Path(tempfile.mkdtemp(prefix="opensz01_hash_"))
+    lf = b'{"thresholds": {"low": 0.0364, "high": 0.6743}}\n{"member": "clean"}\n'
+    crlf = lf.replace(b"\n", b"\r\n")
+    p_lf, p_crlf = tmp / "a.json", tmp / "b.md"
+    p_lf.write_bytes(lf)
+    p_crlf.write_bytes(crlf)
+    norm_same = mod.sha256_file(p_lf) == mod.sha256_file(p_crlf)
+    raw_diff = (mod.sha256_file(p_lf, normalise_text=False)
+                != mod.sha256_file(p_crlf, normalise_text=False))
+    s.check("hash.unit_text_crlf_equals_lf", norm_same and raw_diff,
+            f"normalised_equal={norm_same} raw_differs={raw_diff} "
+            f"(norm={str(mod.sha256_file(p_lf))[:16]}… raw={str(mod.sha256_file(p_lf, normalise_text=False))[:16]}…)")
+
+    # 二进制：CRLF 与 LF 字节流不同 → 摘要不同，且不被文本口径归一化
+    b_lf = tmp / "w.pt"
+    b_crlf = tmp / "w.bin"
+    b_lf.write_bytes(b"\x00\x01\x02\r\n\x03" + b"\x7f" * 32)
+    b_crlf.write_bytes(b"\x00\x01\x02\n\x03" + b"\x7f" * 32)
+    bin_diff = mod.sha256_file(b_lf) != mod.sha256_file(b_crlf)
+    not_text = not mod.is_text_hashed(b_lf) and not mod.is_text_hashed(b_crlf)
+    s.check("hash.unit_binary_raw", bin_diff and not_text,
+            f"binary_differs={bin_diff} treated_as_text={not not_text}")
+
+    # 无扩展名的点文件（.gitignore 等）也按文本口径：两个目录里放同名点文件做对照
+    d1, d2 = tmp / "dot1", tmp / "dot2"
+    d1.mkdir(exist_ok=True)
+    d2.mkdir(exist_ok=True)
+    gi_lf, gi_crlf = d1 / ".gitignore", d2 / ".gitignore"
+    gi_lf.write_bytes(b"reports/*\n!reports/metrics.json\n")
+    gi_crlf.write_bytes(b"reports/*\r\n!reports/metrics.json\r\n")
+    s.check("hash.unit_dotfile_text", mod.is_text_hashed(gi_lf)
+            and mod.sha256_file(gi_lf) == mod.sha256_file(gi_crlf),
+            f"is_text={mod.is_text_hashed(gi_lf)} equal={mod.sha256_file(gi_lf) == mod.sha256_file(gi_crlf)}")
+
+    # 变体接口：文本文件同时给出 sha256 与 sha256_raw，二进制只给一个
+    v_text = mod.sha256_file_variants(p_crlf)
+    v_bin = mod.sha256_file_variants(b_lf)
+    s.check("hash.unit_variants",
+            v_text.get("sha256") and v_text.get("sha256_raw")
+            and v_text["sha256"] != v_text["sha256_raw"]
+            and "sha256_raw" not in v_bin
+            and v_text.get("convention") == mod.HASH_CONVENTION,
+            f"text_variants={sorted(v_text)} bin_variants={sorted(v_bin)}")
+
+    # 缓存新鲜度：同一路径内容变化后（size/mtime 变）不得复用旧摘要
+    cache: dict = {}
+    mut = tmp / "mutable.json"
+    mut.write_bytes(b'{"v": 1}\n')
+    h_before = mod.sha256_file(mut, cache)
+    mut.write_bytes(b'{"v": 111111}\n')
+    h_after = mod.sha256_file(mut, cache)
+    s.check("hash.unit_cache_freshness",
+            h_before is not None and h_after is not None and h_before != h_after,
+            f"before={str(h_before)[:12]}… after={str(h_after)[:12]}… cached_pairs={len(cache)}")
+
+    # 阈值值哈希与行尾无关（构造两个只差行尾的 fusion.json）
+    try:
+        sys.path.insert(0, str(ROOT / "src"))
+        from fusion import FusionEngine                       # noqa: PLC0415
+        lf_bytes = (ROOT.parent / "models" / "fusion.json").read_bytes().replace(b"\r\n", b"\n")
+        f_lf, f_crlf = tmp / "fusion_lf.json", tmp / "fusion_crlf.json"
+        f_lf.write_bytes(lf_bytes)
+        f_crlf.write_bytes(lf_bytes.replace(b"\n", b"\r\n"))
+        args = mod.build_argparser().parse_args(["--no-model", "--no-warmup"])
+        svc = mod.build_service(mod.build_config(args), lambda m: None)
+        v1 = svc._thresholds_value_sha256(FusionEngine.load(str(f_lf)))
+        v2 = svc._thresholds_value_sha256(FusionEngine.load(str(f_crlf)))
+        s.check("hash.unit_thresholds_value_lineending_free",
+                bool(v1) and v1 == v2 and v1.startswith("sha256:"),
+                f"value_sha256={v1}  (LF/CRLF variants equal; raw file sha256 differs: "
+                f"{str(mod.sha256_file(f_lf, normalise_text=False))[:12]} vs "
+                f"{str(mod.sha256_file(f_crlf, normalise_text=False))[:12]} "
+                f"| normalised file sha256: {str(mod.sha256_file(f_lf))[:12]} vs "
+                f"{str(mod.sha256_file(f_crlf))[:12]})")
+    except Exception as e:  # noqa: BLE001
+        s.skip("hash.unit_thresholds_value_lineending_free", f"{type(e).__name__}: {e}")
 
 
 # --------------------------------------------------------------------------- #
@@ -297,6 +394,69 @@ def run_suite(base_url: str, *, full_mode: bool = False, verbose: bool = True,
                 and ver.get("report_schema_version") == health.get("report_schema_version"),
                 f"version={ver.get('report_schema_version')} health="
                 f"{health.get('report_schema_version')}")
+        # ---------------- t10：哈希口径（跨平台可比） ----------------
+        conv = str(ver.get("hash_convention") or "")
+        s.check("hash.convention_field", "CRLF" in conv and "raw bytes" in conv,
+                f"hash_convention={conv!r}")
+        mod = None
+        try:
+            mod = server_module()
+        except Exception as e:  # noqa: BLE001
+            s.check("hash.metrics_normalised_matches", False, f"{type(e).__name__}: {e}")
+        if mod is not None:
+            mp = ROOT / "reports" / "metrics.json"
+            if mp.is_file():
+                want_norm = mod.sha256_file(mp)
+                want_raw = mod.sha256_file(mp, normalise_text=False)
+                got = ver.get("metrics") or {}
+                s.check("hash.metrics_normalised_matches",
+                        got.get("sha256") == want_norm,
+                        f"api={str(got.get('sha256'))[:16]}… local_normalised={str(want_norm)[:16]}…")
+                # 只有当磁盘字节确实含 CRLF 时，才应出现 sha256_raw（保留旧口径便于与 src/ 侧比对）
+                if want_norm != want_raw:
+                    s.check("hash.metrics_raw_companion",
+                            got.get("sha256_raw") == want_raw,
+                            f"api_raw={str(got.get('sha256_raw'))[:16]}… local_raw={str(want_raw)[:16]}…")
+                else:
+                    s.skip("hash.metrics_raw_companion",
+                           "工作区 metrics.json 已是 LF（无原始/归一化差异）")
+            else:
+                s.skip("hash.metrics_normalised_matches", "reports/metrics.json 不存在")
+            # code_hash：两次抓取一致（排除并发编辑）后再与本地重算比对
+            r2 = request("GET", f"{base}{API_PREFIX}/version")
+            try:
+                ver2 = r2.json() if r2.status == 200 else {}
+            except Exception:  # noqa: BLE001
+                ver2 = {}
+            local_code = mod.code_fingerprint(None).get("code_hash")
+            code2 = (ver2.get("code") or {}).get("code_hash")
+            if code2 and code2 != (ver.get("code") or {}).get("code_hash"):
+                s.skip("hash.code_hash_platform_independent",
+                       "两次抓取之间检测到源码变更（并发编辑），跳过比对")
+            else:
+                s.check("hash.code_hash_platform_independent",
+                        bool(local_code) and local_code == code_hash,
+                        f"api={str(code_hash)[:16]}… local_recompute={str(local_code)[:16]}… "
+                        f"(n_text_normalised={code.get('n_text_normalised')}/"
+                        f"{code.get('n_source_files')})")
+        # 归档报告的 thresholds_sha256 是值哈希：应与服务端 value_sha256 一致且与行尾无关
+        arch_sample = ROOT / "reports" / "batch" / "verify-24" / "samples" / "001.json"
+        thr = ver.get("thresholds") or {}
+        if arch_sample.is_file():
+            try:
+                arch = json.loads(arch_sample.read_text(encoding="utf-8"))
+                arch_val = (arch.get("versions") or {}).get("thresholds_sha256")
+                if not thr.get("value_sha256"):
+                    s.skip("hash.thresholds_value_matches_archive", "stub 模式无 fusion 阈值（跳过）")
+                else:
+                    s.check("hash.thresholds_value_matches_archive",
+                            thr.get("value_sha256") == arch_val,
+                            f"api={thr.get('value_sha256')} archive={arch_val}")
+            except Exception as e:  # noqa: BLE001
+                s.check("hash.thresholds_value_matches_archive", False,
+                        f"{type(e).__name__}: {e}")
+        else:
+            s.skip("hash.thresholds_value_matches_archive", "未见 verify-24 归档样本")
         if full_mode:
             s.check("version.thresholds.low_high",
                     isinstance((ver.get("thresholds") or {}).get("low"), (int, float))
@@ -653,6 +813,7 @@ def run_suite(base_url: str, *, full_mode: bool = False, verbose: bool = True,
                 f"mode={h.get('mode')} status={h.get('status')}")
 
     _unit_multipart_parser(s)
+    _unit_hash_convention(s)
 
     summary = s.summary()
     if verbose:
