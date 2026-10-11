@@ -24,13 +24,15 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ---------- 闁轰胶澧楀畵浣圭▔鎼绰颁海闁哄倸娲ｅ▎銏ゆ晬閸粎鐟濋柛蹇嬪劚缁ㄩ亶鏁? Data & large files (not tracked) ----------
-# 闁告稐绮欓。浠嬪箵閹邦亞杩旈柣?246MB xlsx闁靛棔鐒﹁ぐ渚€宕ｉ弽褍姣夐柣銊ュ濞存﹢鎮ч崶鈺冩惣闁告鍠庨～鎰板极閻楀牆绁﹀☉鎾亾鐎垫澘顑勭粭澶愬礂閵夈儳姘?*.xlsx
+# ---------- 数据与大文件（不入库）/ Data & large files (not tracked) ----------
+# 命题提供的 246MB xlsx、提取出的图片等原始数据一律不入库
+*.xlsx
 *.xls
 data/images/
 data/raw/
 data/extracted/
 data/interim/
+data/external/
 *.png
 *.jpg
 *.jpeg
@@ -44,14 +46,15 @@ data/interim/
 *.mov
 *.mkv
 
-# 闁哄倸娲﹂妴鍌滅尵婵犳碍楗柟顑挎祰缁侇偄鈹冮幇顔筋仱闁告艾绉村畷鐔兼晬閸︻湅ADME/闁哄倸娲﹂妴鍌炴煀瀹ュ懏绂堥柡鈧幆褎韬?assets/闁挎稑鑻崢鎴犳媼缁嬪灝寮抽幖瀛樻惈缁?!assets/**/*.png
+# 文档类静态资源白名单（README/文档配图放在 assets/，允许入库）
+!assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
 !assets/**/*.gif
 !assets/**/*.webp
 
-# ---------- 婵☆垪鈧磭鈧兘寮堕崘顔兼闁挎稑鐗呯粭澶愬礂閵夈儳姘ㄩ柨娑欑☉椤┭囨閳ь剟宕楅崣姗€鐓╅悹鍥腹婵炲洭鎮?Git LFS 闁瑰瓨鐗曢ˇ濠氭焾閵娿儱鐎婚柛娆愬煀缁?----------
-# 闁规亽鍔忓畷姗€鏁嶅顡痶 lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
+# ---------- 模型权重（不入库；如需共享请使用 Git LFS 或外部分发） ----------
+# 推荐：git lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
 models/*
 !models/.gitkeep
 *.pt
@@ -64,7 +67,7 @@ models/*
 *.pkl
 *.joblib
 
-# ---------- 閺夆晜鍔橀、鎴炵瑜忔晶?----------
+# ---------- 运行产物 ----------
 reports/*
 !reports/.gitkeep
 !reports/metrics.json
@@ -74,22 +77,34 @@ reports/*
 !reports/error_analysis.csv
 !reports/npr_ablation.json
 !reports/robustness_matrix.json
-# 杩愯鏃朵骇鐗╋細API 钀界洏鎶ュ憡涓庤姹傛棩蹇椾笉鍏ュ簱锛沚atch 鍙叆搴?verify-24 褰掓。锛堣 reports/batch/README.md锛?reports/api/
+
+# 运行时产物：API 落盘报告与请求日志不入库
+reports/api/
+
+# batch 归档只入库 verify-24（见 reports/batch/README.md；verify-119 本机保留但不入库）
 !reports/batch/
 reports/batch/*
 !reports/batch/README.md
 !reports/batch/verify-24/
-# F7: robustness_smoke.json锛堟棭鏈?6 鏍锋湰鎺㈤拡锛岄潪鏈夋晥璇佹嵁锛変笌 video_smoke.json 宸蹭笉瀛樺湪锛?# 鍏剁櫧鍚嶅崟琛屼竴骞剁Щ闄わ紝閬垮厤璇斁琛屾棤鏁堣瘉鎹€?# metrics pack (manual ch.12.1 / 13.1 / 15.1 / 16.2)
+
+# metrics pack (manual ch.12.1 / 13.1 / 15.1 / 16.2)
 !reports/calibration.json
 !reports/member_analysis.json
 !reports/threshold_stability.json
 !reports/stratified_analysis.json
 !reports/resource_profile.json
-# compliance-audit F3c: frozen-split vs out-of-fold protocol reconciliation
+
+# compliance audit: frozen-split vs out-of-fold protocol reconciliation (F3c)
 !reports/protocol_reconciliation.json
+
+# compliance audit fixes: cross-generator test, D2/D3 key attempt, AEROBLADE ablation
 !reports/cross_generator.json
 !reports/meta_proxy_attempt.json
 !reports/aeroblade_ablation.json
+
+# F7：robustness_smoke.json（早期 6 样本探针，非有效证据）与 video_smoke.json 已不存在，
+# 对应的白名单行一并移除，避免误放行无效证据。
+
 *.log
 outputs/
 runs/

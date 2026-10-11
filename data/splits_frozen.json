@@ -1,0 +1,17 @@
+{
+ "created": "2026-10-10T17:20:33Z",
+ "seed": 42,
+ "ratios": {
+  "train": 0.6,
+  "val": 0.2,
+  "test": 0.2
+ },
+ "source_manifest": "data/manifest.json",
+ "splits_file": "data\\splits.json",
+ "signatures": {
+  "train": "68878660214c501a68be0d704577cb2af6a52d5be6442c3154a9d6893a67d7c9",
+  "val": "5930150ed497e7daa01d58a861a72e5aa1061e6416520e29a293d911675d383c",
+  "test": "52240ce6ecc463f2872ca5fdc80eba76164819abe28d5a20c1150a3506546410"
+ },
+ "note": "D8：最终报告只允许使用与本冻结文件签名一致的划分；阈值/权重/模型选择只在 val 上进行（D6/D7）。"
+}

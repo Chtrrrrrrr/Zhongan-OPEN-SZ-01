@@ -7,6 +7,8 @@
 > 审计方法：**先读取证据文件再下结论**。本报告全部结论均指向仓库内可复现的文件与数值；未做任何推测性判定。
 >
 > 路径约定：正文中的 `docs/…`、`src/…`、`scripts/…`、`api/…`、`demo/…` 为**仓库内相对路径**（即 `repo/` 下），`reports/…`、`models/…`、`data/…` 为**工作区相对路径**（即与 `repo/` 同级）。本报告自身路径为 `repo/docs/compliance-audit.md`。
+>
+> ⚠️ **本文件含两轮审计**：第 0–4 节与附录 A/B 为**第一轮（t5）**原始记录，**未作任何删改**；文末 **「第二轮复验（t9）」** 为复验追加章节，含逐项改判、8 项新增发现（N1–N8）、更新后的验收命令清单，以及**最新总结论（见 §5.5）**。查结论请直接读 **§5.5**。
 
 ---
 
@@ -685,7 +687,7 @@ python -c "import csv,hashlib,json,numpy as np;from sklearn.model_selection impo
 
 | 编号 | 等级 | 问题 | 证据 | 最小修补 |
 |---|---|---|---|---|
-| **N1** | **高** | `reports/cross_generator.json` 是**空证据**：三个 fold 的 `overall_auc_on_holdout` 全为 `NaN`、`per_generator.*.auc` 全为 `null`；该 JSON 还含 `NaN` 字面量（**非法严格 JSON**，`JSON.parse` 会抛错） | `models/crossgen.log` 三条 `UndefinedMetricWarning: Only one class is present in y_true. ROC AUC score is not defined`；`repo/scripts/cross_generator_test.py:187-189` 令 `mask_hold` 只含被留出生成器的样本（全是 AI 类）→ 单类；`:205` 因此返回 None；脚本 `:207-218` 的 `holdout_at_3pct_real_budget` 因 `real_hold.sum()==0` 被整块跳过 | 把 Real 样本一并留在 holdout：`mask_hold = np.isin(g, held_ids) | (g == 0)`，或改为报告"留出生成器在固定真实 FPR 预算下的 TPR"；写出前把 `NaN/None` 归一为 `null`；修好后重跑 `python repo/scripts/cross_generator_test.py` |
+| **N1** | **高** | `reports/cross_generator.json` 是**空证据**：三个 fold 的 `overall_auc_on_holdout` 全为 `NaN`、`per_generator.*.auc` 全为 `null`；该 JSON 还含 `NaN` 字面量（**非法严格 JSON**，`JSON.parse` 会抛错） | `models/crossgen.log` 三条 `UndefinedMetricWarning: Only one class is present in y_true. ROC AUC score is not defined`；`repo/scripts/cross_generator_test.py:187-189` 令 `mask_hold` 只含被留出生成器的样本（全是 AI 类）→ 单类；`:205` 因此返回 None；脚本 `:207-218` 的 `holdout_at_3pct_real_budget` 因 `real_hold.sum()==0` 被整块跳过 | 把 Real 样本一并留在 holdout：`mask_hold = np.isin(g, held_ids) or (g == 0)`，或改为报告"留出生成器在固定真实 FPR 预算下的 TPR"；写出前把 `NaN/None` 归一为 `null`；修好后重跑 `python repo/scripts/cross_generator_test.py` |
 | **N2** | 高 | `.gitignore:69 reports/*` 使两项新证据**永不可入库**，且其中一项未归档到 `repo/reports/` | `git check-ignore -v -- reports/aeroblade_ablation.json reports/cross_generator.json` → 均命中 `.gitignore:69:reports/*`；`Test-Path repo/reports/cross_generator.json` → False（`aeroblade_ablation.json` 已复制到 `repo/reports/`，但同样被忽略） | 在 `.gitignore` 白名单补 `!reports/aeroblade_ablation.json`、`!reports/cross_generator.json`，复制 `reports/cross_generator.json → repo/reports/`，然后提交 |
 | **N3** | 中 | **归档漂移（新实例）**：工作区 `reports/metrics.json` 与仓库归档 `repo/reports/metrics.json` 的**仅 latency 块**不同 —— 工作区 P50 809.4 / P95 1216.8 / mean 912.1 / max 1258.1，归档 P50 1007.9 / P95 1300.6 / mean 1054.2 / max 1392.7（分类指标全部逐位相同：acc 0.958 / fpr 0.0317 / tpr 0.9464 / TP53-TN61-FP2-FN3） | SHA-256 比对：`metrics.json` ws=`4906DF2F5DAD` vs repo=`398DFA4FD545`（DIFF）；其余 10 个证据文件 same | 二选一：把工作区 `reports/metrics.json` 同步到 `repo/reports/`（并让 `docs/results.md §5` 引用新值），或重跑 `evaluate_system.py` 后同步；同时把 `docs/results.md §5.1` 的说明扩到"归档即口径基准"。**注意**：第一轮 A7.6/B9.3 引用的 1007.9/1300.6 仍与归档一致，故对照表结论不受影响 |
 | **N4** | 中 | `docs/results.md:15`（§1 KR3 行）未随 F6 修补更新，与同文件 §5 冲突 | 见 F6 行 | 见 F6 行 |

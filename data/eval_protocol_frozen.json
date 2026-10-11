@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "kind": "evaluation_protocol",
+  "created": "2026-10-11T03:52:12Z",
+  "note": "Freezes the EVALUATION protocol only. The data split stays frozen in data/splits_frozen.json and is verified by `scripts/split_dataset.py --verify-frozen`; this file adds the out-of-fold protocol signature required by audit finding F3c and manual ch.15/17.3.",
+  "why_two_files": "data/splits_frozen.json governs the D1-D8 split discipline; the headline metrics use stratified out-of-fold CV because a single 24-sample test set has accuracy std 0.0422 and only 56.4% of draws reach >=95% (reports/protocol_reconciliation.json).",
+  "protocol": {
+    "cv": "stratified k-fold out-of-fold, k=5, shuffle=True, random_state=42, stratified on label (ai/real)",
+    "inner_cv": "k=4 for temperature fitting (random_state=100+fold)",
+    "head_selection": "every head is fit on the training fold only; no selection or threshold search on the held-out fold",
+    "threshold": "order statistic of the training-fold real scores; target FPR 0.03 with an absolute false-positive budget of floor(0.03*70)=2 (transferable across set sizes)",
+    "members": [
+      "combined",
+      "forensic"
+    ],
+    "external_member_admission": "clip_external enters a fold only if its training-fold AUC >= 0.65"
+  },
+  "signatures": {
+    "fold_assignment_sha256": "021c8fe2ef6637676364653874bf9cb3dbd74f06d1cdbd94b9f01a75fa7b6740",
+    "protocol_sha256": "1e598726bcb656e268b6ddf5c99486958adf30cbca6af22c37462402e845ec37",
+    "artifacts_sha256": {
+      "features.csv": "bf717e44f8232735c3b0f32fd42baf1b9bf5255791df16190b8a2b9545ec2630",
+      "data/labels.csv": "3136c3d02bd213ae2cbcb4795c5dea81a2c7abb814294649cb1bd897ec247e36",
+      "models/l1b_feats_119.npy": "02897baad9bc6e12c071ed0538bbb70dc0bbe26865dbff2791c043a463204b21",
+      "models/clip_feats_119.npy": "544399a697f2b9c9b9b434f45908e5f3ac6ed81125aea046ba68bf822371851d",
+      "models/clip_feats_norm_119.npy": "a24abd270e79b882c4cb6b5d520f81a1fd7555ee5b025f4bedf2f764c8780364",
+      "models/clip_tiles_119.npy": "46b66a02d28f0ef585303c35ac6c4382a28dd67a0c76bfa0506b6bd04c798356",
+      "models/npr_scores_119.npy": "721702940d2f9007ad861bd9358bc795a8b1ad781c14ed36a8c15788ffe9d2d4",
+      "models/clip_probe_norm.pt": "d040ca02207f478d547c79cae27c198e430779c0e71fa8dc7a80315b717adbde",
+      "models/npr.pt": "d9fcd961806f38f41339fa203ef7a11b4fd9c793b1bb23311fd73681f44c574e",
+      "models/fusion.json": "d7062fe5198eb38c58211d76ef178b6a65196c055b7f426277f249586190a011",
+      "repo/scripts/evaluate_system.py": "5c24674b31e65c6a0aac1f52fb9e9a9996390097be3189a6c3d32a4cd73e9889",
+      "repo/scripts/metrics_common.py": "533ec0a1054677d9cd2b0745d0082086abac94aa4d2e52349487638ad7732199",
+      "repo/scripts/calibration_analysis.py": "1a4aeab4722b8cc83dde647c4664500ab66ba7c2307464af6c58275ee632a7ad",
+      "repo/scripts/member_analysis.py": "b85106ee8e414627b9dc89d28231e37a87eccf068f814dbecaafa8f78b788b0e",
+      "repo/scripts/threshold_stability.py": "2993a2e418d15cec928db13c4fb80081053ad50d571d434c794dcda3186b7c39",
+      "repo/scripts/resource_profile.py": "08d1651bd256ab9094136a86c3b261252b407844d43ab5d4212e78ab9f301d2f",
+      "repo/scripts/stratified_analysis.py": "a17cd13832681a18eb205756b309115e7badc5cff90a503795320e9cfffc0cdf",
+      "data/splits_frozen.json": "a42c43a2baeec23a6bd20059d14c31035ed2c1853b855fc6fa0a2fec4c070d37",
+      "data/splits.json": "14695cea1a95dd755dfc6b6f5aee1262aecd3e8f9f7a437b1e938bd4372de7f0"
+    }
+  },
+  "headline_metrics_on_this_signature": {
+    "accuracy": 0.9412,
+    "fpr": 0.0317,
+    "tpr": 0.9107,
+    "precision": 0.9623,
+    "confusion": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+    }
+  },
+  "verification_command": "python repo/scripts/freeze_eval_protocol.py --verify"
+}
