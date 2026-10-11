@@ -149,11 +149,22 @@ class FusionEngine:
         )
 
     # ---------- persistence ----------
+    # Thresholds live in the fused PROBABILITY space, i.e. the same space as the value
+    # `fuse()` returns. Calibration is easier to reason about in logits, so the
+    # calibration scripts carry a logit threshold; `from_logit_threshold` converts it.
+    # Mixing the two units silently sends every sample into the review band (a
+    # probability in [0,1] can never reach a logit threshold above 1), so the
+    # conversion is done in exactly one place.
+    @staticmethod
+    def probability_from_logit(logit: float) -> float:
+        return float(1.0 / (1.0 + np.exp(-float(logit))))
+
     def save(self, path: str):
         payload = {
             "weights": self.weights,
             "thr_low": self.thr_low,
             "thr_high": self.thr_high,
+            "threshold_space": "probability",
             "disagree_review": self.disagree_review,
             "temperatures": {k: v.temperature for k, v in self.scalers.items()},
         }

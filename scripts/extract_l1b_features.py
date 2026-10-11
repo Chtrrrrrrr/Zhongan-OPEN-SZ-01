@@ -35,7 +35,10 @@ def main():
     rows = []
     with open(data_dir / "labels.csv", encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            rows.append((int(r["seq"]), r["file"] if r["file"].endswith(".png") else r["filename"],
+            # older label files carry the path under "file", the current one under
+            # "filename" - accept both instead of failing on the header spelling
+            rel = r.get("file") or r.get("filename") or ""
+            rows.append((int(r["seq"]), rel if rel.endswith(".png") else r["filename"],
                          r["label"]))
 
     out_dir = Path(args.out_dir)

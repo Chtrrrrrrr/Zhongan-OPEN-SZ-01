@@ -1,16 +1,2881 @@
 {
-  "cold_start_ms": 13437.5,
-  "warm_image_ms": [
-    1948.6,
-    2471.2
-  ],
-  "video": {
-    "ms": 2334.7,
-    "verdict": "suspect",
-    "confidence": 0.7852,
-    "duration_s": 4.0
+ "throughput_ms": {
+  "p50": 1602.1677000098862,
+  "p95": 2039.3805600062476,
+  "max": 2269.3641999503598
+ },
+ "decision": {
+  "accuracy": 1.0,
+  "fpr": 0.0,
+  "tpr": 1.0,
+  "confusion": {
+   "tp": 56,
+   "tn": 63,
+   "fp": 0,
+   "fn": 0
+  }
+ },
+ "three_tier": {
+  "suspect": 56,
+  "review": 19,
+  "normal": 44
+ },
+ "rows": [
+  {
+   "seq": 1,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9738,
+   "fused": 0.9738,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1637.0,
+   "stages": {
+    "L0": 15.9,
+    "L1": 64.5,
+    "L1b": 255.4,
+    "L2_patch": 73.5,
+    "L2_clip": 81.0,
+    "L2_clip_tiles": 1103.7,
+    "explain": 26.4,
+    "L3": 14.1,
+    "fusion": 0.1,
+    "total": 1636.1
+   }
   },
-  "budget_ms": 5000,
-  "image_p95_within_budget": true,
-  "video_within_budget": true
+  {
+   "seq": 2,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9667,
+   "fused": 0.9667,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1624.6,
+   "stages": {
+    "L0": 14.6,
+    "L1": 40.4,
+    "L1b": 281.5,
+    "L2_patch": 30.6,
+    "L2_clip": 27.3,
+    "L2_clip_tiles": 1190.6,
+    "explain": 26.0,
+    "L3": 11.5,
+    "fusion": 0.1,
+    "total": 1623.7
+   }
+  },
+  {
+   "seq": 3,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9386,
+   "fused": 0.9386,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1748.9,
+   "stages": {
+    "L0": 21.1,
+    "L1": 44.3,
+    "L1b": 240.8,
+    "L2_patch": 31.0,
+    "L2_clip": 27.7,
+    "L2_clip_tiles": 1337.4,
+    "explain": 30.7,
+    "L3": 14.1,
+    "fusion": 0.1,
+    "total": 1748.1
+   }
+  },
+  {
+   "seq": 4,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.974,
+   "fused": 0.974,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1608.2,
+   "stages": {
+    "L0": 14.2,
+    "L1": 53.2,
+    "L1b": 274.5,
+    "L2_patch": 73.5,
+    "L2_clip": 76.1,
+    "L2_clip_tiles": 1071.7,
+    "explain": 28.0,
+    "L3": 15.1,
+    "fusion": 0.1,
+    "total": 1607.4
+   }
+  },
+  {
+   "seq": 5,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9663,
+   "fused": 0.9663,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1482.6,
+   "stages": {
+    "L0": 12.8,
+    "L1": 48.9,
+    "L1b": 160.5,
+    "L2_patch": 85.4,
+    "L2_clip": 81.8,
+    "L2_clip_tiles": 1055.9,
+    "explain": 19.1,
+    "L3": 16.4,
+    "fusion": 0.1,
+    "total": 1481.9
+   }
+  },
+  {
+   "seq": 6,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9867,
+   "fused": 0.9867,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1398.9,
+   "stages": {
+    "L0": 13.9,
+    "L1": 68.1,
+    "L1b": 163.7,
+    "L2_patch": 77.6,
+    "L2_clip": 70.1,
+    "L2_clip_tiles": 955.7,
+    "explain": 24.9,
+    "L3": 22.9,
+    "fusion": 0.1,
+    "total": 1398.2
+   }
+  },
+  {
+   "seq": 7,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9869,
+   "fused": 0.9869,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1438.0,
+   "stages": {
+    "L0": 10.0,
+    "L1": 63.1,
+    "L1b": 121.9,
+    "L2_patch": 80.3,
+    "L2_clip": 67.1,
+    "L2_clip_tiles": 1053.0,
+    "explain": 18.7,
+    "L3": 22.1,
+    "fusion": 0.1,
+    "total": 1437.4
+   }
+  },
+  {
+   "seq": 8,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9963,
+   "fused": 0.9963,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1507.0,
+   "stages": {
+    "L0": 11.3,
+    "L1": 70.9,
+    "L1b": 177.5,
+    "L2_patch": 75.4,
+    "L2_clip": 64.2,
+    "L2_clip_tiles": 1063.6,
+    "explain": 20.1,
+    "L3": 22.3,
+    "fusion": 0.1,
+    "total": 1506.3
+   }
+  },
+  {
+   "seq": 9,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9673,
+   "fused": 0.9673,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1348.1,
+   "stages": {
+    "L0": 4.1,
+    "L1": 45.3,
+    "L1b": 76.1,
+    "L2_patch": 83.1,
+    "L2_clip": 67.4,
+    "L2_clip_tiles": 1043.6,
+    "explain": 13.6,
+    "L3": 13.3,
+    "fusion": 0.1,
+    "total": 1347.5
+   }
+  },
+  {
+   "seq": 10,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9901,
+   "fused": 0.9901,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2169.6,
+   "stages": {
+    "L0": 102.5,
+    "L1": 63.6,
+    "L1b": 445.3,
+    "L2_patch": 39.1,
+    "L2_clip": 29.0,
+    "L2_clip_tiles": 1377.4,
+    "explain": 84.8,
+    "L3": 25.2,
+    "fusion": 0.1,
+    "total": 2168.0
+   }
+  },
+  {
+   "seq": 11,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9965,
+   "fused": 0.9965,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1903.8,
+   "stages": {
+    "L0": 103.6,
+    "L1": 68.3,
+    "L1b": 394.2,
+    "L2_patch": 75.0,
+    "L2_clip": 65.8,
+    "L2_clip_tiles": 1104.9,
+    "explain": 70.7,
+    "L3": 19.0,
+    "fusion": 0.1,
+    "total": 1902.5
+   }
+  },
+  {
+   "seq": 12,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9875,
+   "fused": 0.9875,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1844.1,
+   "stages": {
+    "L0": 108.2,
+    "L1": 54.4,
+    "L1b": 344.8,
+    "L2_patch": 34.7,
+    "L2_clip": 29.6,
+    "L2_clip_tiles": 1176.5,
+    "explain": 74.7,
+    "L3": 18.4,
+    "fusion": 0.1,
+    "total": 1842.9
+   }
+  },
+  {
+   "seq": 13,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9908,
+   "fused": 0.9908,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1987.6,
+   "stages": {
+    "L0": 113.0,
+    "L1": 51.3,
+    "L1b": 373.9,
+    "L2_patch": 32.6,
+    "L2_clip": 52.6,
+    "L2_clip_tiles": 1272.0,
+    "explain": 69.8,
+    "L3": 19.8,
+    "fusion": 0.1,
+    "total": 1986.2
+   }
+  },
+  {
+   "seq": 14,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.992,
+   "fused": 0.992,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1865.5,
+   "stages": {
+    "L0": 104.7,
+    "L1": 55.5,
+    "L1b": 375.4,
+    "L2_patch": 73.3,
+    "L2_clip": 61.9,
+    "L2_clip_tiles": 1101.4,
+    "explain": 71.7,
+    "L3": 19.1,
+    "fusion": 0.1,
+    "total": 1864.3
+   }
+  },
+  {
+   "seq": 15,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9745,
+   "fused": 0.9745,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1590.8,
+   "stages": {
+    "L0": 9.3,
+    "L1": 63.7,
+    "L1b": 233.7,
+    "L2_patch": 82.9,
+    "L2_clip": 81.2,
+    "L2_clip_tiles": 1070.2,
+    "explain": 29.3,
+    "L3": 18.7,
+    "fusion": 0.1,
+    "total": 1590.0
+   }
+  },
+  {
+   "seq": 16,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9858,
+   "fused": 0.9858,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1548.6,
+   "stages": {
+    "L0": 9.2,
+    "L1": 65.6,
+    "L1b": 211.2,
+    "L2_patch": 68.8,
+    "L2_clip": 68.4,
+    "L2_clip_tiles": 1085.3,
+    "explain": 19.6,
+    "L3": 18.6,
+    "fusion": 0.1,
+    "total": 1547.9
+   }
+  },
+  {
+   "seq": 17,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9965,
+   "fused": 0.9965,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2012.6,
+   "stages": {
+    "L0": 97.1,
+    "L1": 54.1,
+    "L1b": 359.7,
+    "L2_patch": 32.1,
+    "L2_clip": 33.4,
+    "L2_clip_tiles": 1344.3,
+    "explain": 71.4,
+    "L3": 18.3,
+    "fusion": 0.1,
+    "total": 2011.4
+   }
+  },
+  {
+   "seq": 18,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.969,
+   "fused": 0.969,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1870.7,
+   "stages": {
+    "L0": 127.3,
+    "L1": 55.8,
+    "L1b": 337.9,
+    "L2_patch": 33.2,
+    "L2_clip": 32.2,
+    "L2_clip_tiles": 1190.4,
+    "explain": 64.7,
+    "L3": 26.9,
+    "fusion": 0.1,
+    "total": 1869.5
+   }
+  },
+  {
+   "seq": 19,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9897,
+   "fused": 0.9897,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1696.7,
+   "stages": {
+    "L0": 10.7,
+    "L1": 63.7,
+    "L1b": 206.4,
+    "L2_patch": 28.1,
+    "L2_clip": 27.7,
+    "L2_clip_tiles": 1313.8,
+    "explain": 25.3,
+    "L3": 19.2,
+    "fusion": 0.1,
+    "total": 1696.1
+   }
+  },
+  {
+   "seq": 20,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9922,
+   "fused": 0.9922,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1700.4,
+   "stages": {
+    "L0": 12.3,
+    "L1": 60.8,
+    "L1b": 213.7,
+    "L2_patch": 28.5,
+    "L2_clip": 33.8,
+    "L2_clip_tiles": 1310.6,
+    "explain": 19.5,
+    "L3": 19.5,
+    "fusion": 0.1,
+    "total": 1699.7
+   }
+  },
+  {
+   "seq": 21,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9734,
+   "fused": 0.9734,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1772.8,
+   "stages": {
+    "L0": 8.6,
+    "L1": 59.1,
+    "L1b": 258.0,
+    "L2_patch": 28.9,
+    "L2_clip": 27.8,
+    "L2_clip_tiles": 1348.7,
+    "explain": 19.6,
+    "L3": 20.3,
+    "fusion": 0.2,
+    "total": 1772.1
+   }
+  },
+  {
+   "seq": 22,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9818,
+   "fused": 0.9818,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1656.1,
+   "stages": {
+    "L0": 7.3,
+    "L1": 43.3,
+    "L1b": 170.3,
+    "L2_patch": 28.5,
+    "L2_clip": 30.6,
+    "L2_clip_tiles": 1344.1,
+    "explain": 17.8,
+    "L3": 12.4,
+    "fusion": 0.1,
+    "total": 1655.4
+   }
+  },
+  {
+   "seq": 23,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9829,
+   "fused": 0.9829,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1293.6,
+   "stages": {
+    "L0": 7.1,
+    "L1": 42.7,
+    "L1b": 169.0,
+    "L2_patch": 28.7,
+    "L2_clip": 28.0,
+    "L2_clip_tiles": 989.3,
+    "explain": 16.1,
+    "L3": 11.0,
+    "fusion": 0.1,
+    "total": 1293.0
+   }
+  },
+  {
+   "seq": 24,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9648,
+   "fused": 0.9648,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1441.2,
+   "stages": {
+    "L0": 11.4,
+    "L1": 44.8,
+    "L1b": 178.2,
+    "L2_patch": 72.0,
+    "L2_clip": 30.3,
+    "L2_clip_tiles": 1069.5,
+    "explain": 18.6,
+    "L3": 14.8,
+    "fusion": 0.1,
+    "total": 1440.6
+   }
+  },
+  {
+   "seq": 25,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9429,
+   "fused": 0.9429,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1497.0,
+   "stages": {
+    "L0": 11.8,
+    "L1": 46.6,
+    "L1b": 176.6,
+    "L2_patch": 51.9,
+    "L2_clip": 34.4,
+    "L2_clip_tiles": 1140.9,
+    "explain": 18.7,
+    "L3": 14.3,
+    "fusion": 0.1,
+    "total": 1496.3
+   }
+  },
+  {
+   "seq": 26,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9665,
+   "fused": 0.9665,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2010.2,
+   "stages": {
+    "L0": 75.1,
+    "L1": 41.9,
+    "L1b": 393.7,
+    "L2_patch": 31.6,
+    "L2_clip": 28.6,
+    "L2_clip_tiles": 1357.8,
+    "explain": 65.1,
+    "L3": 13.9,
+    "fusion": 0.1,
+    "total": 2008.9
+   }
+  },
+  {
+   "seq": 27,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9817,
+   "fused": 0.9817,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1833.8,
+   "stages": {
+    "L0": 86.8,
+    "L1": 61.3,
+    "L1b": 297.2,
+    "L2_patch": 69.2,
+    "L2_clip": 68.9,
+    "L2_clip_tiles": 1164.3,
+    "explain": 65.6,
+    "L3": 17.8,
+    "fusion": 0.1,
+    "total": 1832.5
+   }
+  },
+  {
+   "seq": 28,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9917,
+   "fused": 0.9917,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1810.2,
+   "stages": {
+    "L0": 107.0,
+    "L1": 50.9,
+    "L1b": 323.8,
+    "L2_patch": 81.7,
+    "L2_clip": 64.7,
+    "L2_clip_tiles": 1097.0,
+    "explain": 65.9,
+    "L3": 16.9,
+    "fusion": 0.1,
+    "total": 1808.8
+   }
+  },
+  {
+   "seq": 29,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9851,
+   "fused": 0.9851,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1378.2,
+   "stages": {
+    "L0": 11.1,
+    "L1": 43.3,
+    "L1b": 142.8,
+    "L2_patch": 74.7,
+    "L2_clip": 44.4,
+    "L2_clip_tiles": 1030.4,
+    "explain": 16.5,
+    "L3": 13.3,
+    "fusion": 0.1,
+    "total": 1377.6
+   }
+  },
+  {
+   "seq": 30,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9796,
+   "fused": 0.9796,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1419.7,
+   "stages": {
+    "L0": 9.8,
+    "L1": 40.7,
+    "L1b": 131.3,
+    "L2_patch": 76.2,
+    "L2_clip": 64.4,
+    "L2_clip_tiles": 1067.1,
+    "explain": 15.5,
+    "L3": 12.9,
+    "fusion": 0.1,
+    "total": 1419.1
+   }
+  },
+  {
+   "seq": 31,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9618,
+   "fused": 0.9618,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1500.8,
+   "stages": {
+    "L0": 19.8,
+    "L1": 33.0,
+    "L1b": 212.4,
+    "L2_patch": 48.2,
+    "L2_clip": 33.2,
+    "L2_clip_tiles": 1121.3,
+    "explain": 21.2,
+    "L3": 9.9,
+    "fusion": 0.1,
+    "total": 1500.0
+   }
+  },
+  {
+   "seq": 32,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9777,
+   "fused": 0.9777,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1550.4,
+   "stages": {
+    "L0": 15.9,
+    "L1": 25.8,
+    "L1b": 232.0,
+    "L2_patch": 29.7,
+    "L2_clip": 27.6,
+    "L2_clip_tiles": 1182.3,
+    "explain": 26.0,
+    "L3": 9.0,
+    "fusion": 0.1,
+    "total": 1549.6
+   }
+  },
+  {
+   "seq": 33,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9906,
+   "fused": 0.9906,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1865.9,
+   "stages": {
+    "L0": 23.5,
+    "L1": 67.5,
+    "L1b": 299.0,
+    "L2_patch": 33.1,
+    "L2_clip": 39.7,
+    "L2_clip_tiles": 1346.2,
+    "explain": 40.7,
+    "L3": 14.1,
+    "fusion": 0.1,
+    "total": 1865.0
+   }
+  },
+  {
+   "seq": 34,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9979,
+   "fused": 0.9979,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1763.8,
+   "stages": {
+    "L0": 26.0,
+    "L1": 25.5,
+    "L1b": 243.0,
+    "L2_patch": 31.4,
+    "L2_clip": 28.4,
+    "L2_clip_tiles": 1355.5,
+    "explain": 36.5,
+    "L3": 14.9,
+    "fusion": 0.1,
+    "total": 1762.5
+   }
+  },
+  {
+   "seq": 35,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9974,
+   "fused": 0.9974,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1713.8,
+   "stages": {
+    "L0": 28.7,
+    "L1": 19.7,
+    "L1b": 250.4,
+    "L2_patch": 57.2,
+    "L2_clip": 39.2,
+    "L2_clip_tiles": 1271.1,
+    "explain": 35.5,
+    "L3": 9.6,
+    "fusion": 0.1,
+    "total": 1712.8
+   }
+  },
+  {
+   "seq": 36,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9949,
+   "fused": 0.9949,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1644.2,
+   "stages": {
+    "L0": 48.3,
+    "L1": 20.6,
+    "L1b": 242.4,
+    "L2_patch": 73.5,
+    "L2_clip": 68.3,
+    "L2_clip_tiles": 1140.1,
+    "explain": 38.6,
+    "L3": 10.5,
+    "fusion": 0.1,
+    "total": 1643.3
+   }
+  },
+  {
+   "seq": 37,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9931,
+   "fused": 0.9931,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1552.5,
+   "stages": {
+    "L0": 39.1,
+    "L1": 27.1,
+    "L1b": 259.1,
+    "L2_patch": 86.2,
+    "L2_clip": 76.0,
+    "L2_clip_tiles": 1019.6,
+    "explain": 32.2,
+    "L3": 11.0,
+    "fusion": 0.1,
+    "total": 1551.2
+   }
+  },
+  {
+   "seq": 38,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9964,
+   "fused": 0.9964,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1569.7,
+   "stages": {
+    "L0": 18.0,
+    "L1": 20.2,
+    "L1b": 231.4,
+    "L2_patch": 78.2,
+    "L2_clip": 69.7,
+    "L2_clip_tiles": 1110.2,
+    "explain": 31.8,
+    "L3": 8.3,
+    "fusion": 0.1,
+    "total": 1568.8
+   }
+  },
+  {
+   "seq": 39,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.999,
+   "fused": 0.999,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1540.2,
+   "stages": {
+    "L0": 23.7,
+    "L1": 20.6,
+    "L1b": 223.7,
+    "L2_patch": 30.5,
+    "L2_clip": 28.8,
+    "L2_clip_tiles": 1172.3,
+    "explain": 30.2,
+    "L3": 8.6,
+    "fusion": 0.1,
+    "total": 1539.3
+   }
+  },
+  {
+   "seq": 40,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9991,
+   "fused": 0.9991,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1571.7,
+   "stages": {
+    "L0": 23.7,
+    "L1": 18.6,
+    "L1b": 216.8,
+    "L2_patch": 29.4,
+    "L2_clip": 26.3,
+    "L2_clip_tiles": 1215.1,
+    "explain": 30.6,
+    "L3": 9.0,
+    "fusion": 0.1,
+    "total": 1570.8
+   }
+  },
+  {
+   "seq": 41,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9987,
+   "fused": 0.9987,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1720.0,
+   "stages": {
+    "L0": 46.9,
+    "L1": 21.0,
+    "L1b": 236.9,
+    "L2_patch": 30.7,
+    "L2_clip": 28.5,
+    "L2_clip_tiles": 1311.4,
+    "explain": 32.4,
+    "L3": 10.4,
+    "fusion": 0.1,
+    "total": 1719.1
+   }
+  },
+  {
+   "seq": 42,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9905,
+   "fused": 0.9905,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1897.6,
+   "stages": {
+    "L0": 28.6,
+    "L1": 59.2,
+    "L1b": 340.5,
+    "L2_patch": 50.9,
+    "L2_clip": 59.0,
+    "L2_clip_tiles": 1291.1,
+    "explain": 49.2,
+    "L3": 16.9,
+    "fusion": 0.1,
+    "total": 1896.6
+   }
+  },
+  {
+   "seq": 43,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9984,
+   "fused": 0.9984,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1602.2,
+   "stages": {
+    "L0": 36.2,
+    "L1": 20.0,
+    "L1b": 234.6,
+    "L2_patch": 69.4,
+    "L2_clip": 64.4,
+    "L2_clip_tiles": 1126.6,
+    "explain": 37.6,
+    "L3": 11.6,
+    "fusion": 0.1,
+    "total": 1601.4
+   }
+  },
+  {
+   "seq": 44,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9946,
+   "fused": 0.9946,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1604.7,
+   "stages": {
+    "L0": 44.9,
+    "L1": 56.4,
+    "L1b": 344.1,
+    "L2_patch": 85.7,
+    "L2_clip": 72.7,
+    "L2_clip_tiles": 943.4,
+    "explain": 41.8,
+    "L3": 13.4,
+    "fusion": 0.1,
+    "total": 1603.7
+   }
+  },
+  {
+   "seq": 45,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9964,
+   "fused": 0.9964,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1494.7,
+   "stages": {
+    "L0": 34.8,
+    "L1": 21.0,
+    "L1b": 226.0,
+    "L2_patch": 74.1,
+    "L2_clip": 67.9,
+    "L2_clip_tiles": 1028.1,
+    "explain": 29.6,
+    "L3": 11.1,
+    "fusion": 0.1,
+    "total": 1493.8
+   }
+  },
+  {
+   "seq": 46,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9767,
+   "fused": 0.9767,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1538.3,
+   "stages": {
+    "L0": 42.0,
+    "L1": 20.6,
+    "L1b": 242.9,
+    "L2_patch": 38.5,
+    "L2_clip": 31.0,
+    "L2_clip_tiles": 1114.6,
+    "explain": 31.4,
+    "L3": 14.9,
+    "fusion": 0.2,
+    "total": 1537.1
+   }
+  },
+  {
+   "seq": 47,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9803,
+   "fused": 0.9803,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1732.5,
+   "stages": {
+    "L0": 48.7,
+    "L1": 29.3,
+    "L1b": 293.3,
+    "L2_patch": 30.7,
+    "L2_clip": 28.2,
+    "L2_clip_tiles": 1256.5,
+    "explain": 31.4,
+    "L3": 11.6,
+    "fusion": 0.2,
+    "total": 1730.9
+   }
+  },
+  {
+   "seq": 48,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9813,
+   "fused": 0.9813,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2074.1,
+   "stages": {
+    "L0": 142.3,
+    "L1": 59.7,
+    "L1b": 424.0,
+    "L2_patch": 71.7,
+    "L2_clip": 61.3,
+    "L2_clip_tiles": 1173.7,
+    "explain": 118.8,
+    "L3": 19.8,
+    "fusion": 0.1,
+    "total": 2072.5
+   }
+  },
+  {
+   "seq": 49,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9882,
+   "fused": 0.9882,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1917.4,
+   "stages": {
+    "L0": 138.2,
+    "L1": 62.9,
+    "L1b": 410.5,
+    "L2_patch": 32.0,
+    "L2_clip": 27.6,
+    "L2_clip_tiles": 1113.0,
+    "explain": 112.4,
+    "L3": 18.2,
+    "fusion": 0.1,
+    "total": 1915.7
+   }
+  },
+  {
+   "seq": 50,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9941,
+   "fused": 0.9941,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2128.8,
+   "stages": {
+    "L0": 116.8,
+    "L1": 69.6,
+    "L1b": 430.4,
+    "L2_patch": 40.4,
+    "L2_clip": 57.4,
+    "L2_clip_tiles": 1275.4,
+    "explain": 117.5,
+    "L3": 18.1,
+    "fusion": 0.1,
+    "total": 2126.9
+   }
+  },
+  {
+   "seq": 51,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9948,
+   "fused": 0.9948,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2064.0,
+   "stages": {
+    "L0": 44.8,
+    "L1": 39.6,
+    "L1b": 334.5,
+    "L2_patch": 73.9,
+    "L2_clip": 69.6,
+    "L2_clip_tiles": 1429.2,
+    "explain": 53.9,
+    "L3": 16.0,
+    "fusion": 0.1,
+    "total": 2062.7
+   }
+  },
+  {
+   "seq": 52,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9896,
+   "fused": 0.9896,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1841.8,
+   "stages": {
+    "L0": 67.3,
+    "L1": 61.9,
+    "L1b": 360.1,
+    "L2_patch": 71.3,
+    "L2_clip": 59.8,
+    "L2_clip_tiles": 1119.2,
+    "explain": 78.7,
+    "L3": 20.9,
+    "fusion": 0.1,
+    "total": 1840.5
+   }
+  },
+  {
+   "seq": 53,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9712,
+   "fused": 0.9712,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1554.7,
+   "stages": {
+    "L0": 15.7,
+    "L1": 84.2,
+    "L1b": 134.7,
+    "L2_patch": 82.6,
+    "L2_clip": 82.3,
+    "L2_clip_tiles": 1109.6,
+    "explain": 19.8,
+    "L3": 24.1,
+    "fusion": 0.1,
+    "total": 1554.1
+   }
+  },
+  {
+   "seq": 54,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9573,
+   "fused": 0.9573,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1336.5,
+   "stages": {
+    "L0": 12.2,
+    "L1": 58.4,
+    "L1b": 101.8,
+    "L2_patch": 71.5,
+    "L2_clip": 69.7,
+    "L2_clip_tiles": 980.4,
+    "explain": 19.2,
+    "L3": 21.6,
+    "fusion": 0.1,
+    "total": 1335.8
+   }
+  },
+  {
+   "seq": 55,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9878,
+   "fused": 0.9878,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1392.1,
+   "stages": {
+    "L0": 10.8,
+    "L1": 61.5,
+    "L1b": 74.2,
+    "L2_patch": 72.3,
+    "L2_clip": 67.6,
+    "L2_clip_tiles": 1062.0,
+    "explain": 19.6,
+    "L3": 22.2,
+    "fusion": 0.1,
+    "total": 1391.5
+   }
+  },
+  {
+   "seq": 56,
+   "label": "ai",
+   "verdict": "suspect",
+   "confidence": 0.9804,
+   "fused": 0.9804,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2269.4,
+   "stages": {
+    "L0": 178.2,
+    "L1": 51.5,
+    "L1b": 432.7,
+    "L2_patch": 43.7,
+    "L2_clip": 28.9,
+    "L2_clip_tiles": 1381.8,
+    "explain": 125.1,
+    "L3": 24.1,
+    "fusion": 0.2,
+    "total": 2267.2
+   }
+  },
+  {
+   "seq": 57,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0524,
+   "fused": 0.0524,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2101.0,
+   "stages": {
+    "L0": 231.1,
+    "L1": 54.4,
+    "L1b": 431.6,
+    "L2_patch": 72.0,
+    "L2_clip": 66.3,
+    "L2_clip_tiles": 1093.4,
+    "explain": 116.6,
+    "L3": 32.6,
+    "fusion": 0.1,
+    "total": 2099.3
+   }
+  },
+  {
+   "seq": 58,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0471,
+   "fused": 0.0471,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1888.3,
+   "stages": {
+    "L0": 27.2,
+    "L1": 59.0,
+    "L1b": 348.4,
+    "L2_patch": 32.8,
+    "L2_clip": 34.6,
+    "L2_clip_tiles": 1334.9,
+    "explain": 31.6,
+    "L3": 18.0,
+    "fusion": 0.1,
+    "total": 1887.5
+   }
+  },
+  {
+   "seq": 59,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0517,
+   "fused": 0.0517,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1809.7,
+   "stages": {
+    "L0": 29.0,
+    "L1": 57.2,
+    "L1b": 298.8,
+    "L2_patch": 41.3,
+    "L2_clip": 54.6,
+    "L2_clip_tiles": 1266.0,
+    "explain": 42.7,
+    "L3": 17.5,
+    "fusion": 0.1,
+    "total": 1808.7
+   }
+  },
+  {
+   "seq": 60,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0311,
+   "fused": 0.0311,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1562.6,
+   "stages": {
+    "L0": 15.8,
+    "L1": 43.2,
+    "L1b": 242.2,
+    "L2_patch": 69.7,
+    "L2_clip": 62.1,
+    "L2_clip_tiles": 1092.9,
+    "explain": 24.5,
+    "L3": 10.2,
+    "fusion": 0.1,
+    "total": 1561.7
+   }
+  },
+  {
+   "seq": 61,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0168,
+   "fused": 0.0168,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1552.4,
+   "stages": {
+    "L0": 24.2,
+    "L1": 21.1,
+    "L1b": 247.5,
+    "L2_patch": 75.9,
+    "L2_clip": 73.6,
+    "L2_clip_tiles": 1066.7,
+    "explain": 28.0,
+    "L3": 13.0,
+    "fusion": 0.1,
+    "total": 1551.3
+   }
+  },
+  {
+   "seq": 62,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.025,
+   "fused": 0.025,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1474.8,
+   "stages": {
+    "L0": 27.8,
+    "L1": 21.8,
+    "L1b": 218.8,
+    "L2_patch": 77.0,
+    "L2_clip": 65.8,
+    "L2_clip_tiles": 1027.4,
+    "explain": 23.7,
+    "L3": 10.8,
+    "fusion": 0.1,
+    "total": 1474.1
+   }
+  },
+  {
+   "seq": 63,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.018,
+   "fused": 0.018,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1402.7,
+   "stages": {
+    "L0": 14.2,
+    "L1": 18.7,
+    "L1b": 198.3,
+    "L2_patch": 71.2,
+    "L2_clip": 70.6,
+    "L2_clip_tiles": 997.9,
+    "explain": 21.7,
+    "L3": 8.3,
+    "fusion": 0.1,
+    "total": 1402.0
+   }
+  },
+  {
+   "seq": 64,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0263,
+   "fused": 0.0263,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 2036.6,
+   "stages": {
+    "L0": 43.9,
+    "L1": 78.0,
+    "L1b": 444.1,
+    "L2_patch": 31.9,
+    "L2_clip": 29.1,
+    "L2_clip_tiles": 1332.0,
+    "explain": 43.3,
+    "L3": 32.2,
+    "fusion": 0.1,
+    "total": 2035.7
+   }
+  },
+  {
+   "seq": 65,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0078,
+   "fused": 0.0078,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1802.9,
+   "stages": {
+    "L0": 24.7,
+    "L1": 52.1,
+    "L1b": 275.5,
+    "L2_patch": 53.6,
+    "L2_clip": 59.1,
+    "L2_clip_tiles": 1281.9,
+    "explain": 37.9,
+    "L3": 15.6,
+    "fusion": 0.2,
+    "total": 1801.8
+   }
+  },
+  {
+   "seq": 66,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0132,
+   "fused": 0.0132,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1612.1,
+   "stages": {
+    "L0": 20.2,
+    "L1": 24.3,
+    "L1b": 209.6,
+    "L2_patch": 44.6,
+    "L2_clip": 59.6,
+    "L2_clip_tiles": 1219.6,
+    "explain": 22.8,
+    "L3": 9.4,
+    "fusion": 0.1,
+    "total": 1611.3
+   }
+  },
+  {
+   "seq": 67,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0343,
+   "fused": 0.0343,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1640.2,
+   "stages": {
+    "L0": 26.9,
+    "L1": 50.9,
+    "L1b": 278.9,
+    "L2_patch": 65.4,
+    "L2_clip": 68.7,
+    "L2_clip_tiles": 1099.5,
+    "explain": 31.1,
+    "L3": 16.5,
+    "fusion": 0.1,
+    "total": 1639.2
+   }
+  },
+  {
+   "seq": 68,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.064,
+   "fused": 0.064,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1596.6,
+   "stages": {
+    "L0": 36.6,
+    "L1": 44.8,
+    "L1b": 306.9,
+    "L2_patch": 84.2,
+    "L2_clip": 77.3,
+    "L2_clip_tiles": 1004.6,
+    "explain": 26.8,
+    "L3": 13.7,
+    "fusion": 0.1,
+    "total": 1595.8
+   }
+  },
+  {
+   "seq": 69,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0129,
+   "fused": 0.0129,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1435.6,
+   "stages": {
+    "L0": 28.2,
+    "L1": 39.0,
+    "L1b": 273.2,
+    "L2_patch": 30.8,
+    "L2_clip": 27.9,
+    "L2_clip_tiles": 993.5,
+    "explain": 27.7,
+    "L3": 13.4,
+    "fusion": 0.1,
+    "total": 1434.9
+   }
+  },
+  {
+   "seq": 70,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0038,
+   "fused": 0.0038,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1687.1,
+   "stages": {
+    "L0": 44.4,
+    "L1": 38.3,
+    "L1b": 310.5,
+    "L2_patch": 29.8,
+    "L2_clip": 26.1,
+    "L2_clip_tiles": 1196.3,
+    "explain": 26.2,
+    "L3": 13.6,
+    "fusion": 0.1,
+    "total": 1686.3
+   }
+  },
+  {
+   "seq": 71,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0176,
+   "fused": 0.0176,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1357.7,
+   "stages": {
+    "L0": 6.0,
+    "L1": 46.5,
+    "L1b": 90.9,
+    "L2_patch": 30.5,
+    "L2_clip": 28.0,
+    "L2_clip_tiles": 1127.9,
+    "explain": 13.1,
+    "L3": 13.1,
+    "fusion": 0.1,
+    "total": 1357.1
+   }
+  },
+  {
+   "seq": 72,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0066,
+   "fused": 0.0066,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1793.4,
+   "stages": {
+    "L0": 45.1,
+    "L1": 50.3,
+    "L1b": 300.2,
+    "L2_patch": 31.4,
+    "L2_clip": 34.3,
+    "L2_clip_tiles": 1281.2,
+    "explain": 32.3,
+    "L3": 16.6,
+    "fusion": 0.1,
+    "total": 1792.4
+   }
+  },
+  {
+   "seq": 73,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0478,
+   "fused": 0.0478,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1744.6,
+   "stages": {
+    "L0": 31.3,
+    "L1": 20.1,
+    "L1b": 247.3,
+    "L2_patch": 30.5,
+    "L2_clip": 29.6,
+    "L2_clip_tiles": 1345.9,
+    "explain": 25.4,
+    "L3": 12.7,
+    "fusion": 0.1,
+    "total": 1743.7
+   }
+  },
+  {
+   "seq": 74,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0213,
+   "fused": 0.0213,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1721.4,
+   "stages": {
+    "L0": 27.8,
+    "L1": 21.3,
+    "L1b": 258.9,
+    "L2_patch": 31.1,
+    "L2_clip": 28.0,
+    "L2_clip_tiles": 1316.2,
+    "explain": 25.0,
+    "L3": 11.2,
+    "fusion": 0.1,
+    "total": 1720.5
+   }
+  },
+  {
+   "seq": 75,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0223,
+   "fused": 0.0223,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1686.3,
+   "stages": {
+    "L0": 25.0,
+    "L1": 21.6,
+    "L1b": 263.2,
+    "L2_patch": 46.6,
+    "L2_clip": 53.9,
+    "L2_clip_tiles": 1234.8,
+    "explain": 27.9,
+    "L3": 11.5,
+    "fusion": 0.1,
+    "total": 1685.5
+   }
+  },
+  {
+   "seq": 76,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0214,
+   "fused": 0.0214,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1582.0,
+   "stages": {
+    "L0": 25.5,
+    "L1": 21.4,
+    "L1b": 231.4,
+    "L2_patch": 68.7,
+    "L2_clip": 64.0,
+    "L2_clip_tiles": 1122.7,
+    "explain": 27.8,
+    "L3": 18.3,
+    "fusion": 0.1,
+    "total": 1581.2
+   }
+  },
+  {
+   "seq": 77,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0124,
+   "fused": 0.0124,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1557.1,
+   "stages": {
+    "L0": 30.6,
+    "L1": 20.2,
+    "L1b": 243.1,
+    "L2_patch": 77.3,
+    "L2_clip": 74.5,
+    "L2_clip_tiles": 1068.3,
+    "explain": 27.6,
+    "L3": 13.1,
+    "fusion": 0.1,
+    "total": 1556.3
+   }
+  },
+  {
+   "seq": 78,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0136,
+   "fused": 0.0136,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1397.1,
+   "stages": {
+    "L0": 7.3,
+    "L1": 56.7,
+    "L1b": 105.5,
+    "L2_patch": 76.4,
+    "L2_clip": 68.4,
+    "L2_clip_tiles": 1050.6,
+    "explain": 15.5,
+    "L3": 14.6,
+    "fusion": 0.1,
+    "total": 1396.5
+   }
+  },
+  {
+   "seq": 79,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0162,
+   "fused": 0.0162,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1527.7,
+   "stages": {
+    "L0": 31.0,
+    "L1": 23.1,
+    "L1b": 246.1,
+    "L2_patch": 75.3,
+    "L2_clip": 74.2,
+    "L2_clip_tiles": 1041.6,
+    "explain": 23.3,
+    "L3": 11.0,
+    "fusion": 0.1,
+    "total": 1526.7
+   }
+  },
+  {
+   "seq": 80,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0244,
+   "fused": 0.0244,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1318.8,
+   "stages": {
+    "L0": 6.2,
+    "L1": 44.4,
+    "L1b": 96.4,
+    "L2_patch": 74.6,
+    "L2_clip": 74.8,
+    "L2_clip_tiles": 992.9,
+    "explain": 14.3,
+    "L3": 13.4,
+    "fusion": 0.1,
+    "total": 1318.2
+   }
+  },
+  {
+   "seq": 81,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0242,
+   "fused": 0.0242,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1622.6,
+   "stages": {
+    "L0": 28.0,
+    "L1": 43.1,
+    "L1b": 332.1,
+    "L2_patch": 31.5,
+    "L2_clip": 29.5,
+    "L2_clip_tiles": 1108.7,
+    "explain": 33.4,
+    "L3": 14.4,
+    "fusion": 0.1,
+    "total": 1621.7
+   }
+  },
+  {
+   "seq": 82,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0276,
+   "fused": 0.0276,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1768.9,
+   "stages": {
+    "L0": 31.4,
+    "L1": 47.9,
+    "L1b": 275.8,
+    "L2_patch": 31.3,
+    "L2_clip": 27.2,
+    "L2_clip_tiles": 1304.0,
+    "explain": 29.9,
+    "L3": 19.3,
+    "fusion": 0.1,
+    "total": 1768.0
+   }
+  },
+  {
+   "seq": 83,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0509,
+   "fused": 0.0509,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1813.5,
+   "stages": {
+    "L0": 27.1,
+    "L1": 49.3,
+    "L1b": 285.4,
+    "L2_patch": 30.5,
+    "L2_clip": 27.2,
+    "L2_clip_tiles": 1342.3,
+    "explain": 32.8,
+    "L3": 16.7,
+    "fusion": 0.1,
+    "total": 1812.4
+   }
+  },
+  {
+   "seq": 84,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0034,
+   "fused": 0.0034,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1767.8,
+   "stages": {
+    "L0": 43.5,
+    "L1": 60.0,
+    "L1b": 311.1,
+    "L2_patch": 49.6,
+    "L2_clip": 56.7,
+    "L2_clip_tiles": 1194.1,
+    "explain": 33.9,
+    "L3": 17.0,
+    "fusion": 0.1,
+    "total": 1766.8
+   }
+  },
+  {
+   "seq": 85,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0135,
+   "fused": 0.0135,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1686.1,
+   "stages": {
+    "L0": 45.9,
+    "L1": 52.5,
+    "L1b": 315.0,
+    "L2_patch": 69.2,
+    "L2_clip": 69.1,
+    "L2_clip_tiles": 1075.2,
+    "explain": 37.4,
+    "L3": 19.3,
+    "fusion": 0.1,
+    "total": 1685.0
+   }
+  },
+  {
+   "seq": 86,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0058,
+   "fused": 0.0058,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1432.5,
+   "stages": {
+    "L0": 46.3,
+    "L1": 62.5,
+    "L1b": 300.9,
+    "L2_patch": 67.6,
+    "L2_clip": 34.1,
+    "L2_clip_tiles": 865.9,
+    "explain": 36.0,
+    "L3": 17.0,
+    "fusion": 0.1,
+    "total": 1431.5
+   }
+  },
+  {
+   "seq": 87,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0166,
+   "fused": 0.0166,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1580.4,
+   "stages": {
+    "L0": 35.0,
+    "L1": 52.6,
+    "L1b": 291.1,
+    "L2_patch": 58.9,
+    "L2_clip": 30.3,
+    "L2_clip_tiles": 1061.0,
+    "explain": 33.0,
+    "L3": 16.4,
+    "fusion": 0.1,
+    "total": 1579.5
+   }
+  },
+  {
+   "seq": 88,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0172,
+   "fused": 0.0172,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1691.6,
+   "stages": {
+    "L0": 31.8,
+    "L1": 50.6,
+    "L1b": 295.7,
+    "L2_patch": 31.3,
+    "L2_clip": 28.1,
+    "L2_clip_tiles": 1202.6,
+    "explain": 32.9,
+    "L3": 16.6,
+    "fusion": 0.1,
+    "total": 1690.7
+   }
+  },
+  {
+   "seq": 89,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0008,
+   "fused": 0.0008,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1159.5,
+   "stages": {
+    "L0": 30.9,
+    "L1": 50.4,
+    "L1b": 296.9,
+    "L2_patch": 31.1,
+    "L2_clip": 28.5,
+    "L2_clip_tiles": 665.4,
+    "explain": 34.5,
+    "L3": 19.9,
+    "fusion": 0.1,
+    "total": 1158.6
+   }
+  },
+  {
+   "seq": 90,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0091,
+   "fused": 0.0091,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1622.2,
+   "stages": {
+    "L0": 35.9,
+    "L1": 52.3,
+    "L1b": 317.0,
+    "L2_patch": 74.0,
+    "L2_clip": 64.8,
+    "L2_clip_tiles": 1016.0,
+    "explain": 41.6,
+    "L3": 18.6,
+    "fusion": 0.1,
+    "total": 1621.2
+   }
+  },
+  {
+   "seq": 91,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0303,
+   "fused": 0.0303,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1368.5,
+   "stages": {
+    "L0": 6.8,
+    "L1": 49.6,
+    "L1b": 94.6,
+    "L2_patch": 69.9,
+    "L2_clip": 62.9,
+    "L2_clip_tiles": 1049.3,
+    "explain": 15.4,
+    "L3": 18.1,
+    "fusion": 0.1,
+    "total": 1367.8
+   }
+  },
+  {
+   "seq": 92,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0144,
+   "fused": 0.0144,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1491.1,
+   "stages": {
+    "L0": 31.5,
+    "L1": 40.0,
+    "L1b": 302.6,
+    "L2_patch": 37.9,
+    "L2_clip": 29.9,
+    "L2_clip_tiles": 1005.7,
+    "explain": 28.3,
+    "L3": 13.1,
+    "fusion": 0.1,
+    "total": 1490.2
+   }
+  },
+  {
+   "seq": 93,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.004,
+   "fused": 0.004,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1625.4,
+   "stages": {
+    "L0": 31.2,
+    "L1": 39.3,
+    "L1b": 300.7,
+    "L2_patch": 30.0,
+    "L2_clip": 27.9,
+    "L2_clip_tiles": 1145.8,
+    "explain": 32.1,
+    "L3": 16.5,
+    "fusion": 0.1,
+    "total": 1624.6
+   }
+  },
+  {
+   "seq": 94,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0039,
+   "fused": 0.0039,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1870.3,
+   "stages": {
+    "L0": 38.1,
+    "L1": 38.0,
+    "L1b": 318.5,
+    "L2_patch": 61.2,
+    "L2_clip": 29.1,
+    "L2_clip_tiles": 1344.9,
+    "explain": 25.6,
+    "L3": 13.0,
+    "fusion": 0.1,
+    "total": 1869.5
+   }
+  },
+  {
+   "seq": 95,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0089,
+   "fused": 0.0089,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1809.8,
+   "stages": {
+    "L0": 21.1,
+    "L1": 48.7,
+    "L1b": 251.2,
+    "L2_patch": 30.4,
+    "L2_clip": 27.3,
+    "L2_clip_tiles": 1386.9,
+    "explain": 27.0,
+    "L3": 14.9,
+    "fusion": 0.1,
+    "total": 1808.8
+   }
+  },
+  {
+   "seq": 96,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0068,
+   "fused": 0.0068,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1550.4,
+   "stages": {
+    "L0": 25.0,
+    "L1": 54.4,
+    "L1b": 257.4,
+    "L2_patch": 76.3,
+    "L2_clip": 79.3,
+    "L2_clip_tiles": 1017.9,
+    "explain": 24.3,
+    "L3": 13.9,
+    "fusion": 0.1,
+    "total": 1549.6
+   }
+  },
+  {
+   "seq": 97,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0102,
+   "fused": 0.0102,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1450.1,
+   "stages": {
+    "L0": 16.9,
+    "L1": 45.9,
+    "L1b": 236.1,
+    "L2_patch": 38.4,
+    "L2_clip": 29.1,
+    "L2_clip_tiles": 1041.5,
+    "explain": 27.0,
+    "L3": 13.3,
+    "fusion": 0.1,
+    "total": 1449.4
+   }
+  },
+  {
+   "seq": 98,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0114,
+   "fused": 0.0114,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1551.0,
+   "stages": {
+    "L0": 17.3,
+    "L1": 45.4,
+    "L1b": 232.9,
+    "L2_patch": 31.2,
+    "L2_clip": 26.9,
+    "L2_clip_tiles": 1159.5,
+    "explain": 23.0,
+    "L3": 12.9,
+    "fusion": 0.1,
+    "total": 1550.2
+   }
+  },
+  {
+   "seq": 99,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0229,
+   "fused": 0.0229,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1872.1,
+   "stages": {
+    "L0": 31.8,
+    "L1": 50.6,
+    "L1b": 293.4,
+    "L2_patch": 71.9,
+    "L2_clip": 28.5,
+    "L2_clip_tiles": 1344.1,
+    "explain": 33.3,
+    "L3": 16.4,
+    "fusion": 0.1,
+    "total": 1871.1
+   }
+  },
+  {
+   "seq": 100,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0064,
+   "fused": 0.0064,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1839.5,
+   "stages": {
+    "L0": 36.8,
+    "L1": 61.5,
+    "L1b": 315.6,
+    "L2_patch": 60.4,
+    "L2_clip": 45.2,
+    "L2_clip_tiles": 1254.7,
+    "explain": 33.1,
+    "L3": 29.9,
+    "fusion": 0.2,
+    "total": 1838.3
+   }
+  },
+  {
+   "seq": 101,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.025,
+   "fused": 0.025,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1701.4,
+   "stages": {
+    "L0": 39.0,
+    "L1": 52.5,
+    "L1b": 307.4,
+    "L2_patch": 75.4,
+    "L2_clip": 67.7,
+    "L2_clip_tiles": 1098.8,
+    "explain": 38.3,
+    "L3": 19.7,
+    "fusion": 0.2,
+    "total": 1700.2
+   }
+  },
+  {
+   "seq": 102,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0216,
+   "fused": 0.0216,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1365.2,
+   "stages": {
+    "L0": 7.1,
+    "L1": 54.6,
+    "L1b": 110.5,
+    "L2_patch": 75.2,
+    "L2_clip": 73.3,
+    "L2_clip_tiles": 1011.0,
+    "explain": 16.1,
+    "L3": 15.3,
+    "fusion": 0.1,
+    "total": 1364.5
+   }
+  },
+  {
+   "seq": 103,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0169,
+   "fused": 0.0169,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1435.0,
+   "stages": {
+    "L0": 7.4,
+    "L1": 55.3,
+    "L1b": 109.4,
+    "L2_patch": 75.2,
+    "L2_clip": 69.2,
+    "L2_clip_tiles": 1084.1,
+    "explain": 16.7,
+    "L3": 15.8,
+    "fusion": 0.1,
+    "total": 1434.4
+   }
+  },
+  {
+   "seq": 104,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0044,
+   "fused": 0.0044,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1632.5,
+   "stages": {
+    "L0": 40.5,
+    "L1": 61.1,
+    "L1b": 313.1,
+    "L2_patch": 74.8,
+    "L2_clip": 73.2,
+    "L2_clip_tiles": 1017.0,
+    "explain": 33.5,
+    "L3": 17.2,
+    "fusion": 0.1,
+    "total": 1631.6
+   }
+  },
+  {
+   "seq": 105,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0192,
+   "fused": 0.0192,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1431.9,
+   "stages": {
+    "L0": 22.4,
+    "L1": 19.5,
+    "L1b": 216.1,
+    "L2_patch": 59.0,
+    "L2_clip": 31.6,
+    "L2_clip_tiles": 1047.4,
+    "explain": 23.1,
+    "L3": 11.2,
+    "fusion": 0.1,
+    "total": 1431.2
+   }
+  },
+  {
+   "seq": 106,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0231,
+   "fused": 0.0231,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1313.2,
+   "stages": {
+    "L0": 5.9,
+    "L1": 46.2,
+    "L1b": 99.2,
+    "L2_patch": 71.8,
+    "L2_clip": 63.8,
+    "L2_clip_tiles": 998.1,
+    "explain": 13.4,
+    "L3": 13.3,
+    "fusion": 0.1,
+    "total": 1312.6
+   }
+  },
+  {
+   "seq": 107,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0211,
+   "fused": 0.0211,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1460.4,
+   "stages": {
+    "L0": 19.7,
+    "L1": 19.2,
+    "L1b": 224.1,
+    "L2_patch": 74.3,
+    "L2_clip": 60.4,
+    "L2_clip_tiles": 1027.3,
+    "explain": 22.5,
+    "L3": 11.1,
+    "fusion": 0.1,
+    "total": 1459.7
+   }
+  },
+  {
+   "seq": 108,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0549,
+   "fused": 0.0549,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1435.6,
+   "stages": {
+    "L0": 20.6,
+    "L1": 18.8,
+    "L1b": 221.6,
+    "L2_patch": 56.6,
+    "L2_clip": 32.7,
+    "L2_clip_tiles": 1044.7,
+    "explain": 26.5,
+    "L3": 12.3,
+    "fusion": 0.1,
+    "total": 1434.8
+   }
+  },
+  {
+   "seq": 109,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0039,
+   "fused": 0.0039,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1446.8,
+   "stages": {
+    "L0": 27.2,
+    "L1": 19.9,
+    "L1b": 212.5,
+    "L2_patch": 34.9,
+    "L2_clip": 28.3,
+    "L2_clip_tiles": 1089.0,
+    "explain": 23.1,
+    "L3": 10.2,
+    "fusion": 0.1,
+    "total": 1446.1
+   }
+  },
+  {
+   "seq": 110,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0023,
+   "fused": 0.0023,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1418.9,
+   "stages": {
+    "L0": 24.9,
+    "L1": 19.3,
+    "L1b": 209.4,
+    "L2_patch": 33.5,
+    "L2_clip": 26.0,
+    "L2_clip_tiles": 1072.2,
+    "explain": 21.6,
+    "L3": 10.5,
+    "fusion": 0.1,
+    "total": 1418.2
+   }
+  },
+  {
+   "seq": 111,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0085,
+   "fused": 0.0085,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1460.4,
+   "stages": {
+    "L0": 26.1,
+    "L1": 18.9,
+    "L1b": 201.1,
+    "L2_patch": 38.3,
+    "L2_clip": 30.6,
+    "L2_clip_tiles": 1103.6,
+    "explain": 27.9,
+    "L3": 12.1,
+    "fusion": 0.1,
+    "total": 1459.7
+   }
+  },
+  {
+   "seq": 112,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.0194,
+   "fused": 0.0194,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1480.7,
+   "stages": {
+    "L0": 19.0,
+    "L1": 19.3,
+    "L1b": 205.9,
+    "L2_patch": 30.4,
+    "L2_clip": 26.7,
+    "L2_clip_tiles": 1137.1,
+    "explain": 28.6,
+    "L3": 11.8,
+    "fusion": 0.1,
+    "total": 1479.9
+   }
+  },
+  {
+   "seq": 113,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0092,
+   "fused": 0.0092,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1817.6,
+   "stages": {
+    "L0": 29.5,
+    "L1": 56.5,
+    "L1b": 297.7,
+    "L2_patch": 30.1,
+    "L2_clip": 51.3,
+    "L2_clip_tiles": 1296.5,
+    "explain": 30.1,
+    "L3": 24.0,
+    "fusion": 0.1,
+    "total": 1816.7
+   }
+  },
+  {
+   "seq": 114,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0092,
+   "fused": 0.0092,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1527.6,
+   "stages": {
+    "L0": 6.5,
+    "L1": 47.0,
+    "L1b": 97.7,
+    "L2_patch": 28.1,
+    "L2_clip": 27.5,
+    "L2_clip_tiles": 1292.8,
+    "explain": 13.6,
+    "L3": 12.9,
+    "fusion": 0.1,
+    "total": 1527.0
+   }
+  },
+  {
+   "seq": 115,
+   "label": "real",
+   "verdict": "review",
+   "confidence": 0.015,
+   "fused": 0.015,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1535.3,
+   "stages": {
+    "L0": 24.0,
+    "L1": 20.8,
+    "L1b": 220.8,
+    "L2_patch": 32.6,
+    "L2_clip": 26.9,
+    "L2_clip_tiles": 1175.3,
+    "explain": 22.5,
+    "L3": 10.6,
+    "fusion": 0.1,
+    "total": 1534.6
+   }
+  },
+  {
+   "seq": 116,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.024,
+   "fused": 0.024,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1293.0,
+   "stages": {
+    "L0": 5.5,
+    "L1": 46.0,
+    "L1b": 63.3,
+    "L2_patch": 41.9,
+    "L2_clip": 30.2,
+    "L2_clip_tiles": 1079.0,
+    "explain": 11.2,
+    "L3": 14.2,
+    "fusion": 0.1,
+    "total": 1292.4
+   }
+  },
+  {
+   "seq": 117,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0243,
+   "fused": 0.0243,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1321.1,
+   "stages": {
+    "L0": 5.2,
+    "L1": 45.2,
+    "L1b": 61.3,
+    "L2_patch": 67.3,
+    "L2_clip": 62.8,
+    "L2_clip_tiles": 1052.1,
+    "explain": 12.3,
+    "L3": 13.3,
+    "fusion": 0.1,
+    "total": 1320.5
+   }
+  },
+  {
+   "seq": 118,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0166,
+   "fused": 0.0166,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1313.6,
+   "stages": {
+    "L0": 5.4,
+    "L1": 45.6,
+    "L1b": 61.4,
+    "L2_patch": 72.9,
+    "L2_clip": 76.8,
+    "L2_clip_tiles": 1019.2,
+    "explain": 15.6,
+    "L3": 14.8,
+    "fusion": 0.1,
+    "total": 1313.0
+   }
+  },
+  {
+   "seq": 119,
+   "label": "real",
+   "verdict": "normal",
+   "confidence": 0.0166,
+   "fused": 0.0166,
+   "members": [
+    "forensic",
+    "combined"
+   ],
+   "ms": 1415.3,
+   "stages": {
+    "L0": 7.7,
+    "L1": 50.8,
+    "L1b": 129.0,
+    "L2_patch": 78.2,
+    "L2_clip": 75.2,
+    "L2_clip_tiles": 1041.1,
+    "explain": 16.9,
+    "L3": 14.4,
+    "fusion": 0.1,
+    "total": 1414.7
+   }
+  }
+ ]
 }

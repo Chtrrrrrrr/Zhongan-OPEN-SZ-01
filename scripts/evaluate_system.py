@@ -84,8 +84,21 @@ def resolve_clip_dir(p: Path) -> Path:
     return p
 
 
+def _torch_load(path, map_location="cpu"):
+    """Load a checkpoint saved as {"state_dict": ..., "scaler": {...}}.
+
+    torch>=2.6 defaults ``weights_only`` to True, which rejects the numpy scaler
+    arrays that the probe bundles carry; the bundles are produced by this repo's own
+    training script, so the pickle path is the intended one.
+    """
+    try:
+        return torch.load(path, map_location=map_location, weights_only=False)
+    except TypeError:                      # torch < 1.13 has no weights_only
+        return torch.load(path, map_location=map_location)
+
+
 def load_external_probe(pt: Path):
-    ck = torch.load(pt, map_location="cpu")
+    ck = _torch_load(pt)
     sd = ck.get("state_dict", ck)
     w = sd["weight"].numpy().reshape(-1)
     b = float(sd["bias"].numpy().reshape(-1)[0])
@@ -198,6 +211,16 @@ def main():
     ap.add_argument("--out-dir", default="reports")
     ap.add_argument("--clip-probe", default="models/clip_probe_norm.pt")
     ap.add_argument("--clip-dir", default="models/hf_cache/models--openai--clip-vit-large-patch14/snapshots")
+    ap.add_argument("--feature-spec", default=None,
+                    help="feature_spec.json describing the tile/patch blocks the heads "
+                         "consume (default: <models-dir>/feature_spec.json when present)")
+    ap.add_argument("--frozen-fusion", default="",
+                    help="keep an already-frozen fusion.json instead of re-deriving the "
+                         "deployed thresholds in this run. The deployed artifact comes "
+                         "from scripts/calibrate_deployment.py, whose threshold is the "
+                         "pooled out-of-fold order statistic over several CV rounds; the "
+                         "in-run value is a single nested split and is noisier. The "
+                         "out-of-fold metrics below do not depend on either choice.")
     ap.add_argument("--n-folds", type=int, default=5)
     ap.add_argument("--target-fpr", type=float, default=0.03)
     ap.add_argument("--fp-budget", type=int, default=2,
@@ -219,10 +242,23 @@ def main():
     X1 = np.loadtxt(args.features, delimiter=",", skiprows=1, usecols=range(2, 49))
     Xb = load_matrix(models_dir / "l1b_feats_119.npy", n, "L1b forensics")
     Fg = load_matrix(models_dir / "clip_feats_119.npy", n, "CLIP global")
-    Ft = load_matrix(models_dir / "clip_tiles_119.npy", n, "CLIP tiles")
-    XF = np.concatenate([X1, Xb], axis=1)
-    XC = np.concatenate([X1, Xb, Fg, Ft], axis=1)
-    print(f"[features] forensic={XF.shape[1]}  combined={XC.shape[1]}")
+    # The tile block and the optional patch-token block follow the FROZEN feature spec,
+    # i.e. exactly what src/detector.py assembles online (src/feature_spec.py). The
+    # 3x3 mean/max/std artifact stays the default when no spec is present, so an older
+    # artifact set still evaluates reproducibly.
+    from feature_spec import FeatureSpec
+    spec = FeatureSpec.load(args.feature_spec or (models_dir / "feature_spec.json"))
+    if (models_dir / "clip_tiles_spec.npy").exists():
+        Ft = load_matrix(models_dir / "clip_tiles_spec.npy", n, "CLIP tiles (spec)")
+    else:
+        Ft = load_matrix(models_dir / "clip_tiles_119.npy", n, "CLIP tiles")
+    patch = None
+    if spec.patch_tokens:
+        patch = load_matrix(models_dir / "clip_patch.npy", n, "CLIP patch tokens")
+    XF = np.concatenate([X1, Xb] + ([patch] if patch is not None else []), axis=1)
+    XC = np.concatenate([XF, Fg, Ft], axis=1)
+    print(f"[features] forensic={XF.shape[1]}  combined={XC.shape[1]}  spec={spec.name} "
+          f"(tile aggregation={spec.aggregation}, patch_tokens={spec.patch_tokens})")
 
     probe = Path(args.clip_probe)
     if not probe.exists():
@@ -381,9 +417,22 @@ def main():
         engf.fuse([ModelScore(m, float(inner_logits_full[m][i])) for m in final_members]).fused_score
         for i in range(n) if y[i] == 0])
     budget = None if args.fp_budget is None or args.fp_budget < 0 else args.fp_budget
+    # fusion.json stores thresholds in the fused PROBABILITY space that fuse() returns
     engf.thr_high = fpr_capped_threshold(real_scores, args.target_fpr, budget)
     engf.thr_low = float(np.median(real_scores))
-    engf.save(models_dir / "fusion.json")
+    if engf.thr_low >= engf.thr_high:
+        engf.thr_low = float(np.percentile(real_scores, 25))
+    in_run_thresholds = {"low": engf.thr_low, "high": engf.thr_high}
+    if args.frozen_fusion:
+        src = Path(args.frozen_fusion)
+        if not src.exists():
+            raise SystemExit(f"--frozen-fusion not found: {src}")
+        engf = FusionEngine.load(str(src))
+        print(f"[final] kept the frozen deployment thresholds from {src} "
+              f"(a single in-run nested split would have given "
+              f"{in_run_thresholds['low']:.4f}/{in_run_thresholds['high']:.4f})")
+    else:
+        engf.save(models_dir / "fusion.json")
     print(f"[final] members={final_members} thr_low={engf.thr_low:.4f} thr_high={engf.thr_high:.4f} "
           f"(fp_budget={budget}, target_fpr={args.target_fpr})")
 
@@ -395,6 +444,7 @@ def main():
         clip_domain_lr=str(models_dir / "clip_domain_lr.joblib"),
         combined_lr=str(models_dir / "combined_lr.joblib"),
         forensic_lr=str(models_dir / "forensic_lr.joblib"),
+        feature_spec=str(args.feature_spec or (models_dir / "feature_spec.json")),
         fusion_json=str(models_dir / "fusion.json"), device=args.device))
     paths = [str(data_dir / "images" / f"{s:03d}.png") for s in seqs]
     det.detect_image(paths[0])
@@ -430,6 +480,7 @@ def main():
             "decision_threshold": f"order statistic on training-fold real scores, target FPR<={args.target_fpr}",
             "external_probe": str(probe),
             "external_probe_admission": f"training-fold AUC >= {EXT_MIN_AUC}",
+            "feature_spec": spec.to_dict(),
             "note": "the 119 samples are the only labelled domain data; no selection on held-out folds",
         },
         "oof_overall": overall,
@@ -444,6 +495,12 @@ def main():
         "latency_image": latency,
         "final_members": final_members,
         "final_thresholds": {"low": engf.thr_low, "high": engf.thr_high},
+        "in_run_nested_thresholds": {
+            "low": round(float(in_run_thresholds["low"]), 6),
+            "high": round(float(in_run_thresholds["high"]), 6),
+            "note": "this run's single nested split; the deployed thresholds come from "
+                    "scripts/calibrate_deployment.py (pooled over several CV rounds)",
+        },
     }
     (out_dir / "metrics.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2),
                                           encoding="utf-8")

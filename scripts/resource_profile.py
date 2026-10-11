@@ -211,9 +211,36 @@ def main():
     iso = {k: {"latency_ms": [], "peak_mib": [], "peak_delta_mib": []}
            for k in ("L0", "L1", "L1b", "L2_clip", "L2_clip_tiles", "L2_npr", "L3",
                      "fusion", "end_to_end_image")}
-    det._npr = None
-    det.cfg.npr_weights = str(ws / args.npr_weights)
-    det.npr                                         # (re)load NPR for the isolated pass
+    # NPR was ablated out of the frozen fusion (reports/npr_ablation.json) and its
+    # weights are not shipped, so its isolated row is optional: without this guard the
+    # whole profile aborts after the warm pass, losing every other stage's numbers.
+    npr_available = bool(det.cfg.npr_weights) and Path(det.cfg.npr_weights).exists()
+    # The isolated pass rebuilds member inputs by hand, so it can only run when the
+    # shipped heads match the shipped feature spec. An artifact set assembled by a
+    # different revision would otherwise abort the whole profile *after* the warm pass,
+    # losing the numbers that matter; check the shapes up front and degrade instead.
+    isolated_skip = None
+    expect_combined = det.spec.forensic_dim() + 1024 + det.spec.spec_block_dim()
+    for m, pack, dim in (("forensic", det.forensic_pack, det.spec.forensic_dim()),
+                         ("combined", det.combined_pack, expect_combined)):
+        if pack is None:
+            continue
+        want = int(pack["scaler"].mean_.shape[0])
+        if want != dim:
+            isolated_skip = (f"{m} head expects {want} features but the feature spec "
+                             f"assembles {dim} - artifacts from a different revision")
+            break
+    if isolated_skip:
+        print(f"[resource] skipping the isolated-stage pass: {isolated_skip}")
+    if npr_available:
+        det._npr = None
+        det.cfg.npr_weights = str(ws / args.npr_weights)
+        det.npr                                         # (re)load NPR for the isolated pass
+    else:
+        print(f"[resource] NPR weights absent ({det.cfg.npr_weights}); "
+              f"the L2_npr isolated row is reported as not measured")
+        det._npr = None
+        det.cfg.npr_weights = None
     iso_scores = None
     for p in paths[:args.isolated_samples]:
         parsed = parse_image(p)
@@ -261,21 +288,25 @@ def main():
             torch.cuda.reset_peak_memory_stats()
         base = cuda_peak() or 0.0
         t = time.perf_counter()
-        from l2_clip_tiles import extract_tiled_features
         bgr_full = parsed2.bgr_full if parsed2.bgr_full is not None else parsed2.bgr
-        tile_feat = extract_tiled_features(det.clip, bgr_full)
+        # the tile block follows the deployed feature spec, not the frozen 3x3 layout
+        tile_detail = det.spec.tile_detail(det.clip, bgr_full)
+        tile_feat = det.spec.aggregate_detail(tile_detail)
         iso["L2_clip_tiles"]["latency_ms"].append((time.perf_counter() - t) * 1000)
         iso["L2_clip_tiles"]["peak_mib"].append(cuda_peak())
         iso["L2_clip_tiles"]["peak_delta_mib"].append(round((cuda_peak() or 0.0) - base, 1))
-        # L2 NPR
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-        base = cuda_peak() or 0.0
-        t = time.perf_counter()
-        npr_logit = det.npr.logit(parsed2.bgr)
-        iso["L2_npr"]["latency_ms"].append((time.perf_counter() - t) * 1000)
-        iso["L2_npr"]["peak_mib"].append(cuda_peak())
-        iso["L2_npr"]["peak_delta_mib"].append(round((cuda_peak() or 0.0) - base, 1))
+        # L2 NPR (skipped when its weights are not shipped with the frozen version)
+        if npr_available:
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
+            base = cuda_peak() or 0.0
+            t = time.perf_counter()
+            npr_logit = det.npr.logit(parsed2.bgr)
+            iso["L2_npr"]["latency_ms"].append((time.perf_counter() - t) * 1000)
+            iso["L2_npr"]["peak_mib"].append(cuda_peak())
+            iso["L2_npr"]["peak_delta_mib"].append(round((cuda_peak() or 0.0) - base, 1))
+        else:
+            npr_logit = None
         # L3
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
@@ -287,17 +318,26 @@ def main():
         iso["L3"]["latency_ms"].append((time.perf_counter() - t) * 1000)
         iso["L3"]["peak_mib"].append(cuda_peak())
         iso["L3"]["peak_delta_mib"].append(round((cuda_peak() or 0.0) - base, 1))
-        # fusion
-        scores = [ModelScore("forensic", det._pack_logit(det.forensic_pack,
-                                                         np.concatenate([feature_vector(feat),
-                                                                         feature_vector_b(feat_b)]))),
+        # fusion: assemble the member inputs exactly as the deployed spec expects
+        # (the patent-token block and the tile aggregation are spec-driven, so building
+        # them by hand here silently mismatches the head's input dimension)
+        patch_feat = None
+        if det.spec.patch_tokens:
+            from l3_localization import patch_token_features
+            bgr_full2 = parsed2.bgr_full if parsed2.bgr_full is not None else parsed2.bgr
+            patch_feat = patch_token_features(det.clip, bgr_full2,
+                                              max_side=det.spec.patch_max_side)
+        ctx_f = det.spec.forensic_vector(feature_vector(feat), feature_vector_b(feat_b),
+                                         patch_feat)
+        scores = [ModelScore("forensic", det._pack_logit(det.forensic_pack, ctx_f)),
                   ModelScore("combined", det._pack_logit(
-                      det.combined_pack, np.concatenate([feature_vector(feat),
-                                                         feature_vector_b(feat_b),
-                                                         clip_feat, tile_feat]))),
+                      det.combined_pack,
+                      det.spec.combined_vector(feature_vector(feat), feature_vector_b(feat_b),
+                                               clip_feat, tile_feat, patch_feat))),
                   ModelScore("clip_external", clip_logit),
-                  ModelScore("clip_domain", det._pack_logit(det.clip_domain_pack, clip_feat)),
-                  ModelScore("npr", npr_logit)]
+                  ModelScore("clip_domain", det._pack_logit(det.clip_domain_pack, clip_feat))]
+        if npr_logit is not None:
+            scores.append(ModelScore("npr", npr_logit))
         iso_scores = scores
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()

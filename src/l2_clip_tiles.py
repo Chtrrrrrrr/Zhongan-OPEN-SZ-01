@@ -19,16 +19,25 @@ OVERLAP = 0.25
 
 
 def tile_boxes(h: int, w: int, n: int = N_GRID, overlap: float = OVERLAP):
-    """Overlapping nxn tile boxes (x0, y0, x1, y1) in pixel coords."""
-    th, tw = h / (n - (n - 1) * overlap), w / (n - (n - 1) * overlap)
+    """Overlapping nxn tile boxes (x0, y0, x1, y1) in pixel coords.
+
+    ``n - (n-1)*overlap`` is the number of tile-widths the grid spans, which is
+    fractional for some (n, overlap) pairs; tile edges are rounded outward so the grid
+    always covers the full image instead of clipping the right/bottom edge.
+    """
+    import math
+    span = max(1.0, n - (n - 1) * overlap)
+    th, tw = h / span, w / span
     step_y, step_x = th * (1 - overlap), tw * (1 - overlap)
     boxes = []
     for i in range(n):
         for j in range(n):
             y0, x0 = i * step_y, j * step_x
-            y1, x1 = min(h, y0 + th), min(w, x0 + tw)
-            y0, x0 = max(0, y1 - th), max(0, x1 - tw)
-            boxes.append((int(x0), int(y0), int(x1), int(y1)))
+            y1 = min(h, int(math.ceil(y0 + th)))
+            x1 = min(w, int(math.ceil(x0 + tw)))
+            y0i = max(0, int(math.floor(y1 - th)))
+            x0i = max(0, int(math.floor(x1 - tw)))
+            boxes.append((x0i, y0i, x1, y1))
     return boxes
 
 

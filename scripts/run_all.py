@@ -5,6 +5,9 @@ Runs the whole pipeline with the exact ordering used for the reported numbers:
 
   step 1  L1 + L1b forensic features        -> features.csv, models/l1b_feats.npy
   step 2  CLIP features (global + tiles)    -> models/clip_feats*.npy, clip_tiles*.npy
+  step 2b patch-token statistics + the evidence sweep + the frozen feature spec
+                                            -> models/clip_patch.npy, feature_spec.json,
+                                               clip_tiles_spec.npy, reports/tile_clip_sweep.json
   step 3  CLIP probe training (external)    -> models/clip_probe.pt (+_norm)
   step 4  full evaluation on 119 samples    -> reports/metrics.json + reports/*.html
   step 5  ablations (features / fusion)     -> reports/*_ablation.json
@@ -20,6 +23,9 @@ Runs the whole pipeline with the exact ordering used for the reported numbers:
                                                reports/aeroblade_ablation.json,
                                                reports/meta_proxy_attempt.json,
                                                data/eval_protocol_frozen.json
+  step 11 multi-round verification          -> reports/verify_matrix.json,
+                                               models/deployment_metrics.json
+  step 12 external holdout (optional)       -> reports/external_holdout.json
 
 Usage:
   python scripts/run_all.py                      # everything
@@ -29,6 +35,7 @@ Usage:
                                                  # matrix under models/ on first run)
   python scripts/run_all.py --skip-clip-train    # reuse an existing probe
   python scripts/run_all.py --with-robustness    # add the (slow) robustness matrix
+  python scripts/run_all.py --testset <dir>      # also run the external holdout
 
 Everything is written under the workspace so the package is self-contained.
 """
@@ -56,12 +63,20 @@ def run(cmd: list[str], desc: str) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--steps", default="1,2,3,4,5,6,7,8,9,10")
+    ap.add_argument("--steps", default="1,2,2b,3,4,5,6,7,8,9,10,11")
     ap.add_argument("--skip-clip-train", action="store_true")
     ap.add_argument("--with-robustness", action="store_true",
                     help="also run the robustness matrix (about 30-40 min on GPU)")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--epochs", type=int, default=30)
+    ap.add_argument("--sweep-configs", default="C0,C5,C6,C7,C8,C9,M1,M2,M3,M5",
+                    help="tile-CLIP cells for the evidence sweep (step 2b)")
+    ap.add_argument("--deploy-cell", default="C8",
+                    help="sweep cell frozen into models/feature_spec.json (step 2b)")
+    ap.add_argument("--deploy-aggregation", default="meanmax")
+    ap.add_argument("--verify-rounds", type=int, default=6)
+    ap.add_argument("--testset", default="",
+                    help="optional external 真假测试素材集 for the robustness holdout")
     args = ap.parse_args()
     steps = {s.strip() for s in args.steps.split(",")}
     py = sys.executable
@@ -69,12 +84,26 @@ def main():
     if "1" in steps:
         run([py, "repo/scripts/extract_l1b_features.py", "--data-dir", "data",
              "--features", "features.csv", "--out-dir", "models"],
-            "step 1/7  L1 (47) + L1b (20) forensic features")
+            "step 1/12  L1 (47) + L1b (20) forensic features")
 
     if "2" in steps:
         run([py, "repo/scripts/extract_clip_features.py", "--data-dir", "data",
              "--out-dir", "models", "--device", args.device],
-            "step 2/7  CLIP global + tiled features for the 119 samples")
+            "step 2/12  CLIP global + tiled features for the 119 samples")
+
+    if "2b" in steps:
+        run([py, "repo/scripts/extract_clip_patch_features.py", "--data-dir", "data",
+             "--out-dir", "models", "--device", args.device],
+            "step 2b/12a  CLIP patch-token statistics (training-free clue family)")
+        run([py, "repo/scripts/tile_clip_sweep.py", "--data-dir", "data",
+             "--cache", "models/tile_cache", "--configs", args.sweep_configs,
+             "--aggregations", "base,meanmax", "--seeds", "42,7,123,2024",
+             "--out", "repo/reports/tile_clip_sweep.json", "--device", args.device],
+            "step 2b/12b  tile-CLIP evidence sweep (accuracy at the FP budget vs latency)")
+        run([py, "repo/scripts/build_feature_spec.py", "--cell", args.deploy_cell,
+             "--aggregation", args.deploy_aggregation, "--patch",
+             "--cache", "models/tile_cache", "--models-dir", "models"],
+            "step 2b/12c  freeze models/feature_spec.json + clip_tiles_spec.npy")
 
     if "3" in steps and not args.skip_clip_train:
         shards = sorted((WS / "data" / "external").glob("*.parquet"))
@@ -84,49 +113,50 @@ def main():
              "--shards", *[str(s) for s in shards],
              "--out", "models/clip_probe_norm.pt", "--device", args.device,
              "--epochs", str(args.epochs), "--reencode-q", "90"],
-            "step 3/7  CLIP probe on the 18-generator benchmark (common-codec)")
+            "step 3/12  CLIP probe on the 18-generator benchmark (common-codec)")
 
     if "4" in steps:
         run([py, "repo/scripts/evaluate_system.py", "--device", args.device,
-             "--clip-probe", "models/clip_probe_norm.pt"],
-            "step 4/7  nested-CV evaluation + latency + per-sample reports")
+             "--clip-probe", "models/clip_probe_norm.pt",
+             "--feature-spec", "models/feature_spec.json"],
+            "step 4/12  nested-CV evaluation + latency + per-sample reports")
 
     if "5" in steps:
-        run([py, "repo/scripts/experiment_features.py"], "step 5a/7  feature-set ablation")
-        run([py, "repo/scripts/experiment_fusion.py"], "step 5b/7  fusion-rule ablation")
+        run([py, "repo/scripts/experiment_features.py"], "step 5a/12  feature-set ablation")
+        run([py, "repo/scripts/experiment_fusion.py"], "step 5b/12  fusion-rule ablation")
 
     if "6" in steps:
-        run([py, "repo/scripts/diagnose_errors.py"], "step 6a/7  error analysis")
-        run([py, "repo/scripts/make_figures.py"], "step 6b/7  figures")
+        run([py, "repo/scripts/diagnose_errors.py"], "step 6a/12  error analysis")
+        run([py, "repo/scripts/make_figures.py"], "step 6b/12  figures")
 
     if "7" in steps:
         (WS / "demo_assets").mkdir(exist_ok=True)
         run([py, "repo/scripts/make_test_video.py",
              "--images", "data/images/001.png", "data/images/057.png",
-             "--out", "demo_assets/smoke_test.mp4"], "step 7a/7  video smoke clip")
+             "--out", "demo_assets/smoke_test.mp4"], "step 7a/12  video smoke clip")
         run([py, "repo/scripts/smoke_test.py", "--device", args.device],
-            "step 7b/7  cold/warm image + video budget check")
+            "step 7b/12  cold/warm image + video budget check")
 
     if "8" in steps:
         # the whole metrics pack shares one out-of-fold score matrix: the first script
         # builds and caches it under models/, the rest reuse it (they all reproduce the
         # fold protocol of scripts/evaluate_system.py)
         run([py, "repo/scripts/calibration_analysis.py"],
-            "step 8a/9  calibration: ECE (10/15 bins) + reliability + guardrails "
+            "step 8a/12  calibration: ECE (10/15 bins) + reliability + guardrails "
             "FPR@TPR=95% / TPR@FPR=1%")
         run([py, "repo/scripts/member_analysis.py"],
-            "step 8b/9  member correlation, decision disagreement, FP/FN overlap, "
+            "step 8b/12  member correlation, decision disagreement, FP/FN overlap, "
             "leave-one-out ΔTPR")
         run([py, "repo/scripts/threshold_stability.py"],
-            "step 8c/9  threshold bootstrap CI + sensitivity + hold-out FPR")
+            "step 8c/12  threshold bootstrap CI + sensitivity + hold-out FPR")
         run([py, "repo/scripts/stratified_analysis.py"],
-            "step 8d/9  per-content-class / per-capture-mode breakdown (proxy labels)")
+            "step 8d/12  per-content-class / per-capture-mode breakdown (proxy labels)")
         run([py, "repo/scripts/protocol_reconciliation.py"],
-            "step 8e/9  frozen-split vs out-of-fold protocol reconciliation + signature")
+            "step 8e/12  frozen-split vs out-of-fold protocol reconciliation + signature")
 
     if "9" in steps:
         run([py, "repo/scripts/resource_profile.py", "--device", args.device],
-            "step 9/9  per-stage latency + GPU memory + manual 16.2 budget table")
+            "step 9/12  per-stage latency + GPU memory + manual 16.2 budget table")
 
     if "10" in steps:
         run([py, "repo/scripts/build_meta.py"],
@@ -144,6 +174,26 @@ def main():
         run([py, "repo/scripts/freeze_eval_protocol.py", "--verify"],
             "step 10g  verify the evaluation-protocol freeze")
 
+    if "11" in steps:
+        run([py, "repo/scripts/calibrate_deployment.py", "--data-dir", "data",
+             "--models-dir", "models", "--rounds", str(args.verify_rounds),
+             "--member-set", "combined_forensic"],
+            "step 11a/12  freeze heads + thresholds, multi-round out-of-fold metrics")
+        run([py, "repo/scripts/verify_matrix.py", "--rounds", str(args.verify_rounds),
+             "--data-dir", "data", "--cache", "models/tile_cache",
+             "--out", "repo/reports/verify_matrix.json"],
+            "step 11b/12  verification matrix (config x aggregation x member set)")
+
+    if args.testset:
+        run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
+             "--cache", "models/external_cache", "--stage", "extract",
+             "--device", args.device],
+            "step 12a  external testset feature extraction")
+        run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
+             "--cache", "models/external_cache", "--stage", "evaluate",
+             "--out", "repo/reports/external_holdout.json"],
+            "step 12b  external holdout evaluation (frozen thresholds)")
+
     if args.with_robustness:
         run([py, "repo/scripts/robustness_matrix.py", "--device", args.device],
             "extra  robustness matrix (manual ch.14.1)")
@@ -154,6 +204,8 @@ def main():
     print("Metrics pack: reports/calibration.json, reports/member_analysis.json, "
           "reports/threshold_stability.json, reports/stratified_analysis.json, "
           "reports/resource_profile.json, reports/protocol_reconciliation.json")
+    print("Iteration pack: reports/tile_clip_sweep.json, reports/verify_matrix.json, "
+          "models/deployment_metrics.json, models/feature_spec.json")
     print("Compliance pack: reports/cross_generator.json, reports/aeroblade_ablation.json, "
           "reports/meta_proxy_attempt.json, data/eval_protocol_frozen.json")
 

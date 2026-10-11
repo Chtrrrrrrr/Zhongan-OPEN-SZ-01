@@ -101,8 +101,18 @@ reports/batch/*
 !reports/meta_proxy_attempt.json
 !reports/aeroblade_ablation.json
 
+# iteration evidence: the tile-CLIP evidence sweep and the multi-round verification
+# matrix are the basis of the accuracy/latency claims in docs/iteration-2026-10-11.md,
+# so the raw JSON is archived rather than left as a local run product
+!reports/tile_clip_sweep.json
+!reports/verify_matrix.json
+!reports/external_real_calibration.json
+
 # F7閿涙obustness_smoke.json閿涘牊妫張?6 閺嶉攱婀伴幒銏ゆ嫛閿涘矂娼張澶嬫櫏鐠囦焦宓侀敍澶夌瑢 video_smoke.json 瀹歌弓绗夌€涙ê婀敍?# 鐎电懓绨查惃鍕閸氬秴宕熺悰灞肩楠炲墎些闂勩倧绱濋柆鍨帳鐠囶垱鏂佺悰灞炬￥閺佸牐鐦夐幑顔衡偓?
 *.log
 outputs/
 runs/
 wandb/
+
+# local experiment workspace: alternative specs, per-sample report dumps, run logs
+_local_experiments/

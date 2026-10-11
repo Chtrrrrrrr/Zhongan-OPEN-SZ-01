@@ -12,57 +12,70 @@
       "clip_external": 0.15
     },
     "decision_threshold": "order statistic on training-fold real scores, target FPR<=0.03",
-    "external_probe": "models\\clip_probe_norm.pt",
+    "external_probe": "D:\\dsh\\Zhongan-OPEN-SZ-01\\models\\clip_probe_norm.pt",
     "external_probe_admission": "training-fold AUC >= 0.65",
+    "feature_spec": {
+      "name": "C8-meanmax+patch",
+      "scales": [
+        {
+          "grid": 6,
+          "overlap": 0.3,
+          "max_side": null
+        }
+      ],
+      "aggregation": "meanmax",
+      "patch_tokens": true,
+      "patch_max_side": 1600
+    },
     "note": "the 119 samples are the only labelled domain data; no selection on held-out folds"
   },
   "oof_overall": {
-    "accuracy": 0.958,
+    "accuracy": 0.9496,
     "fpr": 0.0317,
-    "tpr": 0.9464,
-    "precision": 0.9636,
+    "tpr": 0.9286,
+    "precision": 0.963,
     "confusion": {
-      "tp": 53,
+      "tp": 52,
       "tn": 61,
       "fp": 2,
-      "fn": 3
+      "fn": 4
     },
     "accuracy_ci95": [
-      0.916,
-      0.9916
+      0.9076,
+      0.9832
     ],
     "fpr_ci95": [
       0.0,
       0.0794
     ],
     "three_tier": {
-      "suspect": 55,
-      "normal": 32,
-      "review": 32
+      "suspect": 54,
+      "normal": 31,
+      "review": 34
     }
   },
   "per_model_oof_auc": {
-    "forensic": 0.9082,
-    "combined": 0.9657,
-    "clip_external": 0.6477
+    "forensic": 0.9303,
+    "combined": 0.9753,
+    "clip_external": 0.5
   },
   "roc_frontier": {
     "tpr@fpr=0.01": 0.0,
-    "tpr@fpr=0.02": 0.125,
-    "tpr@fpr=0.03": 0.125,
-    "tpr@fpr=0.05": 0.9643,
-    "tpr@fpr=0.10": 0.9643
+    "tpr@fpr=0.02": 0.2143,
+    "tpr@fpr=0.03": 0.2143,
+    "tpr@fpr=0.05": 1.0,
+    "tpr@fpr=0.10": 1.0
   },
   "operating_points_best_accuracy": {
-    "fpr_le_1.59pct_(1_of_63)": 0.5798,
-    "fpr_le_3.17pct_(2_of_63)": 0.9664,
-    "fpr_le_4.76pct_(3_of_63)": 0.9664,
-    "fpr_le_3pct_strict": 0.5798,
-    "official_ratio_2_of_70=2.86pct": 0.5798
+    "fpr_le_1.59pct_(1_of_63)": 0.6218,
+    "fpr_le_3.17pct_(2_of_63)": 0.9832,
+    "fpr_le_4.76pct_(3_of_63)": 0.9832,
+    "fpr_le_3pct_strict": 0.6218,
+    "official_ratio_2_of_70=2.86pct": 0.6218
   },
   "simulated_official_ratio": {
     "simulated_ratio": "70:30",
-    "accuracy_mean": 0.9624,
+    "accuracy_mean": 0.9571,
     "accuracy_ci95": [
       0.92,
       0.99
@@ -87,15 +100,14 @@
       },
       "fold": 1,
       "thresholds": [
-        0.0725,
-        0.6994
+        0.0297,
+        0.6404
       ],
       "members": [
         "combined",
-        "forensic",
-        "clip_external"
+        "forensic"
       ],
-      "ext_auc_train": 0.7045
+      "ext_auc_train": 0.5
     },
     {
       "accuracy": 1.0,
@@ -110,37 +122,36 @@
       },
       "fold": 2,
       "thresholds": [
-        0.0914,
-        0.6748
-      ],
-      "members": [
-        "combined",
-        "forensic",
-        "clip_external"
-      ],
-      "ext_auc_train": 0.6529
-    },
-    {
-      "accuracy": 0.9583,
-      "fpr": 0.0,
-      "tpr": 0.9091,
-      "precision": 1.0,
-      "confusion": {
-        "tp": 10,
-        "tn": 13,
-        "fp": 0,
-        "fn": 1
-      },
-      "fold": 3,
-      "thresholds": [
-        0.0717,
-        0.6141
+        0.051,
+        0.7206
       ],
       "members": [
         "combined",
         "forensic"
       ],
-      "ext_auc_train": 0.6142
+      "ext_auc_train": 0.5
+    },
+    {
+      "accuracy": 0.9167,
+      "fpr": 0.0,
+      "tpr": 0.8182,
+      "precision": 1.0,
+      "confusion": {
+        "tp": 9,
+        "tn": 13,
+        "fp": 0,
+        "fn": 2
+      },
+      "fold": 3,
+      "thresholds": [
+        0.0362,
+        0.6126
+      ],
+      "members": [
+        "combined",
+        "forensic"
+      ],
+      "ext_auc_train": 0.5
     },
     {
       "accuracy": 0.9167,
@@ -155,15 +166,14 @@
       },
       "fold": 4,
       "thresholds": [
-        0.0159,
-        0.2878
+        0.008,
+        0.3322
       ],
       "members": [
         "combined",
-        "forensic",
-        "clip_external"
+        "forensic"
       ],
-      "ext_auc_train": 0.6564
+      "ext_auc_train": 0.5
     },
     {
       "accuracy": 0.913,
@@ -178,40 +188,40 @@
       },
       "fold": 5,
       "thresholds": [
-        0.0724,
-        0.7304
+        0.0678,
+        0.7239
       ],
       "members": [
         "combined",
         "forensic"
       ],
-      "ext_auc_train": 0.6109
+      "ext_auc_train": 0.5
     }
   ],
   "external_probe_per_fold": [
     {
       "fold": 1,
-      "ext_auc_train": 0.7045,
-      "admitted": true
+      "ext_auc_train": 0.5,
+      "admitted": false
     },
     {
       "fold": 2,
-      "ext_auc_train": 0.6529,
-      "admitted": true
+      "ext_auc_train": 0.5,
+      "admitted": false
     },
     {
       "fold": 3,
-      "ext_auc_train": 0.6142,
+      "ext_auc_train": 0.5,
       "admitted": false
     },
     {
       "fold": 4,
-      "ext_auc_train": 0.6564,
-      "admitted": true
+      "ext_auc_train": 0.5,
+      "admitted": false
     },
     {
       "fold": 5,
-      "ext_auc_train": 0.6109,
+      "ext_auc_train": 0.5,
       "admitted": false
     }
   ],
@@ -223,15 +233,16 @@
     "false_negatives_ai_seqs": [
       3,
       29,
-      30
+      30,
+      54
     ]
   },
   "latency_image": {
-    "n": 30,
-    "p50_ms": 809.4,
-    "p95_ms": 1216.8,
-    "mean_ms": 912.1,
-    "max_ms": 1258.1,
+    "n": 40,
+    "p50_ms": 1621.8,
+    "p95_ms": 1978.8,
+    "mean_ms": 1597.5,
+    "max_ms": 2081.6,
     "budget_ms": 5000,
     "p95_within_budget": true
   },
@@ -240,7 +251,12 @@
     "forensic"
   ],
   "final_thresholds": {
-    "low": 0.036440409414102856,
-    "high": 0.6742875975794557
+    "low": 0.026294449831441434,
+    "high": 0.6946558618333415
+  },
+  "in_run_nested_thresholds": {
+    "low": 0.026294,
+    "high": 0.694656,
+    "note": "this run's single nested split; the deployed thresholds come from scripts/calibrate_deployment.py (pooled over several CV rounds)"
   }
 }

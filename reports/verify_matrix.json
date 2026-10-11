@@ -1,0 +1,309 @@
+{
+  "report": "verify_matrix",
+  "rounds": 6,
+  "n_folds": 5,
+  "fp_budget": 2,
+  "protocol": "stratified k-fold x rounds; per-fold nested inner-CV threshold; heads fit on the training fold only; no held-out selection",
+  "rows": [
+    {
+      "tag": "C8_meanmax_deployed_patch1",
+      "cell": "C8",
+      "aggregation": "meanmax",
+      "weights": "deployed",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.976,
+      "acc_mean": 0.944,
+      "acc_min": 0.916,
+      "acc_max": 0.958,
+      "fpr_mean": 0.037,
+      "tpr_mean": 0.9226,
+      "oracle_acc": 0.9678,
+      "two_hits_acc": 0.8221,
+      "loo": {
+        "drop_forensic": 0.9652,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9788
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9773,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C8_meanmax_with_clip_domain_patch1",
+      "cell": "C8",
+      "aggregation": "meanmax",
+      "weights": "with_clip_domain",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9735,
+      "acc_mean": 0.9426,
+      "acc_min": 0.8992,
+      "acc_max": 0.958,
+      "fpr_mean": 0.037,
+      "tpr_mean": 0.9196,
+      "oracle_acc": 0.9636,
+      "two_hits_acc": 0.8221,
+      "loo": {
+        "drop_forensic": 0.9652,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9788
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9773,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C7_meanmax_with_clip_domain_patch1",
+      "cell": "C7",
+      "aggregation": "meanmax",
+      "weights": "with_clip_domain",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9735,
+      "acc_mean": 0.9356,
+      "acc_min": 0.8824,
+      "acc_max": 0.958,
+      "fpr_mean": 0.0423,
+      "tpr_mean": 0.9107,
+      "oracle_acc": 0.9678,
+      "two_hits_acc": 0.8207,
+      "loo": {
+        "drop_forensic": 0.9665,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9786
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9775,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C7_meanmax_deployed_patch1",
+      "cell": "C7",
+      "aggregation": "meanmax",
+      "weights": "deployed",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9755,
+      "acc_mean": 0.9328,
+      "acc_min": 0.8739,
+      "acc_max": 0.958,
+      "fpr_mean": 0.0502,
+      "tpr_mean": 0.9137,
+      "oracle_acc": 0.9692,
+      "two_hits_acc": 0.8193,
+      "loo": {
+        "drop_forensic": 0.9665,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9786
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9775,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C7_base_with_clip_domain_patch1",
+      "cell": "C7",
+      "aggregation": "base",
+      "weights": "with_clip_domain",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9726,
+      "acc_mean": 0.9244,
+      "acc_min": 0.8739,
+      "acc_max": 0.958,
+      "fpr_mean": 0.045,
+      "tpr_mean": 0.8899,
+      "oracle_acc": 0.9622,
+      "two_hits_acc": 0.8137,
+      "loo": {
+        "drop_forensic": 0.9644,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9777
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9756,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C7_base_deployed_patch1",
+      "cell": "C7",
+      "aggregation": "base",
+      "weights": "deployed",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9743,
+      "acc_mean": 0.923,
+      "acc_min": 0.8655,
+      "acc_max": 0.9496,
+      "fpr_mean": 0.0502,
+      "tpr_mean": 0.8929,
+      "oracle_acc": 0.965,
+      "two_hits_acc": 0.8109,
+      "loo": {
+        "drop_forensic": 0.9644,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.9777
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9756,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C0_base_deployed_patch1",
+      "cell": "C0",
+      "aggregation": "base",
+      "weights": "deployed",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.97,
+      "acc_mean": 0.9034,
+      "acc_min": 0.8739,
+      "acc_max": 0.9328,
+      "fpr_mean": 0.037,
+      "tpr_mean": 0.8363,
+      "oracle_acc": 0.9636,
+      "two_hits_acc": 0.7969,
+      "loo": {
+        "drop_forensic": 0.958,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.974
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9675,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C0_meanmax_deployed_patch1",
+      "cell": "C0",
+      "aggregation": "meanmax",
+      "weights": "deployed",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.97,
+      "acc_mean": 0.9034,
+      "acc_min": 0.8739,
+      "acc_max": 0.9328,
+      "fpr_mean": 0.037,
+      "tpr_mean": 0.8363,
+      "oracle_acc": 0.9636,
+      "two_hits_acc": 0.7969,
+      "loo": {
+        "drop_forensic": 0.958,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.974
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9675,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C0_base_with_clip_domain_patch1",
+      "cell": "C0",
+      "aggregation": "base",
+      "weights": "with_clip_domain",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9683,
+      "acc_mean": 0.8936,
+      "acc_min": 0.8655,
+      "acc_max": 0.9244,
+      "fpr_mean": 0.0344,
+      "tpr_mean": 0.8125,
+      "oracle_acc": 0.9608,
+      "two_hits_acc": 0.7983,
+      "loo": {
+        "drop_forensic": 0.958,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.974
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9675,
+        "clip_domain": 0.9098
+      }
+    },
+    {
+      "tag": "C0_meanmax_with_clip_domain_patch1",
+      "cell": "C0",
+      "aggregation": "meanmax",
+      "weights": "with_clip_domain",
+      "patch": true,
+      "members": {
+        "combined": 0.6,
+        "forensic": 0.25,
+        "clip_domain": 0.15
+      },
+      "full_auc": 0.9683,
+      "acc_mean": 0.8936,
+      "acc_min": 0.8655,
+      "acc_max": 0.9244,
+      "fpr_mean": 0.0344,
+      "tpr_mean": 0.8125,
+      "oracle_acc": 0.9608,
+      "two_hits_acc": 0.7983,
+      "loo": {
+        "drop_forensic": 0.958,
+        "drop_combined": 0.9518,
+        "drop_clip_domain": 0.974
+      },
+      "per_member": {
+        "forensic": 0.9323,
+        "combined": 0.9675,
+        "clip_domain": 0.9098
+      }
+    }
+  ]
+}

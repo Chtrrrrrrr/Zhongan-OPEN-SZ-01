@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 
@@ -33,6 +34,7 @@ class PipelineConfig:
                                          # ΔTPR@FPR=5% below the gate) - off by default,
                                          # and it only loads when the frozen fusion table
                                          # actually carries a weight for it (manual ch.12.1)
+    feature_spec: str | None = None      # models/feature_spec.json: block layout the heads expect
     time_budget_s: float = 5.0
     device: str | None = None
 
@@ -62,6 +64,15 @@ class AIGCDetector:
         # degraded result for a perfectly healthy model.
         self._load_s = 0.0
         self.fusion = FusionEngine.load(cfg.fusion_json) if cfg.fusion_json else FusionEngine()
+        # The block layout the heads were fitted on. Read from a frozen artifact so the
+        # online path cannot drift from the offline extractor (src/feature_spec.py).
+        if cfg.feature_spec:
+            from feature_spec import FeatureSpec
+            self.spec = FeatureSpec.load(cfg.feature_spec)
+        else:
+            from feature_spec import FeatureSpec
+            default = Path(__file__).resolve().parent.parent / "models" / "feature_spec.json"
+            self.spec = FeatureSpec.load(default) if default.exists() else FeatureSpec()
 
     # ---- lazy, resident model loading ----
     @property
@@ -73,7 +84,8 @@ class AIGCDetector:
             if self.cfg.clip_probe:
                 import torch
                 from l2_clip import LinearProbe
-                ck = torch.load(self.cfg.clip_probe, map_location=self.device)
+                ck = torch.load(self.cfg.clip_probe, map_location=self.device,
+                                weights_only=False)
                 # accept both {"state_dict": {...}} bundles and flat state dicts,
                 # and both fc.weight/fc.bias and weight/bias key spellings
                 sd = ck.get("state_dict", ck) if isinstance(ck, dict) else ck
@@ -227,7 +239,8 @@ class AIGCDetector:
         }
 
     def _attention_explanation(self, rep: DetectionReport, parsed: ParsedInput, x1, xb,
-                               clip_feat, tile_feat, combined_logit) -> dict:
+                               clip_feat, tile_feat, combined_logit, patch_feat=None,
+                               tile_detail=None) -> dict:
         """Attention map of the decision head - EXPLANATION, never localization.
 
         The deployed `combined` head is a joblib logistic regression: no feature map
@@ -259,11 +272,13 @@ class AIGCDetector:
             exp["reason"] = "分块CLIP特征不可用，combined 头缺少块特征输入"
             return exp
         try:
-            context = np.concatenate([x1, xb, clip_feat])
+            context = self.spec.forensic_vector(x1, xb, patch_feat)
             bgr_full = parsed.bgr_full if parsed.bgr_full is not None else parsed.bgr
             res = tile_contribution_attribution(
-                self.clip, bgr_full, context, tile_feat,
-                lambda v: self._pack_logit(self.combined_pack, v))
+                self.clip, bgr_full, np.concatenate([context, clip_feat]), tile_feat,
+                lambda v: self._pack_logit(self.combined_pack, v),
+                max_side=max(int(sc.get("max_side") or 1600) for sc in self.spec.scales),
+                spec=self.spec, detail=tile_detail)
         except Exception as e:
             exp["reason"] = f"块级贡献归因计算失败：{e}"
             return exp
@@ -343,10 +358,28 @@ class AIGCDetector:
         xb = feature_vector_b(extract_l1b_features(parsed))
         latency["L1b"] = (time.perf_counter() - t) * 1000
 
+        # Optional CLIP patch-token block (feature spec decides whether the heads want it).
+        # Computed from the same frozen forward pass that produces the global feature, so
+        # it adds no extra backbone call.
+        patch_feat = None
+        if self.spec.patch_tokens and self.clip is not None:
+            t = time.perf_counter()
+            try:
+                from l3_localization import patch_token_features
+                bgr_full = parsed.bgr_full if parsed.bgr_full is not None else parsed.bgr
+                patch_feat = patch_token_features(self.clip, bgr_full,
+                                                  max_side=self.spec.patch_max_side)
+                latency["L2_patch"] = (time.perf_counter() - t) * 1000
+            except Exception as e:
+                rep.uncertainty.append(f"分块标记统计不可用（降级运行）：{e}")
+
         # domain forensics (L1 + L1b): always available, no deep model needed
         if self.forensic_pack is not None:
-            scores.append(ModelScore("forensic", self._pack_logit(self.forensic_pack,
-                                                                  np.concatenate([x1, xb]))))
+            try:
+                scores.append(ModelScore("forensic", self._pack_logit(
+                    self.forensic_pack, self.spec.forensic_vector(x1, xb, patch_feat))))
+            except Exception as e:
+                rep.uncertainty.append(f"forensic 头不可用（降级运行）：{e}")
 
         # L2 members with per-member timeout guard
         budget = self.cfg.time_budget_s
@@ -358,6 +391,7 @@ class AIGCDetector:
 
         clip_feat = None
         tile_feat = None
+        tile_detail = None
         combined_logit = None
         if self.clip is not None and _elapsed() < budget - 1.5:
             t = time.perf_counter()
@@ -369,13 +403,15 @@ class AIGCDetector:
             scores.append(ModelScore("clip_external", logit))
             latency["L2_clip"] = (time.perf_counter() - t) * 1000
 
-            # native-resolution tiled CLIP evidence (3x3 overlapping tiles)
+            # native-resolution tiled CLIP evidence (scales come from the feature spec).
+            # The per-tile features are kept so the attention explanation reuses this
+            # pass instead of running the backbone over the same tiles a second time.
             if self.forensic_pack is not None or self.combined_pack is not None:
                 try:
-                    from l2_clip_tiles import extract_tiled_features
                     t = time.perf_counter()
                     bgr_full = parsed.bgr_full if parsed.bgr_full is not None else parsed.bgr
-                    tile_feat = extract_tiled_features(self.clip, bgr_full)
+                    tile_detail = self.spec.tile_detail(self.clip, bgr_full)
+                    tile_feat = self.spec.aggregate_detail(tile_detail)
                     latency["L2_clip_tiles"] = (time.perf_counter() - t) * 1000
                 except Exception as e:
                     rep.uncertainty.append(f"分块CLIP证据不可用：{e}")
@@ -384,11 +420,9 @@ class AIGCDetector:
                 scores.append(ModelScore("clip_domain",
                                          self._pack_logit(self.clip_domain_pack, clip_feat)))
             if self.combined_pack is not None:
-                parts = [x1, xb, clip_feat]
-                if tile_feat is not None:
-                    parts.append(tile_feat)
                 try:
-                    combined_logit = self._pack_logit(self.combined_pack, np.concatenate(parts))
+                    combined_logit = self._pack_logit(self.combined_pack, self.spec.combined_vector(
+                        x1, xb, clip_feat, tile_feat, patch_feat))
                     scores.append(ModelScore("combined", combined_logit))
                 except Exception as e:
                     # a member is an evidence producer, not a gate (manual ch.4.2/16.3):
@@ -418,7 +452,8 @@ class AIGCDetector:
         if _elapsed() < budget - 0.8:
             try:
                 rep.explanation = self._attention_explanation(
-                    rep, parsed, x1, xb, clip_feat, tile_feat, combined_logit)
+                    rep, parsed, x1, xb, clip_feat, tile_feat, combined_logit, patch_feat,
+                    tile_detail)
             except Exception as e:
                 rep.explanation = self._unavailable_explanation(
                     f"关注区域解释生成失败：{e}",

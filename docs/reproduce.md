@@ -13,14 +13,15 @@
 repo/                          # 代码仓库（https://github.com/Chtrrrrrrr/Zhongan-OPEN-SZ-01）
 ├── src/
 │   ├── l0_input.py            # L0 解析与规范化（PNG 块走查、sha256+aHash、最长边512缩放；支持内存解析）
+│   ├── feature_spec.py        # ★ 特征块布局的单一真源（分块尺度/聚合/patch 开关），离线与在线共用
 │   ├── l1_forensics.py        # L1 47 维取证特征
 │   ├── l1b_domain.py          # L1b 20 维"拍摄态 vs 渲染态"取证（噪声均匀性/光照梯度/锐度一致性/频谱）
 │   ├── l2_clip.py             # 冻结 CLIP-L/14 特征提取 + 线性头
-│   ├── l2_clip_tiles.py       # 3×3 重叠原生分辨率分块 CLIP 特征（关键增益来源）
+│   ├── l2_clip_tiles.py       # 原生分辨率分块 CLIP 特征（关键增益来源）
 │   ├── l2_npr.py              # NPR 分支（已实现，经消融剔除）
 │   ├── l2_aeroblade.py        # AEROBLADE 接入位（可选，未启用）
-│   ├── l3_localization.py     # L3 ELA + 噪声不一致异常图与区域框
-│   ├── fusion.py              # 温度标定 + 加权 logit 融合 + 三档决策
+│   ├── l3_localization.py     # L3 ELA + 噪声不一致异常图、区域框、块级归因、patch-token 统计
+│   ├── fusion.py              # 温度标定 + 加权 logit 融合 + 三档决策（阈值统一为概率空间）
 │   ├── detector.py            # 统一图片/视频服务（逐成员超时与降级）
 │   ├── video.py               # 视频通道：均匀抽帧 → 逐帧证据 → 聚合 → 可疑片段
 │   └── report.py              # 结构化 JSON + 自包含 HTML 报告
@@ -28,6 +29,13 @@ repo/                          # 代码仓库（https://github.com/Chtrrrrrrr/Zh
 │   ├── extract_features.py    # 批量 L1 特征 → features.csv
 │   ├── extract_l1b_features.py# 批量 L1b 特征 → models/l1b_feats.npy
 │   ├── extract_clip_features.py # 批量 CLIP 全局 + 分块特征
+│   ├── extract_clip_patch_features.py # ★ 冻结 ViT 的 patch-token 统计（训练-free 线索族）
+│   ├── tile_clip_sweep.py     # ★ 分块规格搜索：网格/重叠/预缩放 × 聚合 × 多尺度 × 多种子
+│   ├── build_feature_spec.py  # ★ 把选中的规格冻结成 models/feature_spec.json
+│   ├── calibrate_deployment.py# ★ 多轮嵌套 CV → 冻结头/阈值 + 出部署口径指标
+│   ├── verify_matrix.py       # ★ 验证矩阵（单元 × 聚合 × 成员组合 × 多种子）
+│   ├── verify_rounds.py       # ★ 逐轮折外证据、成员 LOO、判定规则对照、错误归因
+│   ├── external_holdout.py    # ★ 外部 1537 张素材集的冻结阈值检查（误报频率/泛化排序）
 │   ├── train_clip_probe.py    # 在 18 生成器基准上训练冻结 CLIP 线性探针
 │   ├── train_npr.py           # 训练 NPR 分支（消融用）
 │   ├── extract_npr_scores.py  # NPR 打分与消融判定
@@ -37,17 +45,18 @@ repo/                          # 代码仓库（https://github.com/Chtrrrrrrr/Zh
 │   ├── diagnose_errors.py     # 错误归因（最困难真实/生成样本画像）
 │   ├── robustness_matrix.py   # 鲁棒性矩阵（重压缩/缩放/截图/噪声/模糊）
 │   ├── make_figures.py        # 生成架构图、消融图、前沿图、耗时图
-│   ├── smoke_test.py          # 冷/热启动、图片与视频预算自检
+│   ├── smoke_test.py          # 冷启动 + 全量热启动 P50/P95 + 视频预算自检
 │   ├── test_demo_api.py       # 演示服务 HTTP 接口测试
 │   ├── make_test_video.py     # 合成视频烟测片
 │   ├── predict.py             # 单图/单视频 CLI
 │   ├── baseline_l1.py         # L1 先导基线（分层 5 折 × 5 种子）
-│   └── run_all.py             # 一键复现
+│   └── run_all.py             # 一键复现（含 2b 规格搜索与 11 多轮验证）
 ├── demo/app.py                # 演示服务（零外部 Web 依赖，含启动预热）
+├── api/server.py              # REST 服务（含启动预热与报告落盘）
 ├── tests/test_l1.py           # L0/L1 自测
 ├── assets/                    # 架构图/结果图/报告模板
 ├── reports/                   # 评测证据（metrics / 各类消融 / 错误分析 / 冒烟测试）
-└── docs/                      # 方案说明、实测结果、演示脚本、PPT 大纲、本说明
+└── docs/                      # 方案说明、实测结果、演示脚本、PPT 大纲、本说明、迭代记录
 ```
 
 数据侧（随资料包分发的数据目录，大文件按 `.gitignore` 不入 git）：
