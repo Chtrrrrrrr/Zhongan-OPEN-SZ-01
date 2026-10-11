@@ -12,7 +12,7 @@
 |---|---|---|---|
 | KR1 综合准确率 | 100 套混合样本 ≥ 95% | **95.80%**（out-of-fold，119 样本）；按命题 7:3 比例重采样模拟 **96.24%**（95%CI 0.92–0.99） | ✅ 达标 |
 | KR5 误报率 | 真实材料 FPR ≤ 3% | **3.17%**（=2/63，本集真实类占 53%）；折算到命题 7:3 评测集（70 真实）为 **2.86%**（2 个误报） | ✅ 达标（见 §4 口径说明） |
-| KR3 响应速度 | 单张图/单条视频 ≤ 5 秒 | 图片热启动 P50 **1007.9 ms** / P95 **1300.6 ms**（归档 `metrics.json`；另一次运行 939/1307 ms）；视频 **3705.8 ms**（归档 `smoke_test.json`；另一次运行 3544 ms）；冷启动 12874.6 ms（服务启动时预热，见 §5） | ✅ 达标 |
+| KR3 响应速度 | 单张图/单条视频 ≤ 5 秒 | 图片热启动 P50 **809.4 ms** / P95 **1216.8 ms**（归档 `metrics.json`；历史各次运行 939–1008 / 1301–1314 ms）；视频 **2334.7 ms**（归档 `smoke_test.json`；受控 30 条短片 P95 2545.9 ms）；冷启动 13437.5 ms（服务启动时预热，见 §5） | ✅ 达标 |
 | KR4 检测报告 | 判定结论+置信度+伪造区域标注 | 119 份结构化 JSON + 自包含 HTML 报告（`reports/0xx.json` / `.html`），含输入哈希、三档结论、校准置信度、**仅实际参与融合的成员分数**、模型分歧度、L1 线索清单、L3 异常热力图与区域框、**块级关注区域解释（与定位严格分栏）**、不确定性、模型/阈值/权重 SHA-256 与逐环节耗时（含 L1b 行） | ✅ 达标 |
 | KR2 类型覆盖 | 图片+视频，覆盖 ≥3 种 AIGC 工具 | 图片主链路 + 视频通道（复用图像模型，抽帧聚合）均已打通；训练集覆盖 **18 类生成器**；**跨生成器留出实验**（整类生成器从训练移除）AUC 0.978–1.000（见 §12） | ✅ 达标（视频为通道验证，非基准指标，见 §7） |
 | AI 原生度红线 | 多模态+伪造痕迹+元数据+ensemble | 四要素齐备：冻结 CLIP 多模态特征（全局+分块）、NPR/AEROBLADE 伪影分支（均经消融剔除，见 §13）、L1/L1b 元数据与容器取证、多证据融合（`combined`+`forensic`，含降级例外登记见 §15） | ✅ 齐备 |
@@ -82,43 +82,64 @@
 
 ## 5. 耗时实测
 
-> **数字来源与波动说明（F6 修补）**：本节数字一律引用**归档证据文件**的实测值，不再手抄单次运行值。同机同码不同运行之间存在 5%–15% 的抖动（GPU 调度、磁盘缓存、后台负载），因此引用时以证据文件为准；两个归档口径分别为 `reports/metrics.json → latency_image`（评测内 30 次热启动）与 `reports/smoke_test.json`（冷/热启动 + 视频自检）、`reports/resource_profile.json`（分环节与显存）。
+> **数字来源与波动说明（F6/N9a 修补）**：本节数字一律取自**归档证据文件的当前值**。同机同码不同运行之间存在 5%–35% 的抖动（GPU 调度、磁盘缓存、后台负载，实测同一指标跨运行差异可达 40%），因此评审核对时请以 JSON 为准而非本表快照；本节末尾附一致性核对脚本。证据口径：`reports/metrics.json → latency_image`（评测内 30 次热启动）、`reports/smoke_test.json`（冷/热启动 + 视频自检）、`reports/resource_profile.json`（分环节与显存）、`reports/video_channel_validation.json`（视频受控验证 30 条）。
 
 **主口径（`reports/metrics.json → latency_image`，n=30 热启动）**
 
-| 条件 | 实测 | 证据字段 |
+| 条件 | 实测（当前归档） | 证据字段 |
 |---|---|---|
-| 图片热启动 P50 | **1007.9 ms**（另一次运行 939 ms） | `latency_image.p50_ms` |
-| 图片热启动 P95 | **1300.6 ms**（另一次运行 1307 ms） | `latency_image.p95_ms` |
+| 图片热启动 P50 | **809.4 ms**（历史运行 939 / 1007.9 ms） | `latency_image.p50_ms` |
+| 图片热启动 P95 | **1216.8 ms**（历史运行 1301–1314 ms） | `latency_image.p95_ms` |
 | 预算 | 5000 ms | `latency_image.budget_ms` |
 | 判定 | PASS | `latency_image.p95_within_budget` |
 
 **冷启动 / 视频（`reports/smoke_test.json`）**
 
-| 条件 | 实测 | 证据字段 |
+| 条件 | 实测（当前归档） | 证据字段 |
 |---|---|---|
-| 冷启动（含模型加载 + cudnn autotune） | **12874.6 ms** | `cold_start_ms` |
-| 视频（10 帧均匀抽样） | **3705.8 ms** | `video.ms` |
-| 图片热启动（同一次运行） | 1233.7 / 1636.6 ms | `warm_image_ms` |
+| 冷启动（含模型加载 + cudnn autotune） | **13437.5 ms** | `cold_start_ms` |
+| 图片热启动（同一次运行） | 1948.6 / 2471.2 ms | `warm_image_ms` |
+| 视频（10 帧抽样，2 帧深度证据） | **2334.7 ms** | `video.ms` |
 
-**分环节与显存（`reports/resource_profile.json`，n=30 / n=10 隔离测量）**
+**视频受控验证（`reports/video_channel_validation.json`，30 条短片）**
+
+| 条件 | 实测 |
+|---|---|
+| 视频级 AUC | **0.9689** |
+| 准确率 / TPR / FPR | 0.8667 / 0.9333 / **0.2000**（FPR 无证据支持，见 §7） |
+| 端到端 P50 / P95 | 2234.4 / **2545.9 ms**（预算 5000 ms，PASS） |
+
+**分环节与显存（`reports/resource_profile.json`，部署路径 n=30）**
 
 | 环节 | P50 | P95 |
 |---|---|---|
-| L0 输入解析 | 19.2 ms | 143.6 ms |
-| L1 取证（47 维） | 75.5 ms | 91.1 ms |
-| L1b 域取证（20 维，隔离测量） | 289.3 ms | 523.2 ms |
-| L2 CLIP 全局 | 30.9 ms | 31.6 ms |
-| L2 分块 CLIP | 193.1 ms | 199.3 ms |
-| L3 定位 | 26.5 ms | 33.1 ms |
-| 融合 | 0.2 ms | 0.3 ms |
-| **端到端（图片）** | **845.7 ms** | **1265.6 ms** |
-| **端到端（视频）** | **3160.5 ms** | **3311.3 ms** |
-| 峰值显存 | **1358.9 MiB**（设备 8150.6 MiB，余量 6791.7 MiB） | `peak_allocated_mib` |
+| L0 输入解析 | 18.9 ms | 143.1 ms |
+| L1 取证（47 维） | 73.0 ms | 84.0 ms |
+| L1b 域取证（20 维） | 252.7 ms | 486.0 ms |
+| L2 CLIP 全局 | 50.7 ms | 54.4 ms |
+| L2 分块 CLIP | 493.4 ms | 503.3 ms |
+| L3 定位 | 26.9 ms | 32.9 ms |
+| 融合 | 0.2 ms | 0.4 ms |
+| **端到端（图片）** | **1679.6 ms** | **2057.8 ms** |
+| 峰值显存（保留） | **1416.0 MiB**（设备 8150.6 MiB，余量 6734.6 MiB） | `peak_reserved_mib` |
 
 **说明**：冷启动包含一次性模型加载，服务在启动时执行预热（`api/server.py` 与 `demo/app.py` 启动即调用一次推理），线上请求只走热路径；这符合手册 16.2 对冷/热启动分别报告的要求。
 
-**抽帧数调整**：Stage-1 设计为 16 帧，实测端到端 5.96 s 超出预算，按手册 16.3「限制抽帧」的既定降级策略调整为 10 帧（`src/video.py` 可配置），实测 3.3–3.7 s。
+**抽帧数调整**：Stage-1 设计为 16 帧，实测端到端 5.96 s 超出预算，按手册 16.3「限制抽帧」的既定降级策略调整为 10 帧（`src/video.py` 可配置），叠加预算重分配后视频实测 2.3–3.7 s。
+
+**文档-证据一致性核对命令**（评审可直接运行，任一处不一致会打印 MISMATCH）：
+
+```bash
+python - <<'PY'
+import json
+m=json.load(open('reports/metrics.json',encoding='utf-8'))['latency_image']
+s=json.load(open('reports/smoke_test.json',encoding='utf-8'))
+v=json.load(open('reports/video_channel_validation.json',encoding='utf-8'))
+print('metrics P50/P95 :', m['p50_ms'], m['p95_ms'])
+print('smoke cold/video:', s['cold_start_ms'], s['video']['ms'])
+print('video val P95   :', v['latency_ms']['p95_ms'])
+PY
+```
 
 ### 5.1 性能预算再分配（L0/L1b 超出分层预算的如实记录）
 

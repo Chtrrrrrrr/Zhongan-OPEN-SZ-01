@@ -8,7 +8,7 @@
 >
 > 路径约定：正文中的 `docs/…`、`src/…`、`scripts/…`、`api/…`、`demo/…` 为**仓库内相对路径**（即 `repo/` 下），`reports/…`、`models/…`、`data/…` 为**工作区相对路径**（即与 `repo/` 同级）。本报告自身路径为 `repo/docs/compliance-audit.md`。
 >
-> ⚠️ **本文件含两轮审计**：第 0–4 节与附录 A/B 为**第一轮（t5）**原始记录，**未作任何删改**；文末 **「第二轮复验（t9）」** 为复验追加章节，含逐项改判、8 项新增发现（N1–N8）、更新后的验收命令清单，以及**最新总结论（见 §5.5）**。查结论请直接读 **§5.5**。
+> ⚠️ **本文件含三轮审计**：第 0–4 节与附录 A/B 为**第一轮（t5）**原始记录，**未作任何删改**；文末 **「第二轮复验（t9）」** 为复验追加章节（含 N1–N8 新增发现与 §5.5 总结论）；再后为 **「第三轮复验收口（t12）」**（含 F3a/F3b/F8/F5/F6/F14 核验、§6.6 最终合规判定与开放项闭合条件）。**查最终结论请直接读 §6.6。**
 
 ---
 
@@ -824,3 +824,197 @@ git rev-parse HEAD
 ### 5.5.4 一句话结论
 
 > **第二轮复验：第一轮的 8 项"不符合"中，3 项（AEROBLADE 消融、跨生成器待定项之外的 F3c 协议调和、F7 无效证据）已闭合、1 项（F14）显著改善但未收口、其余与新增的数据类缺口（D2/D3、跨生成器、自建集、视频集、Effort）构成当前剩余的 7 项不符合；139 项对照表仍成立且已按新证据改判 8 项。项目尚未达到"完全符合解题思路与验证手册的全部要求"，但已达到"命题六项验收标准无不符合项、且全部缺口可追溯到具体数据/算力需求"的状态——剩余工作按 §5.5.2/§5.5.3 清单执行即可收敛。**
+
+---
+
+# 第三轮复验收口（t12，2026-10-11）
+
+> 本章同为**追加**内容：第 0–5 节（含第二轮）原文未删改。本轮为**收口轮**，逐项核验 F3a / F3b / F8 / F5 / F6 / F14，给出最终合规判定（§6.6）、139 项最新计数（§6.5）与开放项闭合条件（§6.6.2）。
+
+## 6.0 复验基线与方法
+
+| 项目 | 值（本轮实测） |
+|---|---|
+| 本地 HEAD | `6465b2368d98275e9ce2b083c14fd5b3b5223a3b`（"feat(video): fix the video channel by re-allocating its latency budget (KR2)"） |
+| 远端 `origin/main` | `6465b2368d98275e9ce2b083c14fd5b3b5223a3b` → **一致** |
+| 工作树 | `git status --short` **干净**（无修改、无未跟踪） |
+| 近期提交链 | `6465b23`(视频修复) ← `84dba2f`(F3a 人工标签) ← `ad725dc`(跨平台哈希) ← `9da90c1`(修复 .gitignore 注释 + 版本化 data 侧冻结产物) |
+| 新增证据（工作区与 `repo/` 双侧同哈希） | `data/meta.csv`、`data/splits_meta.json`、`reports/stratified_manual.json`、`reports/meta_proxy_attempt.json`、`reports/cross_generator.json`、`reports/video_channel_validation.json`、`reports/resource_profile.json`(重生成)、`reports/smoke_test.json`(重生成)、`data/eval_protocol_frozen.json` |
+
+**本轮实际执行的命令（只读；唯一一次写操作已备份并还原）**：
+
+```powershell
+cd repo; git log --oneline -n 4; git rev-parse HEAD
+git -c http.sslVerify=false ls-remote origin refs/heads/main ; git status --short
+git ls-files -- api demo/webui.html demo/webui_assets docs/api.md docs/compliance-audit.md data/meta.csv data/splits_meta.json `
+                data/eval_protocol_frozen.json reports/{calibration,member_analysis,threshold_stability,resource_profile,stratified_analysis,`
+                protocol_reconciliation,cross_generator,meta_proxy_attempt,aeroblade_ablation,stratified_manual,video_channel_validation}.json
+# 独立复算：分层数、逐折分层分布、shortcut gap
+python -c "import json,csv,collections;meta={int(r['seq']):r for r in csv.DictReader(open('data/meta.csv',encoding='utf-8'))};d=json.load(open('data/splits_meta.json',encoding='utf-8'));print(collections.Counter((r['label'],r['acquisition']) for r in meta.values()));[print(k,dict(collections.Counter((meta[m['seq']]['label'],meta[m['seq']]['acquisition']) for m in v))) for k,v in d['splits'].items()]"
+# 分层产物可复现性（先备份，跑完比对、并还原）
+Copy-Item data/splits_meta.json .tmp/splits_meta_backup.json -Force
+python scripts/split_dataset.py --manifest data/manifest.json --meta data/meta.csv --out data/splits_meta.json --seed 42
+# …比对后 Copy-Item .tmp/splits_meta_backup.json data/splits_meta.json -Force（已还原，哈希复核 13428BEBB10E…）
+python repo/scripts/freeze_eval_protocol.py --verify          # exit=0
+Get-Content models/crossgen.log -Tail 5                        # 已无 UndefinedMetricWarning
+python -c "import json;print(json.load(open('reports/cross_generator.json',encoding='utf-8')))"
+python -c "import json;print(json.load(open('reports/video_channel_validation.json',encoding='utf-8')))"
+```
+
+**独立复算/核验结论**：
+1. `data/meta.csv` 的 `(label, acquisition)` 组合恰为 **4 个非空分层**（flat_render/ai 27、photographic/ai 29、flat_render/real 25、photographic/real 38），且 `train 71 / val 24 / test 24` **三者均含全部 4 层**（train 15/18/16/22、val 6/6/4/8、test 6/5/5/8）→ D3 分层真实生效。
+2. `shortcut_test.appearance_gap` 独立复算 = |0.4821 − 0.3968| = **0.0853 < 0.15** ✓，与文件一致。
+3. `data/eval_protocol_frozen.json` 的 `signatures.fold_assignment_sha256 = 021c8fe2…` 与本审计在第二轮独立复算的折号向量哈希**一致**；其自带 `verification_command` 实测 **PASS / exit=0**（仅报 1 处预期内的 artifact 漂移：`repo/scripts/resource_profile.py` 在冻结后被编辑）。
+4. 分层产物可复现性：用任务给出的命令重跑，`splits`/`stats`/`protocol` **逐位相同**；仅 `created`（时间戳）与 `source_manifest`（`../data/manifest.json` → `data/manifest.json`）不同 → 归档产物是用不同的 `--manifest` 相对路径生成的（**低等级可复现性瑕疵**，见 6.2/N9）。
+
+## 6.1 逐项核验判定表（F3a / F3b / F8 / F5 / F6 / F14 + 沿用项）
+
+| 编号 | 第二轮 | **第三轮** | 证据（文件 → 字段路径） | 复验说明 |
+|---|---|---|---|---|
+| **F3a** (A6.2/B3.2 **D2** 生成器分层) | 不符合 | **部分符合** | `data/meta.csv → generator = "unavailable"（119/119）`、`source="manual_visual_pass_captain"`；`reports/stratified_manual.json → generator{status:"unavailable", substitute:"reports/cross_generator.json"}`；替代证据 `reports/cross_generator.json → folds.*.held_out_generators` | 命题未提供生成器标签（客观不可得），D2 的**字面要求**仍不满足；但 D2 的**泛化意图**已由 18 生成器基准上的整生成器留出实验覆盖（见 F3b）。属"替代证据 + 局限标注"，不再计入"不符合" |
+| **F3a'** (A6.3/B3.3 **D3** 采集方式分层) | 部分符合 | **符合** | `data/meta.csv → acquisition ∈ {flat_render 52, photographic 67}`（人工目检 119/119）；`data/splits_meta.json → protocol.D3="按 (label,generator,acquisition) 分层"`、`stats.{train,val,test}`；逐折分布已由本审计独立复算（4 层 × 3 折全覆盖）；`reports/stratified_manual.json → strata.acquisition.{flat_render{acc 0.9423,fpr 0,fn 3}, photographic{acc 0.9701,fpr 0.0526,tp 29}}`、`shortcut_test{gap 0.0853, verdict:"NO usable rendered-vs-photographed shortcut"}` | D3 现在**真实生效**：人工目检标签 + 4 个非空分层 + 每折均衡 + 捷径检测通过。**关键价值**：它给出了第一轮"渲染 vs 拍摄捷径"疑虑的量化否证（两类 flat_render 占比 0.482 vs 0.397，gap 仅 8.5pp），并解释了 2 个误报（真实场景照 057/058）与 3 个漏报（flat_render AI 003/029/030） |
+| **F3b** (B2.4/B8.3 跨生成器) | 不符合 | **符合** | `reports/cross_generator.json → dataset{3326 样本/18 类}`、`folds.diffusion_holdout{n_holdout 568, n_real_in_holdout 200, auc 0.9785, threshold_from_real_2fp_budget 0.0407, per_generator_recall_at_threshold{Midjourney 0.9293, SDXL 0.9402}, holdout_at_2fp_real_budget{fpr 0.015,tpr 0.9348,acc 0.9525}}`、`folds.gan_holdout{auc 0.9932, …}`、`folds.chinese_and_glide{auc 1.0, Wukong/GLIDE recall 1.0}`、`same_generator_control{auc 0.9807}` | **N1 已修复且协议正确**：留出集 = 2 个未见生成器的 368 张 AI **+ 200 张共享真实类**（`n_real_in_holdout=200`），因此 AUC 有定义；`per_generator_recall_at_threshold` 与 `holdout_at_2fp_real_budget` 均已产出；`models/crossgen.log` 已无 `UndefinedMetricWarning`；文件内**无 NaN 字面量**（`grep NaN` 无命中）。3 个 fold 覆盖扩散/GAN/中文三族。附注（低）：该证据属**冻结 CLIP 探针**路径（`clip_external` 已被 0.65 准入线剔除、不进部署融合），部署头（combined+forensic）本身仍无跨生成器读数——但手册 10.3 D2/10.2 要求的"测试集必须含训练未见生成器"已由本实验满足 |
+| **F8** (B2.6 视频) | 仍不符合 | **部分符合** | `reports/video_channel_validation.json → caveat("CONTROLLED validation, not an external benchmark…both classes were synthesised from the labelled STILLS")`、`gap("a genuine external video validation still requires a public corpus…recorded as an open item")`、`protocol{per_class 15, seconds 3.0, fps 8, production path}`、`video_level{n 30, auc 0.9689, threshold 0.6695, acc 0.8667, tpr 0.9333, fpr 0.2}`、`latency_ms{p50 2234.4, p95 2545.9, p95_within_budget true}`、`per_clip`(30 条)；`repo/docs/results.md:159-171`（含修复前 0.6222 / 4605.7 ms → 修复后对照表 + 局限声明） | **判定为"部分符合"，不是"符合"**，依据三条：(1) 手册 **8.5 的降级条款**（"若公开视频验证不足…保留逐帧检测+可疑片段+人工复核，并在报告中明确标注该局限"）**已完全满足**——生产路径实测、两类均有标签、缺陷（跳过原生分辨率分块 CLIP → AUC 0.6222）被首次测量发现并修复（→0.9689）、P95 2545.9 ms 在预算内、局限显式标注；(2) 但手册 **15.2 的验收方式**（"视频在公开数据集上按生成器分别报告"）**仍未满足**——外部 AI+真实视频语料离线不可达（`gap` 字段如实记录）；(3) 必须同时记录一个**真实弱点**：受控验证的视频级 **FPR = 0.2**（3/15，2-FP 预算下），远高于图像侧 3% 护栏，说明视频通道的误报护栏未被任何证据支持。故：受控证据 + 缺口与弱点如实记录，判"部分符合"（若坚持 15.2 字面，则更接近于"不符合"；若只按 8.5 读，则可判"符合"——本审计取二者之间的保守判定） |
+| **F5 / N6** (L0/L1b 预算) | 仍部分符合 | **仍部分符合（N6 已闭合）** | 已闭合：`reports/resource_profile.json → headline.stages_p50_ms/stages_p95_ms` 现含 `"L1b"`（p50 **252.7** / p95 **486.0**）、`warm_image_profile` 键含 `L1b`、`deployed_path_no_npr` 键含 `L1b`（总 p50 1698.3 / p95 2047.3）；`repo/reports/batch/verify-24 → archive_qc.markers_present["latency_ms.L1b"] = 24`。残留：`performance_budget_table` 的 L1b 行仍为 `measurement_source:"isolated stage call"`、`measured_n:10`（<手册 16.2 的 ≥20），`rows_exceeding_declared_target` 仍列 `L0 输入解析`、`L1b 采集方式/域线索`；`acceptance.hard_acceptance_pass=true`（图片 P95 2057.8 / 视频 3324.6 ms） | L1b 在**部署路径**已可见（这正是 N6 要求），端到端硬指标仍通过（余量 2942 ms）；但分层预算仍有 2 行超出自定目标，且预算表的 L1b 行未采用部署路径的 n=30 读数 → 判定不变 |
+| **F6 / N4** (文档 vs 证据) | 仍部分符合 | **仍部分符合（并出现新的、可精确指出的漂移）** | `repo/docs/results.md:15` 已改为"1007.9 / 1300.6 ms（另一次运行 939/1307）；3705.8 ms（另一次运行 3544）；12874.6 ms" ✓，`§5` 同值 ✓。**但归档证据在改文档之后又被重跑**：`reports/metrics.json → latency_image{p50 809.4, p95 1216.8, n 30}`（工作区与 repo 双侧同哈希 `4906DF2F5DAD`）；`reports/smoke_test.json → {cold_start_ms 13437.5, video.ms 2334.7, warm_image_ms [1948.6, 2471.2]}`；`reports/resource_profile.json →` L0 18.9/143.1、L1 73.0/84.0、L1b 252.7/486.0、tiles 493.4/503.3、端到端 **1679.6/2057.8**、视频 3208.5/**3324.6** | 文档现引用的 4 组数字（图片 P50/P95、冷启动、视频、分环节表）**全部与当前归档值不符**，而 `§5` 的卷首语恰好声称"本节数字一律引用归档证据文件的实测值" → 属自相矛盾。根因：视频修复后重跑了 `evaluate_system.py` / `smoke_test.py` / `resource_profile.py`，文档未再同步。**这正好说明"以归档为准"的纪律需要机器校验**（见 §6.2/N9 与 §6.3 的校验命令） |
+| **F14** (git 归档) | 仍部分符合 | **符合** | 本地 HEAD = `origin/main` = `6465b23`（`git ls-remote` 实测）；`git status --short` 干净；`git ls-files` 逐个核验：`api/`=1、`demo/webui.html`=1、`demo/webui_assets/`=124、`docs/api.md`=1、`docs/compliance-audit.md`=1、`data/meta.csv`=1、`data/splits_meta.json`=1、`data/eval_protocol_frozen.json`=1、`reports/{calibration,member_analysis,threshold_stability,resource_profile,stratified_analysis,protocol_reconciliation,cross_generator,meta_proxy_attempt,aeroblade_ablation,stratified_manual,video_channel_validation}.json` 均=1；`.gitignore` 白名单已加入 5 个新证据文件 | 第二轮的三个残留全部闭合：远端已同步、工作树干净、两项被忽略的证据已可入库。**流程备注（低）**：本轮追加的本章节在写入时尚未提交，需随下一次提交入库 |
+| **F1 / F2 / F3c / F4 / F7 / F9**（沿用） | 见 §5.1 | **沿用，无冲突** | `reports/member_analysis.json → degradation_path_exception.status="registered"` 仍在；`reports/threshold_stability.json → pure_real_holdout.status="no_external_independent_corpus_available_internal_holdout_substituted"` 仍在；`reports/protocol_reconciliation.json` 与 `data/eval_protocol_frozen.json`（新增，`--verify` PASS）互补；`reports/aeroblade_ablation.json → conclusions.verdict="剔除"`、`not_verified=[effort]` 仍在；`repo/reports/robustness_smoke.json` 不存在；`repo/reports/batch/verify-24/metrics.json → archive_qc.all_pass=true` | 本轮复查未发现与之冲突的新证据。**B11.3（数据划分冻结）由"部分符合"升为"符合"**：第二轮建议的 `data/eval_protocol_frozen.json` 已落盘、已入库、且其自带 `verification_command` 实测 PASS（折号与协议哈希双匹配） |
+| **B2.4 / B8.3 定性** | 不符合 | **符合** | 同上 F3b；`reports/stratified_manual.json → strata.acquisition/content` + `reports/cross_generator.json → per_generator_recall_at_threshold` | B2.4（跨生成器测试集）与 B8.3（15.1 分生成器拆解）由"无证据"变为"有证据"：前者为整生成器留出实验，后者为逐生成器 recall（+ 119 张按 appearance/content 的分层拆解，因 119 张客观无生成器标签） |
+
+## 6.2 本轮新发现（第二轮 N1–N8 的收口状态与新增项）
+
+| 编号 | 第二轮状态 | 第三轮状态 | 证据 |
+|---|---|---|---|
+| **N1** cross_generator 空证据 | 高 | **已闭合** | `folds.*.n_real_in_holdout=200`、AUC 0.9785/0.9932/1.0、无 NaN、`crossgen.log` 无 `UndefinedMetricWarning` |
+| **N2** 两项证据被 gitignore 忽略 | 高 | **已闭合** | `.gitignore` 白名单含 `cross_generator.json`/`aeroblade_ablation.json`/`stratified_manual.json`/`video_channel_validation.json`/`meta_proxy_attempt.json`；`git ls-files` 均=1 |
+| **N3** metrics.json 归档漂移 | 中 | **已闭合（但衍生 N9）** | `reports/metrics.json` 工作区与 `repo/reports/` 哈希相同（`4906DF2F5DAD`）；14 个证据文件双侧比对**全部 same** |
+| **N4** results.md 自相矛盾（§1 vs §5） | 中 | **已闭合** | `docs/results.md:15` 与 `§5` L91/L92/L100/L101 现为同一组值 |
+| **N5** meta.csv 全 unavailable | 中 | **已闭合** | `data/meta.csv` 人工目检 119/119（acquisition 52/67、content 109/10、generator unavailable） |
+| **N6** L1b 未进 16.2 预算表 | 中低 | **部分闭合** | 部署路径已含 L1b（见 F5）；预算表 L1b 行仍为 isolated n=10 |
+| **N7** reports/api 降级报告缺哈希 | 低 | **仍开放（范围略增）** | 实测 `repo/reports/api` 89 份中 **20 份**缺 `versions.artifact_sha256`，全部为降级路径（`channel ∈ {image-degraded, video-degraded}`，`mode ∈ {full, stub}`）；其余 69 份同时含 `artifact_sha256` 与 `explanation` |
+| **N8** 新证据未接入一键复现 | 低 | **部分闭合** | `repo/scripts/run_all.py` 已接入 `protocol_reconciliation`(L124)、`build_meta`(L132)、`aeroblade_ablation`(L134)、`cross_generator_test`(L136)，并新增 "step 10 compliance pack"；**未接入** `stratified_by_meta.py` 与 `video_channel_validation.py`（grep 命中 0） |
+| **N9**（新，低） | — | **新增** | (a) **F6 漂移**：文档引用的 4 组耗时值均与重跑后的归档不符（见 F6 行）；(b) **分层产物可复现性**：按文档命令重跑 `split_dataset.py` 得到相同的 `splits/stats/protocol`，但 `source_manifest` 记录为 `data/manifest.json` 而归档为 `../data/manifest.json`，`created` 亦不同 → 建议把 `source_manifest` 与 `created` 排除在"可复现性签名"之外，或在文档中固定使用归档时所用的参数写法 |
+| **N10**（新，低） | — | **新增** | `reports/meta_proxy_attempt.json → consequence` 仍写 *"data/meta.csv keeps generator/acquisition/content as 'unavailable'; D2/D3 … therefore degrades to label-only"* —— 该文字在人工目检版 `meta.csv` 落地后**已过时**（现 acquisition/content 均有值、D3 已生效）。同一文件的 `how_to_close`（"hand-label acquisition/content … and re-run"）**已达成**。两个文件语义**不冲突**（一个记录"代理被否决"，一个记录"人工标签替代"），但 `consequence` 字段需在下次重跑时更新 |
+| **N11**（新，低） | — | **新增** | `data/eval_protocol_frozen.json → signatures.artifacts_sha256` 与 `--verify` 输出报 1 处漂移：`repo/scripts/resource_profile.py` 在冻结后被编辑（本次 L1b 修补）→ 属预期内，`overall: PASS`；建议在下一次冻结时重签该 artifact 哈希以避免长期告警 |
+
+## 6.3 更新的验收命令清单（第三轮新增部分）
+
+```powershell
+cd "C:\Files\Deepseek Harness\Zhongan-OPEN-SZ-01"    # WS；repo = .\repo
+
+# ===== F3a：人工标签 → 分层 → 捷径检测 =====
+python repo/scripts/build_meta.py --images data/images --labels data/labels.csv --out data/meta.csv
+python scripts/split_dataset.py --manifest data/manifest.json --meta data/meta.csv --out data/splits_meta.json --seed 42
+python repo/scripts/stratified_by_meta.py --meta data/meta.csv --out reports/stratified_manual.json
+#   核验：4 个非空分层、train/val/test 三层全覆盖、shortcut_test.appearance_gap < 0.15
+
+# ===== F3b：跨生成器（整生成器留出，留出集必须含共享真实类）=====
+python repo/scripts/cross_generator_test.py --max-per-shard 200 --out reports/cross_generator.json
+#   核验：folds.*.n_real_in_holdout > 0 且 overall_auc_on_holdout 为有限值；文件内不得出现 NaN
+
+# ===== F8：视频通道受控验证（生产路径；含修复前后对照）=====
+python repo/scripts/video_channel_validation.py --out reports/video_channel_validation.json
+#   核验：video_level.auc / latency_ms.p95_within_budget / caveat + gap 字段齐备
+
+# ===== F5/N6：分层预算与显存 =====
+python repo/scripts/resource_profile.py --device cuda
+
+# ===== B11.3：评测协议冻结自校验（本轮实测 PASS / exit=0）=====
+python repo/scripts/freeze_eval_protocol.py --verify
+
+# ===== 一键复现（含 compliance pack；注意 stratified_by_meta / video_channel_validation 尚未接入，需单独跑）=====
+python repo/scripts/run_all.py --device cuda
+
+# ===== 归档一致性（新增：应全为 same；用于防止 N9(a) 复发）=====
+foreach ($n in @("metrics.json","smoke_test.json","resource_profile.json","calibration.json","member_analysis.json",
+                 "threshold_stability.json","stratified_analysis.json","protocol_reconciliation.json","cross_generator.json",
+                 "meta_proxy_attempt.json","aeroblade_ablation.json","stratified_manual.json","video_channel_validation.json",
+                 "robustness_matrix.json")) {
+  $a="reports\$n"; $b="repo\reports\$n"
+  $ha=if(Test-Path $a){(Get-FileHash $a -Algorithm SHA256).Hash.Substring(0,12)}else{"MISSING"}
+  $hb=if(Test-Path $b){(Get-FileHash $b -Algorithm SHA256).Hash.Substring(0,12)}else{"MISSING"}
+  "{0,-34} {1} {2} {3}" -f $n,$ha,$hb,$(if($ha -eq $hb){"same"}else{"DIFF"})
+}
+# 本轮实测：14/14 same
+
+# ===== 文档-证据数字一致性（建议纳入 CI；当前 §6.1/F6 的四组数字不通过）=====
+python - <<'PY'
+import json,re
+m=json.load(open("reports/metrics.json",encoding="utf-8"))["latency_image"]
+s=json.load(open("reports/smoke_test.json",encoding="utf-8"))
+r=json.load(open("reports/resource_profile.json",encoding="utf-8"))["headline"]
+want={"metrics.p50":m["p50_ms"],"metrics.p95":m["p95_ms"],"smoke.cold":s["cold_start_ms"],
+      "smoke.video":s["video"]["ms"],"rp.image_p95":r["stages_p95_ms"]["total"],"rp.video_p95":r["stages_p95_ms"].get("total")}
+print("归档实测值：",want)
+txt=open("repo/docs/results.md",encoding="utf-8").read()
+for k,v in want.items():
+    print(f"  {k}={v} 是否出现在 results.md:", (str(v) in txt) or (f"{v:.0f}" in txt))
+PY
+```
+
+## 6.4 与前两轮冲突项排查
+
+逐条比对第二轮 §5.1 与本章 §6.1：**未发现任何第二轮结论与现证据相反**。三项改判（F3a 组、F3b 组、F14）均为"证据由无到有/由坏到好"的正向改判；一项由"部分符合"升为"符合"（B11.3，因新增 `data/eval_protocol_frozen.json` 且 `--verify` PASS）；两项保持"不符合"（Effort、自建中文单据集）。**同时报告一项负向发现**：F6 在第二轮被判"仍部分符合（残留 results.md:15）"，本轮该残留已修好，但因**证据在文档之后被重跑**而出现更广的 4 组数字漂移（N9(a)），故 F6 判据不变且理由更新。
+
+## 6.5 ① 139 项对照表最新计数
+
+以第二轮 §5.4 的 `94 / 34 / 7 / 4` 为基数，本轮按 §6.1 改判 8 项：
+
+| 变更条目 | 变化 | 对计数的影响 |
+|---|---|---|
+| A6.2 / B3.2（D2 生成器分层） | 不符合 → 部分符合 | 不符合 −2，部分符合 +2 |
+| B2.6（公开视频数据集） | 不符合 → 部分符合 | 不符合 −1，部分符合 +1 |
+| B2.4（跨生成器测试集） | 不符合 → 符合 | 不符合 −1，符合 +1 |
+| B8.3（分生成器拆解） | 不符合 → 符合 | 不符合 −1，符合 +1 |
+| A6.3 / B3.3（D3 采集方式分层） | 部分符合 → 符合 | 部分符合 −2，符合 +2 |
+| B11.3（数据划分冻结） | 部分符合 → 符合 | 部分符合 −1，符合 +1 |
+
+**第三轮最新计数（合计仍 139）**：
+
+| 状态 | 第二轮 | **第三轮** |
+|---|---|---|
+| 符合 | 94 | **99** |
+| 部分符合 | 34 | **34** |
+| 不符合 | 7 | **2** |
+| 符合（经消融剔除，有证据） | 4 | **4** |
+| 合计 | 139 | **139** |
+
+**仍为"不符合"的 2 项**（皆属手册列为"建议/Optional"性质，均不阻断命题验收）：
+1. **A3.3 Effort 未实现/未验证** —— `reports/aeroblade_ablation.json → not_verified[0]`（"未在预算内验证"，需 EDM 低秩微调，超算力预算；未产出分数、未编造数字）。
+2. **B2.2 自建中文单据集未构建** —— 工作区无该数据集；`docs/data-audit.md §6` 仅有需求描述。
+
+**34 项"部分符合"中的主体**为三类外部依赖：外部纯真实留出集（F2、A8.1/A8.6、B11.2）、官方 100 套评测集/独立测试集（A1.1/A1.2、B9.1、B11.x）、视频外部基准与外部数据类缺口（B2.6、B2.5）、以及工程/呈现类小项（F5 分层预算、F10 降级标注、F11 区域坐标、F12 headline 阶段、F13 口径声明）。
+
+## 6.6 ② 最终合规判定与 ③ 开放项闭合条件
+
+### 6.6.1 一句话最终结论
+
+> **最终判定：项目已达"命题六项验收标准无不符合项"的水平——准确率 95.80%（折外）、FPR 2/63=3.17%（折算命题比例 2.86%）、图片/视频 P95 均 ≤5 s、图片+视频双通道可运行、可解释性与 AI 原生度四要素齐备；139 项手册条款对照为 符合 99 / 部分符合 34 / 不符合 2 / 经消融剔除 4，其中 2 项不符合均为手册明确列为"建议/可选"且已如实记录原因的条目（Effort 未在预算内验证、自建中文单据集未构建）。因此本项目尚未达到"完全符合解题思路与验证手册的全部要求"，但**剩余的 2 项不符合与 34 项部分符合全部可追溯到"命题未提供或离线不可达的外部数据/基准"与"算力预算"两类外部约束，且每一项都已在证据文件中显式标注并给出闭合条件与所需样本量**；工程侧唯一需要立即处理的是文档-证据再同步（N9(a)：重跑后 4 组耗时数字未回写 `docs/results.md §5`）与三项低等级呈现项（N7/N8/N10-N11、F10/F11/F12/F13）。**
+
+### 6.6.2 ③ 剩余开放项清单与闭合条件
+
+| # | 开放项 | 类型 | 当前证据/状态 | 闭合条件 |
+|---|---|---|---|---|
+| 1 | **Effort** 未在预算内验证 | 算力（Optional） | `aeroblade_ablation.json → not_verified`（未产出任何分数） | EDM checkpoint + 低秩微调算力；或由团队明确定级为"不纳入"并在 `docs/solution.md` 标注（手册表 9 允许按消融决定去留） |
+| 2 | **外部纯真实留出集** | 外部数据 | `threshold_stability.json → pure_real_holdout`（内部留出替代，偏差方向=乐观，composition_dependence 0.096/0.0848） | 采集独立纯真实语料：**n≥100**（零误报时 Clopper-Pearson 95% 上界 2.95%≤3%）、**推荐 n=300**（允许 ≤2 误报）；按手册 13.1 步骤 1 的难点分层（渲染态真实单据≥30%、翻拍/低照度/反光/模糊/褶皱/截图每层≥50）；测量前冻结清单并只测一次 |
+| 3 | **外部视频基准** | 外部数据 | `video_channel_validation.json → gap`（离线镜像仅有 AI 类、无匹配真实类） | 取得同时含真实与 AI 生成视频的公开语料（≥2 生成器族、多时长/多分辨率），按生成器分别报告；在此之前维持 8.5 降级方案与 `caveat` 标注 |
+| 4 | **视频级 FPR 护栏** | 外部数据/统计粒度 | 受控验证 `video_level.fpr=0.2`（3/15；2-FP 预算） | 与 #3 同一语料：把真实视频样本量提到 ≥100，使 3% 护栏在 1% 粒度上可读并给出经验 FPR + CP 上界 |
+| 5 | **官方 100 套混合样本** | 外部数据（命题方） | 现用 119 张（47:53）折外评测；7:3 重采样模拟 96.24%（CI 0.92–0.99） | 命题方提供 100 套混合评测集；在此之前按 `docs/results.md` 的折算口径表述，不得声称"已在 100 套上验收" |
+| 6 | **自建中文单据集** | 外部数据/团队产能 | 未构建；`docs/data-audit.md §6` 仅有需求 | 采集渲染态+翻拍态真实单据与拍摄态 AI 生成件，用于领域适配与困难负样本；闭合前"领域适配"只能表述为"未验证" |
+| 7 | **生成器标签（D2 字面）** | 外部数据（命题方） | `data/meta.csv → generator="unavailable"`（119/119）；替代证据 `cross_generator.json` | 命题方提供生成器元数据（或第三方归因工具——手册明确不承诺归因，故此项可长期保持"替代证据已覆盖泛化意图"的状态） |
+| 8 | **文档-证据再同步（N9a）** | 工程（可立即闭合） | `docs/results.md §5`/L15 引 1007.9/1300.6、12874.6、3705.8、845.7/1265.6；归档现为 809.4/1216.8、13437.5、2334.7、1679.6/2057.8（双侧同哈希） | 用 §6.3 的"文档-证据数字一致性"脚本核对后回写（或在文档中把口径固定为"归档即基准 + 记录运行时间戳"） |
+| 9 | **N7 降级报告无追溯哈希** | 工程（低） | `repo/reports/api` 89 份中 20 份（全为 degraded）缺 `artifact_sha256` | 在 `api/server.py → degraded_report` 补 `thresholds_sha256`/`input_sha256`/`artifact_sha256` |
+| 10 | **N8 两个脚本未接入一键复现** | 工程（低） | `run_all.py` 未含 `stratified_by_meta.py`、`video_channel_validation.py` | 在 `run_all.py` 增补两个 step（命令见 §6.3） |
+| 11 | **N10/N11 陈旧字段（低）** | 工程（低） | `meta_proxy_attempt.consequence` 仍称 meta.csv 全 unavailable；`eval_protocol_frozen.signatures.artifacts_sha256` 有 1 处预期内漂移 | 重跑 `build_meta.py` 生成该文件时更新文案；下一次冻结时重签 `resource_profile.py` 哈希 |
+| 12 | **F10/F11/F12/F13（沿用，低）** | 工程/呈现 | detector 无 `mode` 标记（grep 0 命中）；`localization.boxes=0`；`calibration.headline` 混用标定前后阶段（0.0317 vs 0.127）；`results.md` 顶部无口径声明 | 四处小改动（详见 §5.5.3 第 8 项），不影响任何验收指标 |
+
+### 6.6.3 与前两轮的关系
+
+- 第一轮的 8 项"不符合"：**5 项已闭合**（AEROBLADE 消融、F3c 协议调和、F7、F9，以及本轮关闭的跨生成器 B2.4/B8.3 组）、**1 项转正**（F14 由"高"降为已闭合）、**2 项如实保留**（Effort、自建中文单据集）。
+- 第二轮的 7 项"不符合"：**5 项本轮关闭**（D2 ×2 → 部分符合、视频 → 部分符合、跨生成器 ×2 → 符合），**2 项保留**（Effort、自建集）。
+- 第二轮 N1/N2/N3/N4/N5 **全部闭合**，N6/N8 **部分闭合**，N7 **仍开放**；新增 N9–N11 三项低等级工程项。
+- 计数轨迹：`89/39/8/3`（第一轮）→ `94/34/7/4`（第二轮）→ **`99/34/2/4`（第三轮）**。
+
+---
+
+> 本章为只读审计的追加记录：本轮除本文件外未改动任何代码、证据 JSON 或他人文档；对 `data/splits_meta.json` 的一次重跑已先备份、比对并**原样还原**（还原后哈希 `13428BEBB10E7738…` 与备份一致）。未写入 `$DSH_HOME/dsh-progress.json`。

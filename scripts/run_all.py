@@ -135,10 +135,14 @@ def main():
             "step 10b  AEROBLADE ablation (optional member, manual 12.1)")
         run([py, "repo/scripts/cross_generator_test.py", "--max-per-shard", "200"],
             "step 10c  cross-generator test: whole generators removed from training")
+        run([py, "repo/scripts/stratified_by_meta.py"],
+            "step 10d  per-stratum metrics from the manual labels (shortcut test)")
+        run([py, "repo/scripts/video_channel_validation.py"],
+            "step 10e  controlled video-channel validation (30 clips)")
         run([py, "repo/scripts/freeze_eval_protocol.py"],
-            "step 10d  freeze the evaluation protocol + signature")
+            "step 10f  freeze the evaluation protocol + signature")
         run([py, "repo/scripts/freeze_eval_protocol.py", "--verify"],
-            "step 10e  verify the evaluation-protocol freeze")
+            "step 10g  verify the evaluation-protocol freeze")
 
     if args.with_robustness:
         run([py, "repo/scripts/robustness_matrix.py", "--device", args.device],
