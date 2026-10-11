@@ -11,14 +11,14 @@
   "video_level": {
     "n": 30,
     "auc": 0.9689,
-    "threshold_from_2fp_budget": 0.6695,
+    "threshold_from_2fp_budget": 0.7143,
     "accuracy": 0.8667,
     "tpr": 0.9333,
     "fpr": 0.2
   },
   "latency_ms": {
-    "p50": 2234.4,
-    "p95": 2545.9,
+    "p50": 692.4,
+    "p95": 920.9,
     "budget_ms": 5000,
     "p95_within_budget": true
   },
@@ -26,242 +26,242 @@
     {
       "seq": 1,
       "label": "ai",
-      "fused_score": 0.7407,
-      "verdict": "suspect",
+      "fused_score": 0.7399,
+      "verdict": "review",
       "frames": "10",
-      "latency_ms": 13606.3
+      "latency_ms": 22113.9
     },
     {
       "seq": 2,
       "label": "ai",
-      "fused_score": 0.8104,
+      "fused_score": 0.8522,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2488.3
+      "latency_ms": 746.2
     },
     {
       "seq": 3,
       "label": "ai",
-      "fused_score": 0.6471,
+      "fused_score": 0.5779,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2593.1
+      "latency_ms": 1063.7
     },
     {
       "seq": 4,
       "label": "ai",
-      "fused_score": 0.6863,
-      "verdict": "suspect",
+      "fused_score": 0.7308,
+      "verdict": "review",
       "frames": "10",
-      "latency_ms": 2332.4
+      "latency_ms": 676.4
     },
     {
       "seq": 5,
       "label": "ai",
-      "fused_score": 0.9847,
+      "fused_score": 0.9838,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2248.0
+      "latency_ms": 742.9
     },
     {
       "seq": 6,
       "label": "ai",
-      "fused_score": 0.9704,
+      "fused_score": 0.9641,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2229.3
+      "latency_ms": 746.3
     },
     {
       "seq": 7,
       "label": "ai",
-      "fused_score": 0.9733,
+      "fused_score": 0.9749,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2270.8
+      "latency_ms": 727.0
     },
     {
       "seq": 8,
       "label": "ai",
-      "fused_score": 0.995,
+      "fused_score": 0.9976,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2246.8
+      "latency_ms": 711.1
     },
     {
       "seq": 9,
       "label": "ai",
-      "fused_score": 0.8235,
+      "fused_score": 0.8403,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2203.3
+      "latency_ms": 690.7
     },
     {
       "seq": 10,
       "label": "ai",
-      "fused_score": 0.9164,
+      "fused_score": 0.9234,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2169.3
+      "latency_ms": 709.4
     },
     {
       "seq": 11,
       "label": "ai",
-      "fused_score": 0.9338,
+      "fused_score": 0.9442,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2127.3
+      "latency_ms": 683.9
     },
     {
       "seq": 12,
       "label": "ai",
-      "fused_score": 0.9361,
+      "fused_score": 0.961,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2178.7
+      "latency_ms": 718.2
     },
     {
       "seq": 13,
       "label": "ai",
-      "fused_score": 0.8514,
+      "fused_score": 0.8829,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2268.0
+      "latency_ms": 658.0
     },
     {
       "seq": 14,
       "label": "ai",
-      "fused_score": 0.9206,
+      "fused_score": 0.953,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2175.0
+      "latency_ms": 685.1
     },
     {
       "seq": 15,
       "label": "ai",
-      "fused_score": 0.9702,
+      "fused_score": 0.9801,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2231.9
+      "latency_ms": 647.8
     },
     {
       "seq": 57,
       "label": "real",
-      "fused_score": 0.3038,
+      "fused_score": 0.3042,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2214.3
+      "latency_ms": 707.1
     },
     {
       "seq": 58,
       "label": "real",
-      "fused_score": 0.6695,
+      "fused_score": 0.7143,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2214.6
+      "latency_ms": 686.5
     },
     {
       "seq": 59,
       "label": "real",
-      "fused_score": 0.4082,
+      "fused_score": 0.4286,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2207.7
+      "latency_ms": 653.8
     },
     {
       "seq": 60,
       "label": "real",
-      "fused_score": 0.2166,
+      "fused_score": 0.2083,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2241.0
+      "latency_ms": 676.9
     },
     {
       "seq": 61,
       "label": "real",
-      "fused_score": 0.2522,
+      "fused_score": 0.284,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2249.3
+      "latency_ms": 694.0
     },
     {
       "seq": 62,
       "label": "real",
-      "fused_score": 0.3906,
+      "fused_score": 0.4241,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2236.9
+      "latency_ms": 678.4
     },
     {
       "seq": 63,
       "label": "real",
-      "fused_score": 0.0824,
+      "fused_score": 0.0889,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2247.6
+      "latency_ms": 652.0
     },
     {
       "seq": 64,
       "label": "real",
-      "fused_score": 0.3088,
+      "fused_score": 0.3017,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2162.9
+      "latency_ms": 686.4
     },
     {
       "seq": 65,
       "label": "real",
-      "fused_score": 0.1402,
+      "fused_score": 0.162,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2262.1
+      "latency_ms": 703.9
     },
     {
       "seq": 66,
       "label": "real",
-      "fused_score": 0.0877,
+      "fused_score": 0.0922,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2225.4
+      "latency_ms": 657.3
     },
     {
       "seq": 67,
       "label": "real",
-      "fused_score": 0.1942,
+      "fused_score": 0.2083,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2210.1
+      "latency_ms": 666.8
     },
     {
       "seq": 68,
       "label": "real",
-      "fused_score": 0.7811,
+      "fused_score": 0.8244,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2243.6
+      "latency_ms": 728.6
     },
     {
       "seq": 69,
       "label": "real",
-      "fused_score": 0.7564,
+      "fused_score": 0.8135,
       "verdict": "suspect",
       "frames": "10",
-      "latency_ms": 2221.0
+      "latency_ms": 702.7
     },
     {
       "seq": 70,
       "label": "real",
-      "fused_score": 0.4221,
+      "fused_score": 0.4474,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2257.7
+      "latency_ms": 688.8
     },
     {
       "seq": 71,
       "label": "real",
-      "fused_score": 0.11,
+      "fused_score": 0.1093,
       "verdict": "review",
       "frames": "10",
-      "latency_ms": 2218.6
+      "latency_ms": 710.1
     }
   ]
 }

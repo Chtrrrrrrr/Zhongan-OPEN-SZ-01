@@ -1,42 +1,42 @@
 {
-  "cold_start_ms": 21684.6,
+  "cold_start_ms": 20738.8,
   "warm_image_ms": [
-    1328.2,
-    1696.1
+    1403.4,
+    1820.5
   ],
   "warm_latency_all_samples": {
     "n": 119,
-    "p50_ms": 1166.3,
-    "p95_ms": 1588.7,
-    "max_ms": 3024.5,
-    "mean_ms": 1229.0,
+    "p50_ms": 1216.0,
+    "p95_ms": 1630.0,
+    "max_ms": 1775.0,
+    "mean_ms": 1230.3,
     "budget_ms": 5000,
     "target_ms": 4500,
     "p95_within_budget": true,
     "p95_within_target": true,
     "stage_p50_ms": {
-      "L0": 33.9,
-      "L1": 56.1,
-      "L1b": 282.6,
-      "L2_patch": 29.1,
-      "L2_clip": 25.0,
-      "L2_clip_tiles": 689.4,
-      "explain": 33.1,
-      "L3": 18.9,
+      "L0": 34.9,
+      "L1": 52.6,
+      "L1b": 275.3,
+      "L2_patch": 29.0,
+      "L2_clip": 25.5,
+      "L2_clip_tiles": 697.5,
+      "explain": 32.4,
+      "L3": 17.3,
       "fusion": 0.1,
-      "total": 1165.4
+      "total": 1215.3
     },
     "stage_p95_ms": {
-      "L0": 156.9,
-      "L1": 83.7,
-      "L1b": 447.9,
-      "L2_patch": 32.3,
-      "L2_clip": 28.2,
-      "L2_clip_tiles": 840.0,
-      "explain": 110.9,
-      "L3": 40.7,
+      "L0": 103.9,
+      "L1": 81.8,
+      "L1b": 403.7,
+      "L2_patch": 32.4,
+      "L2_clip": 31.2,
+      "L2_clip_tiles": 939.0,
+      "explain": 78.3,
+      "L3": 28.3,
       "fusion": 0.3,
-      "total": 1586.9
+      "total": 1628.5
     }
   },
   "frozen_threshold_decision": {
@@ -56,723 +56,726 @@
       "seq": 1,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1157.3
+      "ms": 1320.6
     },
     {
       "seq": 2,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1213.1
+      "ms": 1329.3
     },
     {
       "seq": 3,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1164.6
+      "ms": 1307.9
     },
     {
       "seq": 4,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1108.8
+      "ms": 1324.1
     },
     {
       "seq": 5,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1001.0
+      "ms": 1213.3
     },
     {
       "seq": 6,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1201.9
+      "ms": 1272.8
     },
     {
       "seq": 7,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1018.9
+      "ms": 1232.6
     },
     {
       "seq": 8,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1115.7
+      "ms": 1307.8
     },
     {
       "seq": 9,
       "label": 1,
       "verdict": "suspect",
-      "ms": 920.8
+      "ms": 1103.1
     },
     {
       "seq": 10,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1584.8
+      "ms": 1702.2
     },
     {
       "seq": 11,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1470.8
+      "ms": 1575.7
     },
     {
       "seq": 12,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1450.5
+      "ms": 1581.4
     },
     {
       "seq": 13,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1493.0
+      "ms": 1627.1
     },
     {
       "seq": 14,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1527.6
+      "ms": 1617.6
     },
     {
       "seq": 15,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1084.4
+      "ms": 1315.7
     },
     {
       "seq": 16,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1114.6
+      "ms": 1264.9
     },
     {
       "seq": 17,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1490.9
+      "ms": 1538.0
     },
     {
       "seq": 18,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1477.8
+      "ms": 1539.6
     },
     {
       "seq": 19,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1161.3
+      "ms": 1285.1
     },
     {
       "seq": 20,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1120.4
+      "ms": 1312.0
     },
     {
       "seq": 21,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1090.2
+      "ms": 1340.7
     },
     {
       "seq": 22,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1062.8
+      "ms": 1193.6
     },
     {
       "seq": 23,
       "label": 1,
       "verdict": "suspect",
-      "ms": 977.1
+      "ms": 1216.0
     },
     {
       "seq": 24,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1085.3
+      "ms": 1227.6
     },
     {
       "seq": 25,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1085.4
+      "ms": 1244.1
     },
     {
       "seq": 26,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1443.1
+      "ms": 1519.3
     },
     {
       "seq": 27,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1477.6
+      "ms": 1574.8
     },
     {
       "seq": 28,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1479.9
+      "ms": 1541.5
     },
     {
       "seq": 29,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1043.3
+      "ms": 1155.7
     },
     {
       "seq": 30,
       "label": 1,
       "verdict": "suspect",
-      "ms": 988.5
+      "ms": 1160.0
     },
     {
       "seq": 31,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1070.8
+      "ms": 1267.4
     },
     {
       "seq": 32,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1018.6
+      "ms": 1236.0
     },
     {
       "seq": 33,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1111.0
+      "ms": 1295.3
     },
     {
       "seq": 34,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1100.1
+      "ms": 1195.4
     },
     {
       "seq": 35,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1138.2
+      "ms": 1245.0
     },
     {
       "seq": 36,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1271.1
+      "ms": 1294.0
     },
     {
       "seq": 37,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1147.5
+      "ms": 1325.6
     },
     {
       "seq": 38,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1117.3
+      "ms": 1232.2
     },
     {
       "seq": 39,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1168.1
+      "ms": 1096.7
     },
     {
       "seq": 40,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1084.9
+      "ms": 1162.9
     },
     {
       "seq": 41,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1227.6
+      "ms": 1260.1
     },
     {
       "seq": 42,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1262.0
+      "ms": 1336.7
     },
     {
       "seq": 43,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1221.6
+      "ms": 1179.2
     },
     {
       "seq": 44,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1319.9
+      "ms": 1333.9
     },
     {
       "seq": 45,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1111.9
+      "ms": 1249.5
     },
     {
       "seq": 46,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1100.1
+      "ms": 1167.7
     },
     {
       "seq": 47,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1197.6
+      "ms": 1283.9
     },
     {
       "seq": 48,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1580.4
+      "ms": 1656.2
     },
     {
       "seq": 49,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1653.5
+      "ms": 1697.2
     },
     {
       "seq": 50,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1624.1
+      "ms": 1745.2
     },
     {
       "seq": 51,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1466.0
+      "ms": 1342.2
     },
     {
       "seq": 52,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1409.4
+      "ms": 1492.2
     },
     {
       "seq": 53,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1044.8
+      "ms": 1058.0
     },
     {
       "seq": 54,
       "label": 1,
       "verdict": "suspect",
-      "ms": 944.8
+      "ms": 1050.1
     },
     {
       "seq": 55,
       "label": 1,
       "verdict": "suspect",
-      "ms": 977.2
+      "ms": 1011.6
     },
     {
       "seq": 56,
       "label": 1,
       "verdict": "suspect",
-      "ms": 1720.0
+      "ms": 1705.7
     },
     {
       "seq": 57,
       "label": 0,
       "verdict": "review",
-      "ms": 1685.0
+      "ms": 1775.0
     },
     {
       "seq": 58,
       "label": 0,
       "verdict": "normal",
-      "ms": 1290.6
+      "ms": 1293.8
     },
     {
       "seq": 59,
       "label": 0,
       "verdict": "review",
-      "ms": 1236.0
+      "ms": 1220.2
     },
     {
       "seq": 60,
       "label": 0,
       "verdict": "review",
-      "ms": 1112.8
+      "ms": 1148.0
     },
     {
       "seq": 61,
       "label": 0,
       "verdict": "review",
-      "ms": 1117.7
+      "ms": 1158.1
     },
     {
       "seq": 62,
       "label": 0,
       "verdict": "review",
-      "ms": 1061.2
+      "ms": 1140.9
     },
     {
       "seq": 63,
       "label": 0,
       "verdict": "review",
-      "ms": 1064.6
+      "ms": 1078.3
     },
     {
       "seq": 64,
       "label": 0,
       "verdict": "normal",
-      "ms": 1391.7
+      "ms": 1463.5
     },
     {
       "seq": 65,
       "label": 0,
       "verdict": "review",
-      "ms": 1165.7
+      "ms": 1180.5
     },
     {
       "seq": 66,
       "label": 0,
       "verdict": "review",
-      "ms": 1052.5
+      "ms": 1095.2
     },
     {
       "seq": 67,
       "label": 0,
       "verdict": "normal",
-      "ms": 1190.4
+      "ms": 1242.2
     },
     {
       "seq": 68,
       "label": 0,
       "verdict": "review",
-      "ms": 1239.6
+      "ms": 1255.7
     },
     {
       "seq": 69,
       "label": 0,
       "verdict": "normal",
-      "ms": 1304.1
+      "ms": 1289.1
     },
     {
       "seq": 70,
       "label": 0,
       "verdict": "review",
-      "ms": 1316.9
+      "ms": 1206.1
     },
     {
       "seq": 71,
       "label": 0,
       "verdict": "review",
-      "ms": 948.7
+      "ms": 945.7
     },
     {
       "seq": 72,
       "label": 0,
       "verdict": "review",
-      "ms": 1269.5
+      "ms": 1275.4
     },
     {
       "seq": 73,
       "label": 0,
       "verdict": "review",
-      "ms": 1200.4
+      "ms": 1136.1
     },
     {
       "seq": 74,
       "label": 0,
       "verdict": "review",
-      "ms": 1154.5
+      "ms": 1056.0
     },
     {
       "seq": 75,
       "label": 0,
       "verdict": "normal",
-      "ms": 1141.5
+      "ms": 1132.6
     },
     {
       "seq": 76,
       "label": 0,
       "verdict": "normal",
-      "ms": 1152.5
+      "ms": 1058.8
     },
     {
       "seq": 77,
       "label": 0,
       "verdict": "review",
-      "ms": 1096.3
+      "ms": 1083.3
     },
     {
       "seq": 78,
       "label": 0,
       "verdict": "review",
-      "ms": 963.2
+      "ms": 967.7
     },
     {
       "seq": 79,
       "label": 0,
       "verdict": "review",
-      "ms": 1153.3
+      "ms": 1053.7
     },
     {
       "seq": 80,
       "label": 0,
       "verdict": "normal",
-      "ms": 2093.5
+      "ms": 932.5
     },
     {
       "seq": 81,
       "label": 0,
       "verdict": "review",
-      "ms": 3024.5
+      "ms": 1239.4
     },
     {
       "seq": 82,
       "label": 0,
       "verdict": "review",
-      "ms": 1269.0
+      "ms": 1140.4
     },
     {
       "seq": 83,
       "label": 0,
       "verdict": "review",
-      "ms": 1244.4
+      "ms": 1154.0
     },
     {
       "seq": 84,
       "label": 0,
       "verdict": "review",
-      "ms": 1236.7
+      "ms": 1247.7
     },
     {
       "seq": 85,
       "label": 0,
       "verdict": "normal",
-      "ms": 1257.5
+      "ms": 1200.9
     },
     {
       "seq": 86,
       "label": 0,
       "verdict": "review",
-      "ms": 1284.5
+      "ms": 1228.8
     },
     {
       "seq": 87,
       "label": 0,
       "verdict": "normal",
-      "ms": 1358.8
+      "ms": 1263.7
     },
     {
       "seq": 88,
       "label": 0,
       "verdict": "review",
-      "ms": 1314.8
+      "ms": 1210.7
     },
     {
       "seq": 89,
       "label": 0,
       "verdict": "review",
-      "ms": 1333.1
+      "ms": 1235.1
     },
     {
       "seq": 90,
       "label": 0,
       "verdict": "normal",
-      "ms": 1276.5
+      "ms": 1232.9
     },
     {
       "seq": 91,
       "label": 0,
       "verdict": "review",
-      "ms": 925.3
+      "ms": 943.0
     },
     {
       "seq": 92,
       "label": 0,
       "verdict": "review",
-      "ms": 1220.9
+      "ms": 1186.6
     },
     {
       "seq": 93,
       "label": 0,
       "verdict": "normal",
-      "ms": 1236.0
+      "ms": 1190.6
     },
     {
       "seq": 94,
       "label": 0,
       "verdict": "review",
-      "ms": 1246.0
+      "ms": 1179.8
     },
     {
       "seq": 95,
       "label": 0,
       "verdict": "review",
-      "ms": 1214.4
+      "ms": 1152.4
     },
     {
       "seq": 96,
       "label": 0,
       "verdict": "review",
-      "ms": 1342.8
+      "ms": 1124.9
     },
     {
       "seq": 97,
       "label": 0,
       "verdict": "normal",
-      "ms": 1104.7
+      "ms": 1104.3
     },
     {
       "seq": 98,
       "label": 0,
       "verdict": "normal",
-      "ms": 1168.9
+      "ms": 1100.2
     },
     {
       "seq": 99,
       "label": 0,
       "verdict": "review",
-      "ms": 1229.5
+      "ms": 1262.9
     },
     {
       "seq": 100,
       "label": 0,
       "verdict": "review",
-      "ms": 1355.2
+      "ms": 1193.2
     },
     {
       "seq": 101,
       "label": 0,
       "verdict": "review",
-      "ms": 1518.8
+      "ms": 1315.1
     },
     {
       "seq": 102,
       "label": 0,
       "verdict": "review",
-      "ms": 1160.3
+      "ms": 902.2
     },
     {
       "seq": 103,
       "label": 0,
       "verdict": "review",
-      "ms": 1166.3
+      "ms": 932.4
     },
     {
       "seq": 104,
       "label": 0,
       "verdict": "normal",
-      "ms": 1351.1
+      "ms": 1216.7
     },
     {
       "seq": 105,
       "label": 0,
       "verdict": "review",
-      "ms": 1257.7
+      "ms": 1031.2
     },
     {
       "seq": 106,
       "label": 0,
       "verdict": "normal",
-      "ms": 1103.9
+      "ms": 895.0
     },
     {
       "seq": 107,
       "label": 0,
       "verdict": "review",
-      "ms": 1149.0
+      "ms": 1143.5
     },
     {
       "seq": 108,
       "label": 0,
       "verdict": "review",
-      "ms": 1060.2
+      "ms": 1101.7
     },
     {
       "seq": 109,
       "label": 0,
       "verdict": "review",
-      "ms": 1083.3
+      "ms": 1040.4
     },
     {
       "seq": 110,
       "label": 0,
       "verdict": "review",
-      "ms": 1111.8
+      "ms": 1055.8
     },
     {
       "seq": 111,
       "label": 0,
       "verdict": "review",
-      "ms": 1170.1
+      "ms": 1157.1
     },
     {
       "seq": 112,
       "label": 0,
       "verdict": "normal",
-      "ms": 1109.9
+      "ms": 1042.0
     },
     {
       "seq": 113,
       "label": 0,
       "verdict": "review",
-      "ms": 1202.5
+      "ms": 1189.2
     },
     {
       "seq": 114,
       "label": 0,
       "verdict": "normal",
-      "ms": 945.3
+      "ms": 948.2
     },
     {
       "seq": 115,
       "label": 0,
       "verdict": "review",
-      "ms": 1157.5
+      "ms": 1100.5
     },
     {
       "seq": 116,
       "label": 0,
       "verdict": "review",
-      "ms": 933.9
+      "ms": 937.1
     },
     {
       "seq": 117,
       "label": 0,
       "verdict": "review",
-      "ms": 953.6
+      "ms": 920.6
     },
     {
       "seq": 118,
       "label": 0,
       "verdict": "review",
-      "ms": 946.3
+      "ms": 901.7
     },
     {
       "seq": 119,
       "label": 0,
       "verdict": "review",
-      "ms": 1123.9
+      "ms": 937.1
     }
   ],
   "video": {
-    "skipped": "D:\\dsh\\Zhongan-OPEN-SZ-01\\demo_assets\\smoke_test.mp4 not found (run make_test_video.py)"
+    "ms": 740.2,
+    "verdict": "suspect",
+    "confidence": 0.8244,
+    "duration_s": 4.0
   },
   "budget_ms": 5000,
   "target_ms": 4500,
   "image_p95_within_budget": true,
   "image_p95_within_target": true,
-  "video_within_budget": false
+  "video_within_budget": true
 }

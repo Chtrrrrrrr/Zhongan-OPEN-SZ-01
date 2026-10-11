@@ -77,13 +77,27 @@ def main():
     ap.add_argument("--seconds", type=float, default=3.0)
     ap.add_argument("--fps", type=int, default=8)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--workspace", default=str(WS),
+                    help="directory holding models/ and the labelled data (default: the "
+                         "repo's parent, which is where run_all.py drives it from)")
+    ap.add_argument("--data-dir", default="data",
+                    help="labelled data directory (labels.csv + images/), relative to "
+                         "--workspace or absolute")
     ap.add_argument("--out", default="reports/video_channel_validation.json")
+    ap.add_argument("--work-dir", default="",
+                    help="where the synthetic clips are written. Defaults to a fresh system "
+                         "temp directory; on hosts where the sandbox forbids encoding into "
+                         "%%TEMP%% (VideoWriter cannot open its file there) point this at a "
+                         "workspace directory instead")
     args = ap.parse_args()
-    ws = Path(str(WS))
+    ws = Path(args.workspace)
     md = ws / "models"
+    data_dir = Path(args.data_dir)
+    if not data_dir.is_absolute():
+        data_dir = ws / data_dir
 
     seqs, labels = [], []
-    with open(ws / "data" / "labels.csv", encoding="utf-8") as f:
+    with open(data_dir / "labels.csv", encoding="utf-8") as f:
         for r in csv.DictReader(f):
             seqs.append(int(r["seq"]))
             labels.append(r["label"])
@@ -96,17 +110,24 @@ def main():
         forensic_lr=str(md / "forensic_lr.joblib"),
         clip_domain_lr=str(md / "clip_domain_lr.joblib"),
         combined_lr=str(md / "combined_lr.joblib"),
+        # the video channel reuses the image heads, so it needs the same frozen block
+        # layout the heads were fitted on (src/feature_spec.py)
+        feature_spec=str(md / "feature_spec.json"),
         fusion_json=str(md / "fusion.json"),
         device=args.device,
     )
     det = AIGCDetector(cfg)
 
-    tmp = Path(tempfile.mkdtemp(prefix="opensz01_video_"))
+    if args.work_dir:
+        tmp = Path(args.work_dir)
+        tmp.mkdir(parents=True, exist_ok=True)
+    else:
+        tmp = Path(tempfile.mkdtemp(prefix="opensz01_video_"))
     rows = []
     try:
         for tag, group in (("ai", ai), ("real", real)):
             for seq in group:
-                still = cv2.imread(str(ws / "data" / "images" / f"{seq:03d}.png"), cv2.IMREAD_COLOR)
+                still = cv2.imread(str(data_dir / "images" / f"{seq:03d}.png"), cv2.IMREAD_COLOR)
                 p = tmp / f"{tag}_{seq:03d}.mp4"
                 make_clip(still, p, args.seconds, args.fps)
                 t0 = time.perf_counter()

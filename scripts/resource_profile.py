@@ -398,7 +398,7 @@ def main():
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        det_v = make_detector(with_npr=True)
+        det_v = make_detector(with_npr=npr_available)
         det_v.detect_video(str(vpath))                    # cold/warm-up
         lat = []
         for _ in range(args.video_samples):
@@ -438,13 +438,19 @@ def main():
                 "p95_within_target": (None if (not s or budget is None)
                                       else bool(s["p95_ms"] <= budget))}
 
+    # The tile row names the deployed grid, which comes from the feature spec rather than
+    # from a hardcoded "3x3" (the spec is searched and can change; the label must follow).
+    tile_label = "L2 CLIP 分块(" + " + ".join(
+        f"{int(sc.get('grid', 3))}x{int(sc.get('grid', 3))}"
+        + (f"@{int(sc['max_side'])}" if sc.get("max_side") else "@原生")
+        for sc in det.spec.scales) + f", {det.spec.aggregation})"
     budget_rows = [
         row("L0 输入解析", "L0", "必须"),
         row("L1 取证线索", "L1", "必须"),
         row("L1b 采集方式/域线索", "L1b", "必须", source="isolated"),
         row("L2 NPR", "L2_npr", "可选/未进入冻结融合"),
         row("L2 CLIP / AIDE", "L2_clip", "核心"),
-        row("L2 CLIP 分块(3x3 tiles)", "L2_clip_tiles", "核心"),
+        row(tile_label, "L2_clip_tiles", "核心"),
         row("L3 篡改定位与热力图", "L3", "建议"),
         row("融合、校准与报告", "fusion", "必须"),
     ]
