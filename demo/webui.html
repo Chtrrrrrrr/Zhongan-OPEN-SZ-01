@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPEN-SZ-01 · AI 生成材料反欺诈检测 · 功能展示台</title>
+<!--
+  demo/webui.html —— OPEN-SZ-01 对外服务首页（由 api/server.py 的 GET / 静态托管）
+
+  设计约束（对应 m4-webui 交付要求）：
+    * 单文件、零外部 CDN：全部 CSS/JS 内联，不引入任何第三方库或字体。
+    * 所有板块连接真实数据，无静态占位：
+        - /api/v1/health, /api/v1/version          -> 功能矩阵 / 通道加载状态 / 阈值与哈希
+        - POST /api/v1/detect/image|video|batch    -> 实时检测（拖拽上传，真跑推理）
+        - /demo/webui_assets/oof_119.json          -> 样本库 119 套折外判定（离线资产，来源可溯）
+        - /reports/batch/...</samples/NNN.json>    -> 样本详情：已落盘的完整检测报告
+        - /api/v1/metrics + /reports/*.json        -> 指标看板与消融证据
+        - /api/v1/report/{id}, /api/v1/reports     -> 落盘报告回取
+      资产缺失/端点不可用时逐块降级并明确标注「未生成 / 不可用」，不引用不存在的资源。
+    * 风格与 demo/app.py 一致：深色卡片。
+  说明：页面只做展示与调用，不修改任何服务端行为；服务端契约见 docs/api.md。
+-->
+<style>
+:root{
+  --bg:#0f1420; --bg2:#131a29; --card:#182031; --line:#2a3550; --fg:#e8edf7; --mut:#93a1bd;
+  --ok:#2e7d32; --ok2:#43a047; --warn:#f9a825; --bad:#c62828; --bad2:#e53935; --acc:#4c8dff;
+  --acc2:#7aa9ff; --grey:#546e7a;
+}
+*{box-sizing:border-box}
+figure{margin:0}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+     font-family:'Microsoft YaHei','PingFang SC',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+code,kbd{background:#0c111b;padding:1px 6px;border-radius:4px;color:#9ecbff;font-family:Consolas,'Courier New',monospace;font-size:12.5px}
+h1{font-size:19px;margin:0}
+h2{font-size:17px;margin:0 0 4px}
+h3{font-size:15px;margin:16px 0 6px;color:#dce6fa}
+h4{font-size:13.5px;margin:12px 0 4px;color:var(--mut);font-weight:600}
+p{margin:6px 0}
+header{position:sticky;top:0;z-index:30;background:rgba(15,20,32,.96);border-bottom:1px solid var(--line);
+       padding:14px 26px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.sub{color:var(--mut);font-size:12.5px;margin:2px 0 0}
+.status{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px}
+nav{position:sticky;top:64px;z-index:29;background:var(--bg2);border-bottom:1px solid var(--line);
+    padding:8px 26px;display:flex;gap:6px;flex-wrap:wrap}
+nav a{padding:5px 12px;border-radius:20px;border:1px solid var(--line);color:var(--fg);font-size:13px}
+nav a:hover{background:#1d2740;text-decoration:none}
+main{padding:18px 26px 60px;max-width:1580px;margin:0 auto}
+section{margin-bottom:26px}
+section>header{position:static;background:none;border:0;padding:0;display:block;margin-bottom:10px}
+.secTitle{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-left:3px solid var(--acc);padding-left:10px}
+.secTitle span.hint{color:var(--mut);font-size:12.5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+.grid{display:grid;gap:14px}
+.grid>*{min-width:0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.chip{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11.5px;border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.chip.on{border-color:var(--ok2);color:#a5e8a8;background:rgba(67,160,71,.12)}
+.chip.off{border-color:#6b4a4a;color:#e2a2a2;background:rgba(198,40,40,.1)}
+.chip.warn{border-color:#8a6a20;color:#f2cd7b;background:rgba(249,168,37,.1)}
+.pill{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11.5px;font-weight:600;color:#fff;white-space:nowrap}
+.p-suspect{background:var(--bad2)} .p-review{background:var(--warn);color:#3a2c00} .p-normal{background:var(--ok2)}
+.p-ok{background:#2b6cb0} .p-miss{background:#455a64} .p-unknown{background:#7e57c2}
+.badge{display:inline-block;padding:8px 22px;border-radius:8px;font-size:19px;font-weight:700;color:#fff}
+.b-normal{background:var(--ok)} .b-review{background:var(--warn);color:#3a2c00} .b-suspect{background:var(--bad)}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;font-size:13px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+th{color:var(--mut);font-weight:500;background:rgba(255,255,255,.02);min-width:84px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:rgba(76,141,255,.05)}
+.bar{height:7px;background:#0c111b;border-radius:4px;overflow:hidden;min-width:70px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#4c8dff,#7aa9ff)}
+.bar.hot>i{background:linear-gradient(90deg,#e53935,#ff8a65)}
+.bar.warm>i{background:linear-gradient(90deg,#f9a825,#ffe082)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--mut);font-size:12px}
+.kpi .t{color:var(--mut);font-size:12.5px}
+#drop{border:2px dashed var(--line);border-radius:10px;padding:26px 14px;text-align:center;color:var(--mut);cursor:pointer;transition:.15s}
+#drop.hot{border-color:var(--acc);color:var(--fg);background:#1d2740}
+button{background:var(--acc);border:0;color:#fff;padding:8px 15px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit}
+button:hover{background:#3d7ce8}
+button.ghost{background:#22304d;color:var(--fg)}
+button.ghost:hover{background:#2c3d63}
+button:disabled{opacity:.5;cursor:default}
+select,input[type=text]{background:#0c111b;border:1px solid var(--line);color:var(--fg);border-radius:6px;padding:6px 9px;font-family:inherit;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mut{color:var(--mut)}
+.mono{font-family:Consolas,'Courier New',monospace;font-size:12px;word-break:break-all}
+img.hm{max-width:100%;border:1px solid var(--line);border-radius:8px;background:#0c111b}
+.prev{max-width:100%;max-height:260px;border-radius:8px;display:block}
+.note{border-left:3px solid var(--acc);background:rgba(76,141,255,.08);padding:8px 12px;border-radius:0 8px 8px 0;font-size:12.5px;color:#cfe0ff}
+.note.warn{border-color:var(--warn);background:rgba(249,168,37,.1);color:#f5dfae}
+.note.bad{border-color:var(--bad2);background:rgba(229,57,53,.1);color:#ffc9c7}
+.note.ok{border-color:var(--ok2);background:rgba(67,160,71,.1);color:#c7efc9}
+.banner{display:none;padding:10px 14px;border-radius:8px;margin-bottom:12px}
+.banner.show{display:block}
+#samplesGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(134px,1fr));gap:10px}
+.sc{background:#141c2c;border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:6px;cursor:pointer;transition:.12s}
+.sc:hover{transform:translateY(-2px);border-color:var(--acc)}
+.sc.tp{border-left-color:var(--ok2)} .sc.tn{border-left-color:#2b6cb0}
+.sc.fp{border-left-color:var(--bad2);background:#26161a} .sc.fn{border-left-color:var(--warn);background:#26200f}
+.sc img{width:100%;height:104px;object-fit:cover;border-radius:5px;background:#0c111b;display:block}
+.sc .cap{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-top:5px;font-size:12px}
+.sc .cap b{font-variant-numeric:tabular-nums}
+.sc .meta{color:var(--mut);font-size:11px;display:flex;justify-content:space-between;gap:4px;white-space:nowrap;overflow:hidden}
+.sc .ph{width:100%;height:104px;border-radius:5px;background:repeating-linear-gradient(45deg,#141c2c,#141c2c 6px,#19233a 6px,#19233a 12px);
+        display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.modal{position:fixed;inset:0;background:rgba(6,9,16,.82);z-index:60;display:none;padding:24px;overflow:auto}
+.modal.show{display:block}
+.modal .sheet{background:var(--bg2);border:1px solid var(--line);border-radius:12px;max-width:1120px;margin:0 auto;padding:18px}
+.modal .close{float:right}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.cm{display:grid;grid-template-columns:auto auto auto;gap:2px;font-variant-numeric:tabular-nums;font-size:13px;width:max-content}
+.cm div{border:1px solid var(--line);padding:6px 12px;text-align:center}
+.cm .h{background:#1d2740;color:var(--mut);font-size:12px}
+.nowrap{white-space:nowrap}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--acc2);font-size:13px}
+footer{border-top:1px solid var(--line);padding:16px 26px;color:var(--mut);font-size:12px}
+ul.tight{margin:4px 0 4px 18px;padding:0}
+ul.tight li{margin:2px 0}
+.spin{color:var(--mut);font-size:12.5px}
+.barRow{display:grid;grid-template-columns:150px 1fr 66px;gap:8px;align-items:center;font-size:12.5px;margin:3px 0}
+.evBody{max-height:620px;overflow:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>AI 生成材料反欺诈检测 · 功能展示台</h1>
+    <p class="sub">OPEN-SZ-01 · 众安 1024 AI Coding 挑战赛 · L0 输入 → L1 取证 / L1b 域 → L2 多模态 CLIP（全局+分块）→ L3 定位 → 多证据融合 → 三档决策</p>
+  </div>
+  <div class="status" id="svcStatus">
+    <span class="chip" id="stHealth">服务状态：连接中…</span>
+    <span class="chip" id="stMode">模式：—</span>
+    <span class="chip" id="stWarm">预热：—</span>
+    <span class="chip" id="stThr">阈值：—</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#matrix">① 功能矩阵</a>
+  <a href="#live">② 实时检测</a>
+  <a href="#samples">③ 样本库（119）</a>
+  <a href="#dashboard">④ 指标看板</a>
+  <a href="#compliance">⑤ 合规与复现</a>
+</nav>
+
+<main>
+
+  <div class="banner note bad" id="offlineBanner">
+    无法访问后端接口。<b>本页必须由 OPEN-SZ-01 服务托管</b>：请先运行
+    <code>python api/server.py --port 8080</code>，再打开 <code>http://127.0.0.1:8080/</code>
+    （直接用 file:// 打开本文件时浏览器会拦截跨源请求，属预期行为）。
+  </div>
+
+  <!-- ================= ① 功能矩阵 ================= -->
+  <section id="matrix">
+    <div class="secTitle">
+      <h2>① 功能矩阵：系统「具备什么功能」</h2>
+      <span class="hint">四要素证据链 · 三档决策 · 版本与阈值（数据来自 GET /api/v1/health、/api/v1/version）</span>
+    </div>
+    <div class="grid g4" id="matrixCards">
+      <div class="card"><h3>多模态 CLIP</h3><p class="mut">加载中…</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>三档决策与当前冻结阈值</h3>
+        <div id="tierBox" class="mut">加载中…</div>
+      </div>
+      <div class="card">
+        <h3>证据通道加载状态（GET /api/v1/health → channels）</h3>
+        <div id="channelsBox" class="mut">加载中…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ② 实时检测 ================= -->
+  <section id="live">
+    <div class="secTitle">
+      <h2>② 实时检测（图片 / 视频，真跑推理）</h2>
+      <span class="hint">POST /api/v1/detect/image | /api/v1/detect/video —— 拖拽或选择文件即可，服务端模型常驻</span>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div id="drop">拖拽图片 / 视频到此，或点击选择文件<br><span class="sub">支持 png / jpg / webp / mp4 / mov（单次 ≤ 64 MB）</span></div>
+        <input id="file" type="file" accept="image/*,video/*" style="display:none">
+        <div class="row" style="margin-top:12px">
+          <button id="go" disabled>开始检测</button>
+          <label class="mut">单请求超时
+            <select id="timeoutSel">
+              <option value="30000">默认 30 s</option>
+              <option value="5000">5 s</option>
+              <option value="1">1 ms（演示超时降级）</option>
+            </select>
+          </label>
+          <label class="mut">落盘报告 <input type="checkbox" id="saveChk" checked></label>
+        </div>
+        <img id="prev" class="prev" style="display:none;margin-top:12px">
+        <div class="spin" id="spin"></div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+        <h3>批量检测（POST /api/v1/detect/batch）</h3>
+        <div class="row">
+          <input type="file" id="batchFiles" multiple accept="image/*,video/*">
+          <button class="ghost" id="goBatch">批量检测所选文件</button>
+        </div>
+        <div class="spin" id="batchSpin"></div>
+        <div id="batchOut"></div>
+      </div>
+      <div class="card" id="out"><div class="mut">等待输入……检测结果将在此展示（结论徽标、各路模型分数、L1 取证线索、L3 定位图、关注区域解释、分歧度、逐环节耗时、版本哈希）。</div></div>
+    </div>
+  </section>
+
+  <!-- ================= ③ 样本库 ================= -->
+  <section id="samples">
+    <div class="secTitle">
+      <h2>③ 样本库（119 套命题样本 · 折外判定）</h2>
+      <span class="hint">缩略图与折外（OOF）分数/判定来自 /demo/webui_assets/oof_119.json；点击卡片查看完整报告</span>
+    </div>
+    <div class="card">
+      <div class="row" id="sampleFilters">
+        <span class="mut">筛选：</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input type="text" id="seqSearch" placeholder="按序号搜索，如 57" style="width:180px">
+        <span class="legend" id="sampleLegend">
+          <span><i style="background:#43a047"></i>正确（真判真 / 假判假）</span>
+          <span><i style="background:#e53935"></i>误报（真实被判嫌疑）</span>
+          <span><i style="background:#f9a825"></i>漏报（AI 未判嫌疑）</span>
+          <span><i style="background:#2b6cb0"></i>正确（真实 · 未判嫌疑）</span>
+        </span>
+      </div>
+      <div id="samplesSummary" class="mut" style="margin:8px 0">加载中…</div>
+      <div id="samplesGrid"></div>
+      <p class="mut" style="margin-top:12px" id="samplesProvenance"></p>
+    </div>
+  </section>
+
+  <!-- ================= ④ 指标看板 ================= -->
+  <section id="dashboard">
+    <div class="secTitle">
+      <h2>④ 指标看板（折外指标 + 消融证据）</h2>
+      <span class="hint">GET /api/v1/metrics（reports/metrics.json）与 reports/ 下各证据文件实时读取，缺文件即标注「未生成」</span>
+    </div>
+    <div class="grid g4" id="kpiBox"><div class="kpi"><span class="t">加载中…</span></div></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card"><h3>混淆矩阵与三档分布</h3><div id="confBox" class="mut">加载中…</div></div>
+      <div class="card"><h3>阈值前 ROC 前沿 / 折外 AUC</h3><div id="rocBox" class="mut">加载中…</div></div>
+      <div class="card"><h3>分折结果（分层 5 折，同 evaluate_system.py 协议）</h3><div id="foldBox" class="mut">加载中…</div></div>
+      <div class="card"><h3>评测协议与口径（metrics.protocol）</h3><div id="protoBox" class="mut">加载中…</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px" id="evidenceBox"></div>
+  </section>
+
+  <!-- ================= ⑤ 合规与复现 ================= -->
+  <section id="compliance">
+    <div class="secTitle">
+      <h2>⑤ 合规口径与一键复现</h2>
+      <span class="hint">结论口径、证据标签约定、复现命令与接口文档入口</span>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>结论口径（术语纪律）</h3>
+        <div class="note">
+          本系统输出的是<b>材料层面的技术判定</b>：<span class="pill p-normal">normal 正常</span>
+          <span class="pill p-review">review 待复核</span>
+          <span class="pill p-suspect">suspect 疑似生成/篡改</span>。
+          对 <b>suspect</b> 的规范表述是「<b>疑似生成合成内容</b>」，<b>不构成业务欺诈定性</b>，
+          最终业务结论须由人工复核与业务流程判定。
+        </div>
+        <h4>证据标签约定（《技术验证手册》表 10-1）</h4>
+        <table>
+          <tr><th>标签</th><th>含义</th></tr>
+          <tr><td><span class="chip on">【已验证】</span></td><td>已完成，有可复现的数据或统计结果支撑</td></tr>
+          <tr><td><span class="chip warn">【部分验证】</span></td><td>部分结论已验证，其余仍需补充实验</td></tr>
+          <tr><td><span class="chip">【待验证】</span></td><td>尚无实验数据，属于需要验证的假设或候选方案</td></tr>
+          <tr><td><span class="chip">【工程假设】</span></td><td>基于公开资料与工程经验提出的设计选择，尚未在本任务上验证</td></tr>
+          <tr><td><span class="chip off">【命题约束】</span></td><td>由命题规定的硬性要求，不是本方案的实验结果</td></tr>
+          <tr><td><span class="chip off">【验收标准】</span></td><td>判定方案是否达标的判定线，须由最终实测数据对照</td></tr>
+        </table>
+        <p class="mut" style="margin-top:8px">逐条对照与验收清单见 <code>docs/compliance-audit.md</code>（合规审计报告）。</p>
+        <h4>降级与错误口径</h4>
+        <ul class="tight mut">
+          <li>输入不可解码、证据通道加载失败、单请求超时 <b>都不是 HTTP 错误</b>：返回 HTTP 200 + <code>verdict=review</code> + <code>meta.degraded=true</code> + <code>uncertainty</code> 说明（可在②中选择「1 ms 演示超时降级」）。</li>
+          <li>HTTP 400/403/404/405/413/415/429/500 只表示「请求本身不合法」，统一错误体为 <code>{"error":{"code","message","details?","request_id"}}</code>。</li>
+          <li>服务默认只监听 <code>127.0.0.1</code> 且不含身份认证，定位为本机/内网演示与评测；对外部署须前置网关做认证与限流。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>一键复现命令</h3>
+        <div id="cmds" class="mut">加载中…</div>
+        <h3>接口与文档入口</h3>
+        <div class="row">
+          <a class="chip" href="/api/v1/health" target="_blank">GET /api/v1/health</a>
+          <a class="chip" href="/api/v1/version" target="_blank">GET /api/v1/version</a>
+          <a class="chip" href="/api/v1/metrics" target="_blank">GET /api/v1/metrics</a>
+          <a class="chip" href="/api/v1/reports?limit=20" target="_blank">GET /api/v1/reports</a>
+          <a class="chip" href="/api/v1/openapi.json" target="_blank">GET /api/v1/openapi.json（OpenAPI 3.0.3，可导入 Swagger/Postman）</a>
+          <a class="chip" href="/demo/webui_assets/README.md" target="_blank">静态资产说明</a>
+        </div>
+        <h4>仓库内文档</h4>
+        <ul class="tight mut">
+          <li><code>docs/api.md</code> 对外接口说明与 curl 示例（端点、错误码、超时降级）</li>
+          <li><code>docs/solution.md</code> 方案与架构 · <code>docs/results.md</code> 结果 · <code>docs/reproduce.md</code> 复现步骤</li>
+          <li><code>docs/compliance-audit.md</code> 合规审计（逐条对照解题思路与验证手册）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>多证据组合的判定链路（页面自查）</h3>
+      <div id="pipelineBox" class="mut">加载中…</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  OPEN-SZ-01 · AI 生成材料反欺诈检测 · WebUI（demo/webui.html，单文件零 CDN）·
+  结论为材料层面的技术判定，疑似生成合成内容不构成业务欺诈定性。
+</footer>
+
+<div class="modal" id="modal"><div class="sheet" id="modalBody"></div></div>
+
+<script>
+"use strict";
+/* ============================ 基础工具 ============================ */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s === undefined || s === null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+const fixed = (v, n) => (typeof v === "number" && isFinite(v) ? v.toFixed(n === undefined ? 4 : n) : "—");
+const pct = (v, n) => (typeof v === "number" && isFinite(v) ? (v * 100).toFixed(n === undefined ? 2 : n) + "%" : "—");
+const isNum = (v) => typeof v === "number" && isFinite(v);
+const bar = (v, cls) => {
+  const w = isNum(v) ? Math.max(0, Math.min(1, v)) * 100 : 0;
+  return '<div class="bar ' + (cls || "") + '"><i style="width:' + w.toFixed(1) + '%"></i></div>';
+};
+const VERDICT_CN = { suspect: "疑似生成/篡改", review: "待复核", normal: "正常" };
+const VERDICT_PILL = { suspect: "p-suspect", review: "p-review", normal: "p-normal" };
+const OUTCOME_CN = {
+  true_positive: ["正确", "tp"], true_negative: ["正确", "tn"],
+  false_positive: ["误报", "fp"], false_negative: ["漏报", "fn"]
+};
+const MEMBER_CN = {
+  forensic: "取证/域特征头（L1 47 维 + L1b 20 维，LR）",
+  combined: "取证+CLIP 联合头（L1/L1b + CLIP 全局 1024 + 分块 3072，LR）",
+  clip_external: "冻结 CLIP 外部分类探针（18 生成器基准，未用 119 训练）",
+  clip_domain: "CLIP 域判别头（渲染态 vs 拍摄态，消融通道）",
+  npr: "冻结 NPR ResNet-18（消融剔除，权重 0）",
+  frame_mean: "视频抽帧均值", frame_median: "视频抽帧中位数",
+  frame_p90: "视频抽帧 P90", frame_std: "视频抽帧标准差"
+};
+function chip(text, cls) { return '<span class="chip ' + (cls || "") + '">' + esc(text) + "</span>"; }
+function kvTable(rows) {
+  return '<table>' + rows.map((r) => "<tr><th>" + esc(r[0]) + "</th><td>" +
+    (r[2] === undefined ? esc(r[1]) : r[1]) + "</td></tr>").join("") + "</table>";
+}
+async function getJSON(url, opts) {
+  try {
+    const r = await fetch(url, opts);
+    const text = await r.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* 非 JSON（如 CSV / HTML） */ }
+    return { ok: r.ok, status: r.status, data: data, text: text };
+  } catch (e) {
+    return { ok: false, status: 0, error: String(e), data: null, text: "" };
+  }
+}
+function copyText(btn, text) {
+  const done = () => { const o = btn.textContent; btn.textContent = "已复制"; setTimeout(() => (btn.textContent = o), 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+  else {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta); done();
+  }
+}
+function cmdRow(cmd, desc) {
+  return '<div class="row" style="margin:6px 0;align-items:flex-start">' +
+    '<button class="ghost" data-cmd="' + esc(cmd) + '" onclick="copyCmd(this)" style="flex:0 0 auto">复制</button>' +
+    '<div><div class="mono">' + esc(cmd) + "</div>" + (desc ? '<div class="mut" style="font-size:12px">' + esc(desc) + "</div>" : "") + "</div></div>";
+}
+window.copyCmd = (btn) => copyText(btn, btn.getAttribute("data-cmd"));
+window.thumbFail = (img) => {
+  const ph = document.createElement("div");
+  ph.className = "ph"; ph.textContent = "缩略图缺失";
+  img.replaceWith(ph);
+};
+
+/* ============================ 全局状态 ============================ */
+const ST = { health: null, version: null, metrics: null, oof: null, live: null };
+
+/* ============================ ① 功能矩阵 ============================ */
+const FEATURES = [
+  {
+    key: "clip", title: "① 多模态 CLIP 语义特征",
+    code: "src/l2_clip.py · src/l2_clip_tiles.py",
+    desc: "CLIP ViT-L/14 全局嵌入 + 分块（tile）嵌入，捕捉生成模型在语义与局部纹理上的一致性偏差；外部探针 models/clip_probe_norm.pt 另在 18 生成器基准上训练，用于跨生成器泛化。",
+    chan: ["L2_clip", "L2_clip_probe"]
+  },
+  {
+    key: "forensic", title: "② 伪影与取证特征",
+    code: "src/l1_forensics.py · src/l1b_domain.py",
+    desc: "47 维零权重取证特征（噪声残差、多尺度残差、JPEG/PNG 块效应、色彩统计等）+ 20 维域特征（渲染态 vs 拍摄态），噪声与残差层面的不一致是合成/篡改的直接痕迹。",
+    chan: ["L1_forensics", "L1b_domain"]
+  },
+  {
+    key: "meta", title: "③ 元数据与容器线索",
+    code: "src/l0_input.py（解析）· src/l1_forensics.py（线索成文）",
+    desc: "PNG 容器块结构（IDAT 数、sRGB、eXIf）、EXIF/XMP 元数据、位深与色彩描述等；容器与元数据异常作为可解释线索进入报告的 forensic_clues 三态表（命中/未命中/不确定）。",
+    chan: ["L0_input"]
+  },
+  {
+    key: "ensemble", title: "④ 多证据 Ensemble 融合",
+    code: "src/fusion.py · models/fusion.json",
+    desc: "各路证据在 logit 尺度做温度标定后按权重融合，输出校准置信度与分歧度，再按冻结阈值给出三档结论；融合权重与阈值只在训练/校准折上确定（禁止在最终测试集上搜索）。",
+    chan: ["fusion", "head_forensic", "head_combined"]
+  }
+];
+function renderMatrix() {
+  const h = ST.health || {}, v = ST.version || {};
+  const chans = h.channels || {};
+  const loaded = (k) => chans[k] && chans[k].loaded;
+  $("#matrixCards").innerHTML = FEATURES.map((f) => {
+    const states = f.chan.map((c) => {
+      const c0 = chans[c];
+      if (!c0) return chip(c + "：未报告", "off");
+      const ok = !!c0.loaded;
+      return chip(c + (ok ? "：已常驻" : (c0.available ? "：可用未常驻" : "：未配置")), ok ? "on" : (c0.available ? "warn" : "off"));
+    }).join(" ");
+    return '<div class="card"><h3>' + esc(f.title) + "</h3>" +
+      '<p class="mut">' + esc(f.desc) + "</p>" +
+      '<div class="tags" style="margin-top:8px">' + states + "</div>" +
+      '<div class="mono mut" style="margin-top:8px">' + esc(f.code) + "</div></div>";
+  }).join("");
+
+  // 三档决策 + 阈值
+  const th = (v.thresholds || {});
+  const fw = th.weights || {};
+  const wsum = Object.keys(fw).reduce((a, k) => a + (fw[k] || 0), 0) || 1;
+  let tiers = '<table>' +
+    "<tr><th>结论</th><th>判定条件（融合分 s）</th><th>业务含义</th></tr>" +
+    '<tr><td><span class="pill p-suspect">suspect</span></td><td>s ≥ high = <code>' + fixed(th.high, 6) + "</code></td><td>疑似生成合成内容，建议人工复核</td></tr>" +
+    '<tr><td><span class="pill p-review">review</span></td><td>low &lt; s &lt; high（low = <code>' + fixed(th.low, 6) + "</code>）</td><td>证据不足/分歧较大，转人工复核</td></tr>" +
+    '<tr><td><span class="pill p-normal">normal</span></td><td>s ≤ low</td><td>未发现生成/篡改迹象</td></tr>' +
+    "</table>" +
+    '<h4>融合权重（models/fusion.json）</h4>' +
+    Object.keys(fw).sort().map((k) => '<div class="barRow"><span class="mut">' + esc(k) + "</span>" + bar(fw[k] / wsum) + "<span>" + fixed(fw[k], 3) + "</span></div>").join("") +
+    '<p class="mut" style="margin-top:8px">阈值/温度来源：<span class="mono">' + esc(th.source || "—") + "</span><br>sha256：<span class='mono'>" + esc(th.source_sha256 || "—") + "</span></p>";
+  const vp = v.pipeline || {}, vc = v.code || {}, vm = v.models || {};
+  tiers += "<h4>系统版本（GET /api/v1/version）</h4>" + kvTable([
+    ["服务 / API", (v.service || "—") + " " + (v.service_version || "") + " · API " + (v.api_version || "—") +
+      " · 报告 schema " + (v.report_schema_version || "—")],
+    ["检测管线", (vp.version || "—") + " · mode=" + (vp.mode || "—") + " · device=" + (vp.device || "—") +
+      (vp.time_budget_s ? " · 内部时间预算 " + vp.time_budget_s + " s" : "")],
+    ["代码版本", String(vc.code_hash || "—").slice(0, 24) + "…（git " + String(vc.git_commit || "—").slice(0, 10) +
+      (vc.git_dirty ? "，工作区有未提交改动" : "") + "，源文件 " + (vc.n_source_files || "—") + " 个）"],
+    ["模型权重 sha256", Object.keys(vm).map((k) => k + "=" + String((vm[k] || {}).sha256 || "—").slice(0, 14) + "…").join("　")],
+    ["指标文件", (v.metrics || {}).exists === false ? "未生成" :
+      String(((v.metrics || {}).n_samples) || "—") + " 套 · OOF acc " + fixed((v.metrics || {}).oof_accuracy, 4) +
+      " / FPR " + fixed((v.metrics || {}).oof_fpr, 4) + " / TPR " + fixed((v.metrics || {}).oof_tpr, 4)]
+  ]);
+  $("#tierBox").innerHTML = tiers;
+
+  // 通道状态表
+  const keys = Object.keys(chans).sort();
+  if (!keys.length) { $("#channelsBox").innerHTML = '<span class="mut">未获取到通道状态。</span>'; }
+  else {
+    $("#channelsBox").innerHTML = "<table><tr><th>通道</th><th>状态</th><th>配置 / 加载</th></tr>" +
+      keys.map((k) => {
+        const c = chans[k] || {};
+        const st = c.loaded ? chip("已常驻", "on") : (c.available ? chip("可用·未常驻", "warn") : chip("未配置", "off"));
+        return "<tr><td>" + esc(k) + (c.kind ? '<div class="mut" style="font-size:12px">' + esc(c.kind) + "</div>" : "") +
+          "</td><td>" + st + "</td><td class='mono mut'>" +
+          esc(["configured", "available", "path", "weights", "thr_low", "thr_high"].filter((x) => c[x] !== undefined)
+            .map((x) => x + "=" + JSON.stringify(c[x])).join("  ")) + "</td></tr>";
+      }).join("") + "</table>";
+  }
+}
+
+/* ============================ ② 实时检测 ============================ */
+let picked = null, isVideo = false;
+function initLive() {
+  const drop = $("#drop"), file = $("#file");
+  drop.onclick = () => file.click();
+  drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("hot"); };
+  drop.ondragleave = () => drop.classList.remove("hot");
+  drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("hot"); take(e.dataTransfer.files[0]); };
+  file.onchange = () => take(file.files[0]);
+  $("#go").onclick = runDetect;
+  $("#goBatch").onclick = runBatch;
+}
+function take(f) {
+  if (!f) return;
+  picked = f;
+  isVideo = (f.type || "").startsWith("video") || /\.(mp4|mov|avi|mkv|webm)$/i.test(f.name);
+  $("#drop").innerHTML = "已选择：<b>" + esc(f.name) + "</b><br><span class='sub'>" +
+    esc((f.type || "未知类型")) + " · " + (f.size / 1024).toFixed(0) + " KB · 将调用 " +
+    (isVideo ? "/api/v1/detect/video" : "/api/v1/detect/image") + "</span>";
+  $("#go").disabled = false;
+  const prev = $("#prev");
+  if (!isVideo) { prev.src = URL.createObjectURL(f); prev.style.display = "block"; }
+  else { prev.style.display = "none"; prev.removeAttribute("src"); }
+}
+async function runDetect() {
+  if (!picked) return;
+  const t0 = performance.now();
+  $("#go").disabled = true;
+  const ms = $("#timeoutSel").value, save = $("#saveChk").checked ? "true" : "0";
+  $("#spin").textContent = "推理中……（服务端模型常驻；若未预热首单会包含冷启动开销）";
+  $("#out").innerHTML = '<div class="mut">推理中……</div>';
+  const kind = isVideo ? "video" : "image";
+  const url = "/api/v1/detect/" + kind + "?name=" + encodeURIComponent(picked.name) +
+    "&timeout_ms=" + ms + "&save=" + save + "&html=false";
+  const r = await getJSON(url, {
+    method: "POST",
+    headers: { "Content-Type": picked.type || "application/octet-stream" },
+    body: picked
+  });
+  const wall = (performance.now() - t0) / 1000;
+  $("#spin").textContent = "";
+  $("#go").disabled = false;
+  if (!r.ok || !r.data) {
+    $("#out").innerHTML = '<div class="note bad"><b>请求失败（HTTP ' + r.status + "）</b><br>" +
+      esc(r.data && r.data.error ? JSON.stringify(r.data.error, null, 1) : (r.error || r.text.slice(0, 400))) + "</div>";
+    return;
+  }
+  ST.live = r.data;
+  $("#out").innerHTML = renderReport(r.data, { wall: wall });
+}
+function memberRows(scores, weights) {
+  const w = weights || {};
+  const merged = Object.assign({}, (ST.health || {}).channels ? (((ST.health || {}).channels.fusion || {}).weights || {}) : {}, w);
+  const inFusion = Object.keys(scores).filter((k) => merged[k] !== undefined || /frame_/.test(k));
+  const other = Object.keys(scores).filter((k) => inFusion.indexOf(k) < 0);
+  let html = "<table><tr><th>证据成员</th><th>分数</th><th class='num'>数值</th><th>参与融合</th></tr>" +
+    inFusion.map((k) => "<tr><td>" + esc(k) + (MEMBER_CN[k] ? '<div class="mut" style="font-size:12px">' + esc(MEMBER_CN[k]) + "</div>" : "") +
+      "</td><td style='width:150px'>" + bar(scores[k]) + "</td><td class='num'>" + fixed(scores[k], 4) +
+      "</td><td>" + chip(/^frame_/.test(k) ? "是（视频抽帧聚合）" : "是（权重 " + fixed(merged[k], 2) + "）", "on") + "</td></tr>").join("") + "</table>";
+  if (other.length) {
+    html += "<details><summary>其它未进入融合的通道分数（" + other.length + "）</summary><table>" +
+      other.map((k) => "<tr><td>" + esc(k) + "</td><td class='num'>" + fixed(scores[k], 4) + "</td></tr>").join("") + "</table></details>";
+  }
+  return html;
+}
+function clueRows(clues) {
+  if (!clues || !clues.length) return '<span class="mut">无 L1 线索（或该通道未参与本次判定）。</span>';
+  const cls = (s) => (/命中/.test(s) && !/未命中/.test(s)) ? "p-ok" : (/未命中/.test(s) ? "p-miss" : "p-unknown");
+  return "<table><tr><th>线索</th><th>状态</th><th>说明</th></tr>" +
+    clues.map((c) => "<tr><td>" + esc(c.name) + "</td><td><span class='pill " + cls(c.status || "") + "'>" + esc(c.status || "—") +
+      "</span></td><td class='mut'>" + esc(c.detail || "") + "</td></tr>").join("") + "</table>";
+}
+function factorRows(factors) {
+  if (!factors || !factors.length) return "";
+  return "<h3>证据因子（fusion factors）</h3><table><tr><th>因子</th><th>权重/贡献</th><th>说明</th></tr>" +
+    factors.map((f) => "<tr><td>" + esc(f.name || f.key || "—") + "</td><td class='num'>" +
+      fixed(typeof f.value === "number" ? f.value : f.weight, 4) + "</td><td class='mut'>" + esc(f.detail || f.note || "") + "</td></tr>").join("") + "</table>";
+}
+function latencyRows(lat) {
+  if (!lat) return "";
+  const keys = Object.keys(lat);
+  const max = Math.max.apply(null, keys.map((k) => (isNum(lat[k]) ? lat[k] : 0)).concat([1]));
+  return "<table><tr><th>环节</th><th>耗时分布</th><th class='num'>ms</th></tr>" +
+    keys.map((k) => "<tr><td>" + esc(k) + "</td><td style='width:180px'>" + bar(lat[k] / max) +
+      "</td><td class='num'>" + fixed(lat[k], 1) + "</td></tr>").join("") + "</table>";
+}
+function renderReport(j, opt) {
+  opt = opt || {};
+  const meta = j.meta || {};
+  const v = j.verdict || "review";
+  const cls = { normal: "b-normal", review: "b-review", suspect: "b-suspect" }[v] || "b-review";
+  let h = "";
+  if (meta.degraded) {
+    h += '<div class="note warn"><b>降级返回</b>：HTTP 200 + <code>verdict=' + esc(v) +
+      "</code>（不是服务错误）。原因：" + esc((j.uncertainty || [])[0] || "见 uncertainty") + "</div>";
+  }
+  h += '<div class="row" style="align-items:center;gap:14px">' +
+    '<span class="badge ' + cls + '">' + esc(j.verdict_cn || VERDICT_CN[v] || v) + "</span>" +
+    '<div><div class="mut">校准置信度</div><b style="font-size:20px">' + fixed(j.confidence, 4) + "</b></div>" +
+    '<div><div class="mut">融合分数</div><b style="font-size:20px">' + fixed(j.fused_score, 4) + "</b></div>" +
+    '<div><div class="mut">模型分歧度</div><b style="font-size:20px">' + fixed(j.disagreement, 4) + "</b></div>" +
+    '<div><div class="mut">前端往返</div><b style="font-size:20px">' + (opt.wall !== undefined ? opt.wall.toFixed(2) : "—") + " s</b></div>" +
+    '<div><div class="mut">服务端耗时</div><b style="font-size:20px">' + fixed(meta.elapsed_ms, 0) + " ms</b></div>" +
+    "</div>";
+  h += '<p class="mut" style="margin-top:10px">输入：' + esc((meta.input || {}).filename || "—") + " · 类型 " +
+    esc(j.input_type || "—") + " · " + esc(j.resolution || "—") +
+    (j.duration_s ? " · 时长 " + fixed(j.duration_s, 1) + " s" : "") +
+    " · 输入 sha256 <span class='mono'>" + esc(String(j.input_hash || "").slice(0, 24)) + "…</span></p>";
+
+  h += "<h3>各路模型 / 证据分数（仅列出实际参与融合的成员）</h3>" + memberRows(j.model_scores || {}, (ST.version && ST.version.thresholds || {}).weights);
+
+  h += "<h3>L1 取证线索（三态：命中 / 未命中 / 不确定）</h3>" + clueRows(j.forensic_clues);
+
+  const loc = j.localization || {}, exp = j.explanation || {};
+  h += "<h3>定位与归因（术语严格区分）</h3><div class='grid g2'>";
+  h += "<div><h4>伪造区域定位（L3 · 零权重取证图，ELA + 噪声不一致）</h4>";
+  if (loc.heatmap_png_b64) h += '<img class="hm" src="data:image/png;base64,' + loc.heatmap_png_b64 + '">';
+  else h += '<div class="mut">无热力图' + (loc.reason ? "：" + esc(loc.reason) : (loc.available === false ? "：该通道未提供空间热力图" : "")) + "</div>";
+  if (loc.kind) h += '<div class="mut mono" style="font-size:12px;margin-top:4px">' + esc(loc.kind) + "</div>";
+  if (loc.boxes && loc.boxes.length) h += '<div class="mut">可疑框：' + loc.boxes.length + " 个</div>";
+  if (loc.suspicious_segments && loc.suspicious_segments.length) h += '<div class="mut">可疑片段：<span class="mono">' + esc(JSON.stringify(loc.suspicious_segments)) + "</span></div>";
+  if (loc.note) h += '<div class="mut" style="font-size:12px">' + esc(loc.note) + "</div>";
+  h += "</div><div><h4>关注区域解释（分类器归因，≠ 伪造区域定位）</h4>";
+  const expPng = exp.heatmap_png_b64 || exp.attribution_png_b64;
+  if (expPng) h += '<img class="hm" src="data:image/png;base64,' + expPng + '">';
+  else h += '<div class="mut">' + esc(exp.reason || exp.status || "未提供归因图") + "</div>";
+  if (exp.method) h += '<div class="mut mono" style="font-size:12px;margin-top:4px">' + esc(exp.method) + "</div>";
+  if (exp.head) h += '<div class="mut" style="font-size:12px">基于：' + esc(exp.head) + "</div>";
+  if (exp.gradcam) {
+    h += '<div class="mut" style="font-size:12px">Grad-CAM：' + esc(exp.gradcam.available ? "可用" : "不可用") +
+      (exp.gradcam.reason ? "（" + esc(exp.gradcam.reason) + "）" : "") +
+      (exp.gradcam.substitute ? " → 替代：" + esc(exp.gradcam.substitute) : "") + "</div>";
+  }
+  h += "</div></div>";
+  if (exp.tiles && exp.tiles.length) {
+    const ts = exp.tiles.slice().sort((a, b) => Math.abs(b.delta_logit || 0) - Math.abs(a.delta_logit || 0)).slice(0, 8);
+    const mx = Math.max.apply(null, ts.map((t) => Math.abs(t.delta_logit || 0)).concat([1e-9]));
+    h += "<details open><summary>块级贡献归因 Top " + ts.length + "（leave-one-tile-out on combined 头）</summary><table>" +
+      "<tr><th>块号</th><th>位置(row,col)</th><th>bbox(x,y,w,h)</th><th>Δlogit</th><th>贡献</th></tr>" +
+      ts.map((t) => "<tr><td>#" + esc(t.index) + "</td><td>" + esc(t.row) + "," + esc(t.col) + "</td><td class='mono'>" +
+        esc((t.bbox_xywh || []).join(", ")) + "</td><td class='num'>" + fixed(t.delta_logit, 4) + "</td><td style='width:150px'>" +
+        bar(Math.abs(t.delta_logit || 0) / mx) + "</td></tr>").join("") + "</table></details>";
+  }
+
+  h += "<h3>不确定性与局限</h3><ul class='tight mut'>" +
+    ((j.uncertainty || []).map((u) => "<li>" + esc(u) + "</li>").join("") || "<li>无</li>") + "</ul>";
+
+  h += "<h3>逐环节耗时</h3>" + latencyRows(j.latency_ms);
+
+  const ver = j.versions || {};
+  h += "<h3>版本与可追溯哈希</h3><table><tr><th>项</th><th>值</th></tr>" +
+    Object.keys(ver).filter((k) => typeof ver[k] !== "object").map((k) => "<tr><td>" + esc(k) + "</td><td class='mono'>" + esc(ver[k]) + "</td></tr>").join("") +
+    (ver.artifact_sha256 ? "<tr><td>artifact_sha256</td><td class='mono'>" +
+      Object.keys(ver.artifact_sha256).map((k) => esc(k + " = " + ver.artifact_sha256[k])).join("<br>") + "</td></tr>" : "") +
+    "</table>";
+  h += factorRows(j.factors);
+
+  h += '<div class="row" style="margin-top:12px">' +
+    (meta.report_url ? '<a class="chip" href="' + esc(meta.report_url) + '" target="_blank">查看落盘报告 JSON（' + esc(meta.report_id || "") + "）</a>" : chip("本次未落盘（save=false）")) +
+    (meta.report_id ? '<button class="ghost" onclick="openReportId(\'' + esc(meta.report_id) + '\')">在本页打开完整报告</button>' : "") +
+    '<button class="ghost" onclick="copyCmd(this)" data-cmd="' + esc(JSON.stringify(j, null, 1)) + '">复制原始 JSON</button>' +
+    "</div>";
+  h += '<details><summary>原始响应 JSON（顶层字段与 meta）</summary><div class="mono" style="white-space:pre-wrap;max-height:320px;overflow:auto;background:#0c111b;padding:10px;border-radius:8px">' +
+    esc(JSON.stringify(j, null, 1)) + "</div></details>";
+  return h;
+}
+async function runBatch() {
+  const files = $("#batchFiles").files;
+  if (!files || !files.length) { $("#batchSpin").textContent = "请先选择文件。"; return; }
+  $("#goBatch").disabled = true;
+  $("#batchSpin").textContent = "批量推理中……共 " + files.length + " 个文件";
+  const fd = new FormData();
+  for (let i = 0; i < files.length; i++) fd.append("file", files[i]);
+  const r = await getJSON("/api/v1/detect/batch?save=true", { method: "POST", body: fd });
+  $("#goBatch").disabled = false;
+  $("#batchSpin").textContent = "";
+  if (!r.ok || !r.data) { $("#batchOut").innerHTML = '<div class="note bad">批量请求失败：HTTP ' + r.status + "</div>"; return; }
+  const s = r.data.summary || {};
+  let h = '<div class="note ok">批量完成：' + r.data.count + " 个文件 · 耗时 " + fixed(s.elapsed_ms, 0) + " ms · 结论分布 " +
+    esc(JSON.stringify(s.verdicts || {})) + " · 失败 " + (s.errors || 0) + " · 超时 " + (s.timeout || 0) +
+    " · 平均置信度 " + fixed(s.mean_confidence, 4) + " · 落盘 " + (s.reports_saved || 0) + "</div>";
+  h += "<table><tr><th>文件</th><th>状态</th><th>结论</th><th class='num'>置信度</th><th class='num'>耗时 ms</th><th>报告</th></tr>" +
+    (r.data.results || []).map((x) => "<tr><td>" + esc(x.filename) + "</td><td>" + esc(x.status) +
+      "</td><td><span class='pill " + (VERDICT_PILL[x.verdict] || "p-review") + "'>" + esc(x.verdict_cn || x.verdict || "—") +
+      "</span></td><td class='num'>" + fixed(x.confidence, 4) + "</td><td class='num'>" +
+      fixed((x.latency_ms || {}).total, 1) + "</td><td>" +
+      (x.report_id ? '<a href="' + esc(x.report_url) + '" target="_blank">' + esc(x.report_id) + "</a>" : "—") + "</td></tr>").join("") + "</table>";
+  $("#batchOut").innerHTML = h;
+}
+
+/* ============================ ③ 样本库 ============================ */
+let SAMPLE_FILTER = "all";
+function renderSamples() {
+  const o = ST.oof;
+  if (!o || !o.samples) {
+    $("#samplesSummary").innerHTML = '<span class="note bad">未加载到 /demo/webui_assets/oof_119.json。'
+      + '该资产由 <code>python demo/webui_assets/build_assets.py</code> 生成（来源 models/oof_bundle_119.json + data/images/）。</span>';
+    return;
+  }
+  const ss = o.samples, c = o.counts;
+  const counts = {
+    all: ss.length,
+    false_positive: c.outcome.false_positive,
+    false_negative: c.outcome.false_negative,
+    review: c.three_tier.review,
+    correct: c.outcome.true_positive + c.outcome.true_negative
+  };
+  const FILTERS = [
+    ["all", "全部 " + counts.all], ["false_positive", "误报 " + counts.false_positive],
+    ["false_negative", "漏报 " + counts.false_negative], ["review", "待复核（弃权）" + counts.review],
+    ["correct", "正确 " + counts.correct]
+  ];
+  $("#sampleFilters").innerHTML = '<span class="mut">筛选：</span>' +
+    FILTERS.map((f) => '<button class="ghost" data-f="' + f[0] + '" onclick="setSampleFilter(this)">' + esc(f[1]) + "</button>").join("");
+  applySampleFilter();
+  const m = o.deployed_metrics || {};
+  $("#samplesSummary").innerHTML = "共 <b>" + ss.length + "</b> 套命题样本（AI " +
+    ss.filter((x) => x.label === "ai").length + " / 真实 " + ss.filter((x) => x.label === "real").length +
+    "）· 折外 Accuracy <b>" + fixed(m.accuracy, 4) + "</b> · FPR <b>" + fixed(m.fpr, 4) + "</b> · TPR <b>" +
+    fixed(m.tpr, 4) + "</b> · 误报 " + counts.false_positive + " · 漏报 " + counts.false_negative +
+    "（与 <code>reports/metrics.json</code> 的 oof_overall 逐项一致）";
+  const src = o.sources || {};
+  $("#samplesProvenance").innerHTML = "数据可追溯：折外分数/判定来自 <code>" + esc((src.oof_bundle || {}).path || "models/oof_bundle_119.json") +
+    "</code>（sha256 <span class='mono'>" + esc(String((src.oof_bundle || {}).sha256 || "").slice(0, 16)) + "…</span>）；口径说明："
+    + esc(o.protocol && o.protocol.cv ? o.protocol.cv : "") + "；缩略图由 <code>data/images/NNN.png</code> 离线生成（150 px）。"
+    + "按评测口径 <b>review 计入负类</b>，故 AI 侧的 review 同时计入漏报。"
+    + "点击任意卡片可载入该样本的完整落盘报告（按顺序探测 reports/batch/*/samples/NNN.json，"
+    + "当前 <code>verify-119</code> 覆盖全部 119 个序号）。";
+}
+window.setSampleFilter = (btn) => { SAMPLE_FILTER = btn.getAttribute("data-f"); applySampleFilter(); };
+function applySampleFilter() {
+  if (!ST.oof || !ST.oof.samples) return;
+  $$("#sampleFilters button").forEach((b) => b.classList.toggle("ghost", b.getAttribute("data-f") !== SAMPLE_FILTER));
+  const q = ($("#seqSearch").value || "").trim();
+  const list = ST.oof.samples.filter((s) => {
+    if (q && String(s.seq).indexOf(q) < 0) return false;
+    if (SAMPLE_FILTER === "all") return true;
+    if (SAMPLE_FILTER === "review") return s.verdict === "review";
+    if (SAMPLE_FILTER === "correct") return s.outcome === "true_positive" || s.outcome === "true_negative";
+    return s.outcome === SAMPLE_FILTER;
+  });
+  $("#samplesGrid").innerHTML = list.length ? list.map((s) => {
+    const oc = OUTCOME_CN[s.outcome] || ["—", "tn"];
+    const pad = String(s.seq).padStart(3, "0");
+    const labelShort = s.label === "ai" ? "AI" : "真实";
+    return '<figure class="sc ' + oc[1] + '" onclick="openSample(' + s.seq + ')" title="#' + pad + " " + esc(s.file) +
+      " · " + esc(s.label_cn) + " · 折外" + esc(oc[0]) + " · " + esc(s.verdict_cn) + " · 折外融合分 " + fixed(s.fused_score, 4) + '">' +
+      '<img loading="lazy" src="/demo/webui_assets/thumbs/' + pad + '.svg" alt="' + pad + '" onerror="thumbFail(this)">' +
+      '<div class="cap"><b>#' + pad + "</b><span class='pill " + (VERDICT_PILL[s.verdict] || "p-review") + "'>" +
+      esc(s.verdict_cn) + "</span></div>" +
+      '<div class="meta"><span>' + esc(labelShort) + "</span><span>" + esc(oc[0]) + "</span></div>" +
+      '<div class="meta"><span>' + fixed(s.fused_score, 4) + "</span><span>fold " + esc(s.fold) + "</span></div></figure>";
+  }).join("") : '<div class="mut">没有符合条件的样本。</div>';
+}
+/* 逐样本完整报告的候选数据源（页面不做假设，逐个探测；404 = 该源没有这份样本）。
+   顺序 = 覆盖面优先：119 套全量批量产物 > 均衡子集 > 其他子集。 */
+const REPORT_SOURCES = [
+  "reports/batch/verify-119/samples/",        // 119 套全量批量评测产物（覆盖全部序号）
+  "reports/batch/verify-balanced24/samples/", // 12 AI + 12 real 均衡子集
+  "reports/batch/verify-24/samples/",
+  "reports/batch/full119/samples/"
+];
+const reportCache = new Map();
+const REPORT_CACHE_MAX = 12;   // 单份完整报告含 L3 定位图与归因图（约 2 MB），只保留最近若干份
+async function loadFullReport(seq) {
+  if (reportCache.has(seq)) return reportCache.get(seq);
+  const pad = String(seq).padStart(3, "0");
+  for (const base of REPORT_SOURCES) {
+    const url = "/" + base + pad + ".json";
+    const r = await getJSON(url);
+    if (r.ok && r.data && r.data.verdict) {
+      const out = { url: url, data: r.data };
+      reportCache.set(seq, out);
+      while (reportCache.size > REPORT_CACHE_MAX) {
+        reportCache.delete(reportCache.keys().next().value);
+      }
+      return out;
+    }
+  }
+  reportCache.set(seq, null);
+  return null;
+}
+window.openSample = async (seq) => {
+  const s = (ST.oof.samples || []).filter((x) => x.seq === seq)[0];
+  if (!s) return;
+  const pad = String(seq).padStart(3, "0");
+  const oc = OUTCOME_CN[s.outcome] || ["—", ""];
+  let h = '<button class="ghost close" onclick="closeModal()">关闭</button>' +
+    "<h2>样本 #" + pad + " · " + esc(s.file) + "</h2>" +
+    '<div class="row" style="margin:8px 0">' +
+    '<img src="/demo/webui_assets/thumbs/' + pad + '.svg" alt="' + pad + '" style="width:150px;border:1px solid var(--line);border-radius:8px" onerror="thumbFail(this)">' +
+    "<div style='flex:1 1 320px'>" +
+    kvTable([
+      ["真实标签", chip(s.label_cn, s.label === "ai" ? "warn" : "on"), 1],
+      ["折外判定", '<span class="pill ' + (VERDICT_PILL[s.verdict] || "p-review") + '">' + esc(s.verdict_cn) + "</span>（" + esc(oc[0]) + "）", 1],
+      ["折外融合分数", "<b>" + fixed(s.fused_score, 6) + "</b>", 1],
+      ["交叉验证折", "fold " + esc(s.fold) + "（该折阈值 low=" + fixed(s.thr_low, 4) + " / high=" + fixed(s.thr_high, 4) + "，该折成员 " + esc((s.members || []).join(", ")) + "）", 1],
+      ["各路标定分", esc(Object.keys(s.member_scores || {}).map((k) => k + "=" + fixed(s.member_scores[k], 4)).join("  ")), 1],
+      ["原始尺寸", esc((s.width || "—") + " × " + (s.height || "—")), 1],
+      ["文件 sha256", "<span class='mono'>" + esc(s.sha256 || "—") + "</span>", 1]
+    ]) + "</div></div>";
+  h += "<h3>判定依据说明</h3><div class='note'>该判定是<b>折外（out-of-fold）</b>结果：模型头在该样本所在折的训练集上拟合，"
+    + "阈值来自训练折真实样本的分位点（逐折独立），因此可用于无泄漏地估计泛化表现。"
+    + (s.verdict === "review" ? " 该样本落在两阈值之间，属<b>弃权/待复核</b>；按评测口径 review 计入负类，故若真实标签为 AI 会同时计入漏报。" : "")
+    + "</div>";
+  h += '<div id="sampleFull" class="mut">正在查找该样本已落盘的完整检测报告……</div>';
+  h += "<h3>复现该样本</h3>" + cmdRow("python scripts/predict.py --input data/images/" + pad + ".png --out reports/" + pad + ".json",
+    "单样本 CLI 复跑（需要工作区内的样本文件；浏览器无法直接读取 data/ 目录）");
+  $("#modalBody").innerHTML = h;
+  $("#modal").classList.add("show");
+  const full = await loadFullReport(seq);
+  const box = $("#sampleFull");
+  if (!box) return;
+  if (full) {
+    box.className = "";
+    box.innerHTML = '<div class="note ok">已载入落盘完整报告：<a href="' + esc(full.url) + '" target="_blank">' + esc(full.url) + "</a>（含 L3 定位图与关注区域解释）</div>" +
+      renderReport(full.data, {});
+  } else {
+    box.className = "";
+    box.innerHTML = '<div class="note warn">该样本暂时没有可回取的落盘完整报告：页面已按顺序探测 ' +
+      esc(REPORT_SOURCES.map((u) => "/" + u + pad + ".json").join("、")) + " 均未命中。上方折外记录来自权威评测产物 "
+      + '<code>models/oof_bundle_119.json</code>，数字真实可用；如需完整报告请用下方命令复跑，或在②中上传同一样本实时检测。</div>';
+  }
+};
+window.openReportId = async (rid) => {
+  $("#modalBody").innerHTML = '<button class="ghost close" onclick="closeModal()">关闭</button><h2>报告 ' + esc(rid) + "</h2><div class='mut'>加载中……</div>";
+  $("#modal").classList.add("show");
+  const r = await getJSON("/api/v1/report/" + encodeURIComponent(rid));
+  if (!r.ok || !r.data) {
+    $("#modalBody").innerHTML = '<button class="ghost close" onclick="closeModal()">关闭</button><h2>报告 ' + esc(rid) + "</h2><div class='note bad'>回取失败：HTTP " + r.status + "</div>";
+    return;
+  }
+  $("#modalBody").innerHTML = '<button class="ghost close" onclick="closeModal()">关闭</button><h2>报告 ' + esc(rid) + "</h2>" + renderReport(r.data, {});
+};
+window.closeModal = () => $("#modal").classList.remove("show");
+$("#modal").addEventListener("click", (e) => { if (e.target === $("#modal")) closeModal(); });
+
+/* ============================ ④ 指标看板 ============================ */
+function renderDashboard() {
+  const m = ST.metrics;
+  if (!m) {
+    $("#kpiBox").innerHTML = '<div class="kpi"><span class="t">指标未生成</span><small>未取到 /api/v1/metrics</small></div>';
+    $("#confBox").innerHTML = '<div class="note warn">未取到 <code>reports/metrics.json</code>；可运行 <code>python scripts/evaluate_system.py</code> 生成。</div>';
+    return;
+  }
+  const oo = m.oof_overall || {}, cm = oo.confusion || {}, tt = oo.three_tier || {}, li = m.latency_image || {};
+  const kpi = [
+    ["折外 Accuracy", fixed(oo.accuracy, 4), "95% CI [" + fixed((oo.accuracy_ci95 || [])[0], 4) + ", " + fixed((oo.accuracy_ci95 || [])[1], 4) + "]"],
+    ["FPR（真实误报率）", fixed(oo.fpr, 4), "95% CI [" + fixed((oo.fpr_ci95 || [])[0], 4) + ", " + fixed((oo.fpr_ci95 || [])[1], 4) + "]"],
+    ["TPR（AI 检出率）", fixed(oo.tpr, 4), "n=" + esc(m.n_samples) + "（AI " + esc((m.class_balance || {}).ai) + " / 真实 " + esc((m.class_balance || {}).real) + "）"],
+    ["Precision", fixed(oo.precision, 4), "混淆矩阵 TP" + cm.tp + " FP" + cm.fp + " FN" + cm.fn + " TN" + cm.tn],
+    ["单图耗时 P50", fixed(li.p50_ms, 1) + " ms", "预算 " + esc(li.budget_ms) + " ms · P95 " + fixed(li.p95_ms, 1) + " ms"],
+    ["三档分布", esc(tt.suspect || 0) + " / " + esc(tt.review || 0) + " / " + esc(tt.normal || 0), "suspect / review / normal"]
+  ];
+  $("#kpiBox").innerHTML = kpi.map((k) => '<div class="kpi"><span class="t">' + esc(k[0]) + "</span><b>" + esc(k[1]) +
+    "</b><small>" + esc(k[2]) + "</small></div>").join("");
+
+  $("#confBox").innerHTML = "<div class='row' style='align-items:flex-start;gap:24px'><div>" +
+    "<div class='cm'><div class='h'></div><div class='h'>预测：疑似/阳性</div><div class='h'>预测：非嫌疑/阴性</div>" +
+    "<div class='h'>真实 AI</div><div style='background:#1c2b1e'>TP " + esc(cm.tp) + "</div><div style='background:#2b2116'>FN " + esc(cm.fn) + "</div>" +
+    "<div class='h'>真实 real</div><div style='background:#2b1616'>FP " + esc(cm.fp) + "</div><div style='background:#16222b'>TN " + esc(cm.tn) + "</div></div>" +
+    "<p class='mut' style='font-size:12px;max-width:420px'>口径：<code>pred = 1 if 融合分 ≥ 折内 high 阈值</code>；review（弃权）计入负类，"
+    + "因此 AI 侧 review 计入 FN、真实侧 review 计入 TN。TPR/Accuracy 的分子分母按 "
+    + "<code>docs/api.md §7</code> 所述协议。</p></div><div>" +
+    "<h4>三档分布</h4>" + Object.keys(tt).map((k) => '<div class="barRow"><span class="mut">' + esc(k) + "</span>" +
+      bar(tt[k] / Math.max(1, m.n_samples)) + "<span>" + esc(tt[k]) + "</span></div>").join("") +
+    "<h4>按 7:3 评测比例模拟</h4><div class='mut'>" + esc(JSON.stringify(m.simulated_official_ratio || {}, null, 1).replace(/[\{\}\n]/g, " ")) + "</div>" +
+    "</div></div>";
+
+  const rf = m.roc_frontier || {}, pm = m.per_model_oof_auc || {};
+  $("#rocBox").innerHTML = "<h4>tpr@fpr（阈值前 ROC 前沿）</h4><table><tr><th>工作点</th><th class='num'>TPR</th><th>水平</th></tr>" +
+    Object.keys(rf).map((k) => "<tr><td>" + esc(k) + "</td><td class='num'>" + fixed(rf[k], 4) + "</td><td style='width:150px'>" + bar(rf[k]) + "</td></tr>").join("") +
+    "</table><h4>各路折外 AUC</h4>" + Object.keys(pm).map((k) => '<div class="barRow"><span class="mut">' + esc(k) + "</span>" + bar(pm[k]) + "<span>" + fixed(pm[k], 4) + "</span></div>").join("") +
+    "<h4>最佳精度工作点</h4><div class='mut mono' style='font-size:12px;white-space:pre-wrap'>" +
+    esc(JSON.stringify(m.operating_points_best_accuracy || {}, null, 1)) + "</div>";
+  $("#rocBox").innerHTML += "<p class='mut' style='font-size:12px'>说明：FPR=1%/3% 处的 TPR 很低，是因为 119 套样本只有 63 张真实、1 张误报即 1.59% FPR，"
+    + "护栏指标（TPR@FPR=1%、FPR@TPR=95%）在如此小的校准集上分辨率有限，属方法学限制而非实现问题。</p>";
+
+  const folds = m.folds || [];
+  $("#foldBox").innerHTML = folds.length ? "<table style='font-size:12.5px'><tr><th>折</th><th class='num'>Acc</th><th class='num'>FPR</th><th class='num'>TPR</th>" +
+    "<th class='nowrap'>TP/FP/FN/TN</th><th class='nowrap'>阈值 low / high</th><th>成员</th><th class='num nowrap'>ext AUC</th></tr>" +
+    folds.map((f) => "<tr><td>" + esc(f.fold) + "</td><td class='num'>" + fixed(f.accuracy, 4) + "</td><td class='num'>" +
+      fixed(f.fpr, 4) + "</td><td class='num'>" + fixed(f.tpr, 4) + "</td><td class='nowrap'>" +
+      esc([(f.confusion || {}).tp, (f.confusion || {}).fp, (f.confusion || {}).fn, (f.confusion || {}).tn].join("/")) +
+      "</td><td class='mono nowrap'>" + esc((f.thresholds || []).join(" / ")) + "</td><td class='mut'>" + esc((f.members || []).join(", ")) +
+      "</td><td class='num'>" + fixed(f.ext_auc_train, 4) + "</td></tr>").join("") + "</table>"
+    : '<span class="mut">无分折数据。</span>';
+
+  const p = m.protocol || {};
+  $("#protoBox").innerHTML = kvTable(Object.keys(p).map((k) => [k, typeof p[k] === "object" ? JSON.stringify(p[k]) : p[k]])) +
+    "<h4>失败案例（error_analysis）</h4>" + kvTable(Object.keys(m.error_analysis || {}).map((k) => [k, JSON.stringify(m.error_analysis[k])])) +
+    "<h4>冻结阈值与最终成员</h4>" + kvTable([
+      ["final_members", JSON.stringify(m.final_members)],
+      ["final_thresholds", JSON.stringify(m.final_thresholds)],
+      ["n_samples", String(m.n_samples)]
+    ]);
+}
+/* ---- 证据文件：已知结构精细渲染 + 未知结构通用展开 ---- */
+const EVIDENCE = [
+  ["reports/feature_ablation.json", "特征消融（feature_ablation.json）"],
+  ["reports/fusion_ablation.json", "融合规则消融（fusion_ablation.json）"],
+  ["reports/npr_ablation.json", "NPR 通道消融（npr_ablation.json）"],
+  ["reports/robustness_matrix.json", "鲁棒性矩阵（robustness_matrix.json）"],
+  ["reports/smoke_test.json", "冷启动与端到端冒烟（smoke_test.json）"],
+  ["reports/calibration.json", "置信度校准 / ECE（calibration.json）"],
+  ["reports/member_analysis.json", "成员相关性与错误重叠 / 留一法（member_analysis.json）"],
+  ["reports/threshold_stability.json", "阈值 bootstrap 稳定性（threshold_stability.json）"],
+  ["reports/stratified_analysis.json", "分层诊断拆解（stratified_analysis.json）"],
+  ["reports/resource_profile.json", "各环节耗时与显存画像（resource_profile.json）"]
+];
+function numTable(obj, cols) {
+  return "<table><tr>" + cols.map((c) => "<th>" + esc(c[0]) + "</th>").join("") + "</tr>" +
+    obj.map((r) => "<tr>" + cols.map((c) => "<td class='" + (c[2] || "") + "'>" + c[1](r) + "</td>").join("") + "</tr>").join("") + "</table>";
+}
+function genericRender(node, depth, name) {
+  depth = depth || 0;
+  if (node === null || node === undefined) return '<span class="mut">' + esc(name || "") + "：null</span>";
+  if (typeof node !== "object") return esc(String(node));
+  const CAP_ROWS = 25, CAP_BARS = 30;   // 证据文件可能很大：截断显示，避免单卡片高度失控
+  if (Array.isArray(node)) {
+    if (!node.length) return '<span class="mut">空数组</span>';
+    if (node.every((x) => typeof x !== "object" || x === null)) {
+      if (node.every(isNum)) {
+        const shown = node.slice(0, CAP_BARS);
+        const mx = Math.max.apply(null, shown.map(Math.abs).concat([1e-9]));
+        return shown.map((x, i) => '<div class="barRow"><span class="mut">#' + (i + 1) + "</span>" + bar(Math.abs(x) / mx, x < 0 ? "warm" : "") + "<span>" + fixed(x, 4) + "</span></div>").join("") +
+          (node.length > shown.length ? '<div class="mut">… 另有 ' + (node.length - shown.length) + " 项</div>" : "");
+      }
+      return '<span class="mono">' + esc(node.slice(0, 30).join(", ")) + (node.length > 30 ? " …（共 " + node.length + " 项）" : "") + "</span>";
+    }
+    const cols = Array.from(new Set(node.slice(0, 40).reduce((a, r) => a.concat(Object.keys(r || {})), [])));
+    const rows = node.slice(0, CAP_ROWS);
+    return "<table><tr>" + cols.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr>" +
+      rows.map((r) => "<tr>" + cols.map((c) => {
+        const v = (r || {})[c];
+        return "<td>" + (typeof v === "object" && v !== null ? "<span class='mono'>" + esc(JSON.stringify(v).slice(0, 300)) + "</span>" : esc(v)) + "</td>";
+      }).join("") + "</tr>").join("") + "</table>" +
+      (node.length > rows.length ? '<div class="mut">… 仅显示前 ' + rows.length + " 行，共 " + node.length + " 行（完整数据见下方原始 JSON）</div>" : "");
+  }
+  const keys = Object.keys(node);
+  if (depth >= 3) return "<span class='mono'>" + esc(JSON.stringify(node).slice(0, 300)) + "</span>";
+  return "<table>" + keys.map((k) => {
+    const v = node[k];
+    let cell;
+    if (typeof v === "object" && v !== null) cell = genericRender(v, depth + 1, k);
+    else if (isNum(v) && Math.abs(v) <= 1.5) cell = "<div class='row' style='gap:8px'>" + bar(Math.abs(v)) + "<span>" + fixed(v, 4) + "</span></div>";
+    else cell = esc(v);
+    return "<tr><th style='min-width:120px'>" + esc(k) + "</th><td>" + cell + "</td></tr>";
+  }).join("") + "</table>";
+}
+function evidenceRender(url, data) {
+  if (/feature_ablation/.test(url)) {
+    const res = data.results || {};
+    const rows = Object.keys(res);
+    return "<div class='mut' style='font-size:12px'>" + esc(data.note || "") + "</div><table><tr><th>特征集</th><th class='num'>维度</th><th class='num'>折外 AUC</th><th class='num'>best acc@FPR≤3%</th><th>tpr@fpr=1%</th></tr>" +
+      rows.map((k) => "<tr><td>" + esc(k) + "</td><td class='num'>" + esc((res[k] || {}).dim) + "</td><td class='num'>" +
+        fixed((res[k] || {}).oof_auc, 4) + "</td><td class='num'>" + fixed((res[k] || {})["best_acc@fpr<=0.03"], 4) +
+        "</td><td>" + fixed(((res[k] || {}).frontier || {})["tpr@fpr=0.01"], 4) + "</td></tr>").join("") + "</table>";
+  }
+  if (/fusion_ablation/.test(url)) {
+    return "<div class='mut' style='font-size:12px'>" + esc(data.note || "") + "</div>" +
+      numTable(data.results || [], [["融合规则", (r) => esc(r.rule)], ["目标 FPR", (r) => fixed(r.target_fpr, 4), "num"],
+        ["Accuracy", (r) => fixed(r.accuracy, 4), "num"], ["FPR", (r) => fixed(r.fpr, 4), "num"], ["TPR", (r) => fixed(r.tpr, 4), "num"],
+        ["FP", (r) => esc(r.fp), "num"], ["FN", (r) => esc(r.fn), "num"]]) +
+      "<div class='mut' style='font-size:12px;margin-top:6px'>单路 AUC：" + esc(JSON.stringify(data.oof_auc || {})) + "</div>";
+  }
+  if (/npr_ablation/.test(url)) {
+    const rows = Object.keys(data).filter((k) => /acc@fpr3_/.test(k)).map((k) => k.replace("acc@fpr3_w", ""));
+    return numTable(rows, [["NPR 权重", (w) => esc(w)], ["Accuracy@FPR3", (w) => fixed(data["acc@fpr3_w" + w], 4), "num"],
+      ["FP", (w) => esc(data["fp_w" + w]), "num"], ["FN", (w) => esc(data["fn_w" + w]), "num"],
+      ["组合 AUC", (w) => fixed(data["combined_rank_plus_npr_w" + w], 4), "num"]]) +
+      "<div class='mut' style='font-size:12px;margin-top:6px'>NPR 单路 AUC = " + fixed(data.npr_standalone_auc, 4) +
+      "；结论：加入 NPR 不提升（FN 上升），已消融剔除，NPR 权重置 0。</div>";
+  }
+  if (/robustness_matrix/.test(url)) {
+    return "<div class='mut' style='font-size:12px'>" + esc(data.protocol || "") + "</div>" +
+      numTable(data.rows || [], [["扰动", (r) => esc(r.perturbation)], ["Accuracy", (r) => fixed(r.accuracy, 4), "num"],
+        ["FPR", (r) => fixed(r.fpr, 4), "num"], ["TPR", (r) => fixed(r.tpr, 4), "num"],
+        ["ΔAcc", (r) => fixed(r.delta_accuracy_vs_clean, 4), "num"]]);
+  }
+  if (/smoke_test/.test(url)) {
+    return kvTable([["冷启动", fixed(data.cold_start_ms, 1) + " ms"],
+      ["预热后单图", (data.warm_image_ms || []).map((x) => fixed(x, 1)).join(" / ") + " ms"],
+      ["视频", JSON.stringify(data.video || {})],
+      ["预算", data.budget_ms + " ms"],
+      ["单图 P95 在预算内", String(data.image_p95_within_budget)], ["视频在预算内", String(data.video_within_budget)]]);
+  }
+  return genericRender(data, 0);
+}
+async function renderEvidence() {
+  const box = $("#evidenceBox");
+  box.innerHTML = '<div class="card mut">正在读取 reports/ 下的证据文件……</div>';
+  const results = await Promise.all(EVIDENCE.map(async (e) => {
+    const r = await getJSON("/" + e[0]);
+    return { url: e[0], title: e[1], ok: r.ok && r.data, data: r.data, status: r.status };
+  }));
+  box.innerHTML = results.map((r) => {
+    if (!r.ok) {
+      return '<div class="card"><h3>' + esc(r.title) + "</h3><div class='note warn'>未生成 / 不可用（HTTP " +
+        r.status + "）。生成命令见⑤「一键复现」，或等待对应脚本产出后刷新本页。</div></div>";
+    }
+    return '<div class="card"><h3>' + esc(r.title) + '</h3><div class="evBody">' + evidenceRender(r.url, r.data) +
+      '</div><details><summary>原始 JSON</summary><div class="mono" style="white-space:pre-wrap;max-height:300px;overflow:auto;background:#0c111b;padding:10px;border-radius:8px">' +
+      esc(JSON.stringify(r.data, null, 1)) + "</div></details></div>";
+  }).join("");
+  // 错误分析 CSV 摘要
+  const csv = await getJSON("/reports/error_analysis.csv");
+  if (csv.ok && csv.text) {
+    const lines = csv.text.trim().split(/\r?\n/);
+    const rows = lines.slice(1).map((l) => l.split(","));
+    const hard = rows.filter((r) => /hard/.test(r[3] || "")).length;
+    box.insertAdjacentHTML("beforeend", '<div class="card"><h3>错误分析清单（error_analysis.csv）</h3>' +
+      "<div class='mut'>共 " + rows.length + " 行逐样本诊断记录（按分数从「最像 AI 的真实样本」到「最不像 AI 的 AI 样本」排序）；" +
+      "其中 difficulty=hard 的边界样本 " + hard + " 个。诊断分数为独立诊断模型的折外概率，与融合判定分数口径不同，仅用于挑样本。</div>" +
+      "<table><tr><th>序号</th><th>标签</th><th class='num'>诊断分数</th><th>难度</th></tr>" +
+      rows.slice(0, 12).map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td class='num'>" +
+        esc(r[2]) + "</td><td>" + esc(r[3] || "") + "</td></tr>").join("") + "</table></div>");
+  }
+}
+
+/* ============================ ⑤ 复现命令与链路自查 ============================ */
+function renderCompliance() {
+  const v = ST.version || {};
+  const cmds = [
+    ["python api/server.py --port 8080", "启动对外 REST 服务（默认加载真实模型并预热；无权重环境加 --no-model）"],
+    ["python tests/test_api.py", "端点自测：stub 契约套件 + full 真实模型套件"],
+    ["python scripts/evaluate_system.py", "重算折外指标 → reports/metrics.json"],
+    ["python scripts/batch_evaluate.py --dir data/images --labels data/labels.csv --out reports/batch/full119", "119 套样本一键批量评测（指标表 + 失败案例 + 逐样本报告）"],
+    ["python demo/webui_assets/build_assets.py", "重建本页静态资产（缩略图 + oof_119.json，含来源 sha256）"]
+  ];
+  $("#cmds").innerHTML = cmds.map((c) => cmdRow(c[0], c[1])).join("") +
+    '<p class="mut" style="font-size:12px">当前服务代码 sha256：<span class="mono">' +
+    esc(((v.code || {}).code_hash || "—")) + "</span>　git commit：<span class='mono'>" +
+    esc(((v.code || {}).git_commit || "—")) + "</span>" + ((v.code || {}).git_dirty ? "（工作区有未提交改动）" : "") + "</p>";
+  const h = ST.health || {}, ch = h.channels || {};
+  const order = ["L0_input", "L1_forensics", "L1b_domain", "L2_clip", "L2_clip_probe", "L2_npr", "L2_aeroblade", "L3_localization", "head_forensic", "head_combined", "fusion"];
+  $("#pipelineBox").innerHTML = "<table><tr><th>链路环节</th><th>职责</th><th>当前状态</th></tr>" +
+    order.map((k) => {
+      const c = ch[k] || {};
+      return "<tr><td>" + esc(k) + "</td><td class='mut'>" + esc(c.kind || "—") + "</td><td>" +
+        (c.loaded ? chip("已常驻", "on") : (c.available ? chip("可用·未常驻", "warn") : chip("未配置/已消融", "off"))) + "</td></tr>";
+    }).join("") + "</table>";
+}
+
+/* ============================ 启动 ============================ */
+async function boot() {
+  initLive();
+  const [health, version, metrics, oof] = await Promise.all([
+    getJSON("/api/v1/health"), getJSON("/api/v1/version"),
+    getJSON("/api/v1/metrics"), getJSON("/demo/webui_assets/oof_119.json")
+  ]);
+  const online = health.ok;
+  $("#offlineBanner").classList.toggle("show", !online);
+  ST.health = health.ok ? health.data : null;
+  ST.version = version.ok ? version.data : null;
+  ST.metrics = metrics.ok ? metrics.data : null;
+  ST.oof = oof.ok ? oof.data : null;
+
+  const hh = ST.health || {}, vv = ST.version || {}, th = vv.thresholds || {};
+  $("#stHealth").textContent = online ? "服务状态：" + (hh.status === "ok" ? "ok（健康）" : "degraded（降级运行）") : "服务状态：离线";
+  $("#stHealth").className = "chip " + (online ? (hh.status === "ok" ? "on" : "warn") : "off");
+  $("#stMode").textContent = "模式：" + (hh.mode || "—") + (hh.device ? " / " + hh.device : "");
+  const w = hh.warmup || {};
+  $("#stWarm").textContent = "预热：" + (w.done ? "已完成 " + fixed(w.ms, 0) + " ms" : (w.skipped ? "已跳过" : "进行中/未开始"));
+  $("#stThr").textContent = "阈值：low " + fixed(th.low, 4) + " / high " + fixed(th.high, 4);
+  if (!online) $("#svcStatus").insertAdjacentHTML("afterbegin", chip("提示：请通过 api/server.py 托管本页", "off"));
+
+  renderMatrix();
+  renderSamples();
+  renderDashboard();
+  renderCompliance();
+  renderEvidence();
+  $("#seqSearch").addEventListener("input", applySampleFilter);
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+(function () { const f = $("#file"); if (f) f.value = ""; })();
+boot();
+</script>
+</body>
+</html>

@@ -67,7 +67,10 @@ def extract_l1b_features(parsed) -> dict:
 
     out["b_nearWhiteFrac"] = float((gray >= 245).mean())
     out["b_nearBlackFrac"] = float((gray <= 25).mean())
-    out["b_grayLevelCount"] = float(len(np.unique(gray.astype(np.uint8))))
+    # distinct 8-bit gray levels: bincount is O(n) where np.unique sorts (this was
+    # the single most expensive L1b operation on 1.6 MP inputs)
+    _hist = np.bincount(gray.astype(np.uint8).ravel(), minlength=256)
+    out["b_grayLevelCount"] = float(int((_hist > 0).sum()))
 
     gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
     gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
@@ -86,29 +89,46 @@ def extract_l1b_features(parsed) -> dict:
     out["b_noiseRatio"] = flat_noise / (tex_noise + 1e-6)
 
     # noise spatial uniformity: rendered/flat images have a very even noise map
+    # Vectorised with box filters (same windows/stride as the original Python loop,
+    # so feature values are unchanged) - the loop was the dominant L1b cost
+    # (P95 535 ms vs the manual's 350 ms layer target).
     win, step = 32, 16
-    vals = []
-    for y in range(0, max(1, res.shape[0] - win + 1), step):
-        for x in range(0, max(1, res.shape[1] - win + 1), step):
-            vals.append(res[y:y + win, x:x + win].std())
-    if vals:
-        v = np.asarray(vals, dtype=np.float32)
-        out["b_noiseUniform"] = float(v.std() / (v.mean() + 1e-6))
+    n_y = len(range(0, max(1, res.shape[0] - win + 1), step))
+    n_x = len(range(0, max(1, res.shape[1] - win + 1), step))
+    if n_y > 0 and n_x > 0:
+        mean_win = cv2.boxFilter(res, ddepth=-1, ksize=(win, win), normalize=True,
+                                 borderType=cv2.BORDER_REFLECT)
+        mean_sq = cv2.boxFilter(res * res, ddepth=-1, ksize=(win, win), normalize=True,
+                                borderType=cv2.BORDER_REFLECT)
+        var_win = np.maximum(mean_sq - mean_win * mean_win, 0.0)
+        std_win = np.sqrt(var_win, dtype=np.float32)
+        # the original loop sampled the window anchored at its top-left corner
+        sampled = std_win[win // 2::step, win // 2::step][:n_y, :n_x].ravel()
+        if sampled.size:
+            v = np.asarray(sampled, dtype=np.float32)
+            out["b_noiseUniform"] = float(v.std() / (v.mean() + 1e-6))
 
     # illumination gradient: std of a heavily blurred version (low-frequency energy)
     low = cv2.GaussianBlur(gray, (0, 0), sigmaX=max(4.0, min(h, w) / 24.0))
     out["b_illumGradient"] = float(low.std())
 
     # sharpness uniformity across tiles (camera blur varies with depth of field)
+    # Box-filter variance over 64x64 tiles, identically to the original tile loop.
     lap = cv2.Laplacian(gray, cv2.CV_32F)
     tile = 64
-    tv = [lap[y:y + tile, x:x + tile].var()
-          for y in range(0, max(1, gray.shape[0] - tile + 1), tile)
-          for x in range(0, max(1, gray.shape[1] - tile + 1), tile)]
-    if tv:
-        tv = np.asarray(tv, dtype=np.float32)
-        out["b_sharpMean"] = float(tv.mean())
-        out["b_sharpCV"] = float(tv.std() / (tv.mean() + 1e-6))
+    ny_t = (max(1, gray.shape[0] - tile + 1) + tile - 1) // tile
+    nx_t = (max(1, gray.shape[1] - tile + 1) + tile - 1) // tile
+    if ny_t > 0 and nx_t > 0:
+        m_lap = cv2.boxFilter(lap, ddepth=-1, ksize=(tile, tile), normalize=True,
+                              borderType=cv2.BORDER_REFLECT)
+        m_lap2 = cv2.boxFilter(lap * lap, ddepth=-1, ksize=(tile, tile), normalize=True,
+                               borderType=cv2.BORDER_REFLECT)
+        var_lap = np.maximum(m_lap2 - m_lap * m_lap, 0.0)
+        tv = var_lap[tile // 2::tile, tile // 2::tile][:ny_t, :nx_t].ravel()
+        if tv.size:
+            tv = np.asarray(tv, dtype=np.float32)
+            out["b_sharpMean"] = float(tv.mean())
+            out["b_sharpCV"] = float(tv.std() / (tv.mean() + 1e-6))
 
     # Hasler-Susstrunk colorfulness
     b, g, r = bgr[:, :, 0].astype(np.float32), bgr[:, :, 1].astype(np.float32), bgr[:, :, 2].astype(np.float32)
@@ -143,16 +163,25 @@ def extract_l1b_features(parsed) -> dict:
     strong = mag >= np.percentile(mag, 99)
     out["b_edgeWidth"] = float(1.0 / (mag[strong].mean() + 1e-6)) if strong.any() else 0.0
 
-    # per-channel noise correlation: sensor noise is channel-correlated after demosaic
+    # per-channel noise correlation: sensor noise is channel-correlated after demosaic.
+    # Computed with explicit moments instead of np.corrcoef on 3 stacked full-res
+    # planes - same Pearson r, far less memory traffic.
     rb = cv2.GaussianBlur(bgr[:, :, 0].astype(np.float32), (5, 5), 1.2)
     gb = cv2.GaussianBlur(bgr[:, :, 1].astype(np.float32), (5, 5), 1.2)
     bb = cv2.GaussianBlur(bgr[:, :, 2].astype(np.float32), (5, 5), 1.2)
-    nB = bgr[:, :, 0] - rb
-    nG = bgr[:, :, 1] - gb
-    nR = bgr[:, :, 2] - bb
+    nB = (bgr[:, :, 0] - rb).ravel()
+    nG = (bgr[:, :, 1] - gb).ravel()
+    nR = (bgr[:, :, 2] - bb).ravel()
+
+    def _pearson(a, b):
+        am, bm = a.mean(), b.mean()
+        da, db = a - am, b - bm
+        denom = float(np.sqrt((da * da).sum() * (db * db).sum()))
+        return float((da * db).sum() / denom) if denom > 1e-12 else 0.0
+
     if nB.std() > 1e-9 and nG.std() > 1e-9 and nR.std() > 1e-9:
-        c = np.corrcoef(np.stack([nB.ravel(), nG.ravel(), nR.ravel()]))
-        out["b_chanNoiseCorr"] = float((c[0, 1] + c[0, 2] + c[1, 2]) / 3.0)
+        out["b_chanNoiseCorr"] = (_pearson(nB, nG) + _pearson(nB, nR) + _pearson(nG, nR)) / 3.0
+        del nB, nG, nR
 
     rv = res.ravel()
     rv = rv - rv.mean()

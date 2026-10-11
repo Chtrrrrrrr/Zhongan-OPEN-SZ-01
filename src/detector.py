@@ -13,7 +13,8 @@ import numpy as np
 from fusion import FusionEngine, ModelScore
 from l0_input import parse_image, ParsedInput
 from l1_forensics import extract_l1_features
-from report import DetectionReport, heatmap_to_b64_png
+from report import (DetectionReport, heatmap_to_b64_png, model_hash_table,
+                    sha256_file, thresholds_sha256)
 
 
 @dataclass
@@ -32,9 +33,13 @@ class PipelineConfig:
     device: str | None = None
 
 
+# The decision head an attention explanation would have to explain, in one string so
+# every report section (available or not) describes the same head.
+ATTENTION_HEAD_DESC = ("combined (joblib 逻辑回归 on [L1 | L1b | CLIP global | CLIP tiles])")
+
+
 class AIGCDetector:
     """Unified image/video detection service (models kept resident & warm)."""
-
     def __init__(self, cfg: PipelineConfig):
         self.cfg = cfg
         self.device = cfg.device or ("cuda" if __import__("torch").cuda.is_available() else "cpu")
@@ -46,12 +51,18 @@ class AIGCDetector:
         self._clip_domain_pack = None
         self._combined_pack = None
         self._forensic_pack = None
+        # One-time setup cost (weights + joblib loads). It must not be charged to the
+        # per-item time budget, otherwise the very first item of a cold process (CLI,
+        # first demo/API request) silently drops CLIP/tiles/explanation and reports a
+        # degraded result for a perfectly healthy model.
+        self._load_s = 0.0
         self.fusion = FusionEngine.load(cfg.fusion_json) if cfg.fusion_json else FusionEngine()
 
     # ---- lazy, resident model loading ----
     @property
     def clip(self):
         if self._clip is None and self.cfg.clip_dir:
+            t_load = time.perf_counter()
             from l2_clip import CLIPFeatureExtractor
             self._clip = CLIPFeatureExtractor(self.cfg.clip_dir, self.device)
             if self.cfg.clip_probe:
@@ -66,23 +77,28 @@ class AIGCDetector:
                 head = LinearProbe(int(norm["weight"].shape[1])).to(self.device).eval()
                 head.load_state_dict({"fc.weight": norm["weight"], "fc.bias": norm["bias"]})
                 self._clip_head = head
+            self._load_s += time.perf_counter() - t_load
         return self._clip
 
     @property
     def npr(self):
         if self._npr is None and self.cfg.npr_weights:
+            t_load = time.perf_counter()
             from l2_npr import NPRFeatureExtractor
             self._npr = NPRFeatureExtractor(self.cfg.npr_weights, self.device)
+            self._load_s += time.perf_counter() - t_load
         return self._npr
 
     @property
     def blade(self):
         if self._blade is None and self.cfg.vae_dir and self.cfg.enable_aeroblade:
+            t_load = time.perf_counter()
             try:
                 from l2_aeroblade import AerobladeScorer
                 self._blade = AerobladeScorer(self.cfg.vae_dir, self.device)
             except Exception as e:
                 print(f"[degrade] AEROBLADE unavailable: {e}")
+            self._load_s += time.perf_counter() - t_load
         return self._blade
 
     @property
@@ -130,6 +146,131 @@ class AIGCDetector:
         with torch.no_grad():
             return float(self._clip_head(v.unsqueeze(0)).item())
 
+    # ---- traceability: hashes of the frozen artifacts behind this output ----
+    def artifact_paths(self) -> dict:
+        """Configured weights/threshold files whose hashes make a run reproducible."""
+        return {
+            "clip_probe": self.cfg.clip_probe,
+            "npr": self.cfg.npr_weights,
+            "l1_lr": self.cfg.l1_lr_model,
+            "forensic_lr": self.cfg.forensic_lr,
+            "clip_domain_lr": self.cfg.clip_domain_lr,
+            "combined_lr": self.cfg.combined_lr,
+            "fusion_json": self.cfg.fusion_json,
+        }
+
+    def _traceability(self, rep: DetectionReport, extra: dict | None = None) -> dict:
+        """Report `versions` block: versions + weight/threshold/input SHA-256.
+
+        Manual ch.9.2/16.x asks for a verifiable chain from output back to the exact
+        frozen artifacts. The input hash is already carried by the report; the model
+        and threshold hashes are added here (joblib/pt/fusion.json are hashed on
+        disk, fusion parameters are additionally hashed as a canonical value set).
+        """
+        v = {
+            "pipeline": "open-sz-01 v0.1",
+            "models": "+".join(rep.model_scores.keys()) or "none",
+            "thresholds": f"low={self.fusion.thr_low:.3f}/high={self.fusion.thr_high:.3f}",
+            "thresholds_sha256": thresholds_sha256(self.fusion),
+            "device": self.device,
+            "input_sha256": rep.input_hash or "不可用：该通道未计算输入哈希",
+            "artifact_sha256": model_hash_table(self.artifact_paths()),
+        }
+        if extra:
+            v.update(extra)
+        return v
+
+    # ---- classifier attention explanation (manual ch.9.2 "Grad-CAM (if available)") ----
+    @staticmethod
+    def _unavailable_explanation(reason: str, *, method: str | None = None,
+                                 gradcam: dict | None = None,
+                                 disclaimer: str | None = None) -> dict:
+        """A complete, non-blank explanation block for a case where no map exists."""
+        from l3_localization import (ATTRIBUTION_DISCLAIMER, ATTRIBUTION_KIND,
+                                     ATTRIBUTION_LABEL_CN, ATTRIBUTION_METHOD)
+        meth = method or ATTRIBUTION_METHOD
+        return {
+            "kind": ATTRIBUTION_KIND,
+            "label_cn": ATTRIBUTION_LABEL_CN,
+            "available": False,
+            "status": "不可用",
+            "method": meth,
+            "head": ATTENTION_HEAD_DESC,
+            "heatmap_png_b64": None,
+            "tiles": [],
+            "reason": reason,
+            "disclaimer": disclaimer or ATTRIBUTION_DISCLAIMER,
+            "gradcam": gradcam if gradcam is not None else {
+                "available": False, "status": "不可用", "reason": reason,
+                "substitute": meth},
+        }
+
+    def _attention_explanation(self, rep: DetectionReport, parsed: ParsedInput, x1, xb,
+                               clip_feat, tile_feat, combined_logit) -> dict:
+        """Attention map of the decision head - EXPLANATION, never localization.
+
+        The deployed `combined` head is a joblib logistic regression: no feature map
+        and no backward pass, so Grad-CAM cannot be computed for it. The usable
+        substitute is a tile-level leave-one-out contribution attribution over the
+        very CLIP tile features that head consumes. If neither path can produce a
+        figure, the field is explicitly reported as 不可用 with a reason - a blank
+        field is never left behind (manual ch.9.2).
+        """
+        from l3_localization import (ATTRIBUTION_METHOD, gradcam_supported,
+                                     tile_contribution_attribution)
+        gradcam_ok, gradcam_reason = gradcam_supported(self.combined_pack)
+        gradcam = {"available": bool(gradcam_ok),
+                   "status": "可用" if gradcam_ok else "不可用",
+                   "reason": gradcam_reason,
+                   "substitute": ATTRIBUTION_METHOD}
+        exp = self._unavailable_explanation("关注区域解释未生成", gradcam=gradcam)
+        exp["reason"] = None
+        if not gradcam_ok:
+            rep.uncertainty.append(
+                f"Grad-CAM 不可用（{gradcam_reason}）；关注区域解释改由块级贡献归因提供")
+        if self.combined_pack is None:
+            exp["reason"] = "combined 头未配置或加载失败，无关注区域可解释"
+            return exp
+        if self.clip is None or clip_feat is None:
+            exp["reason"] = "CLIP 骨干不可用，无法计算分块特征"
+            return exp
+        if tile_feat is None:
+            exp["reason"] = "分块CLIP特征不可用，combined 头缺少块特征输入"
+            return exp
+        try:
+            context = np.concatenate([x1, xb, clip_feat])
+            bgr_full = parsed.bgr_full if parsed.bgr_full is not None else parsed.bgr
+            res = tile_contribution_attribution(
+                self.clip, bgr_full, context, tile_feat,
+                lambda v: self._pack_logit(self.combined_pack, v))
+        except Exception as e:
+            exp["reason"] = f"块级贡献归因计算失败：{e}"
+            return exp
+        if not res.get("ok"):
+            exp["reason"] = res.get("reason") or "块级贡献归因不可用"
+            return exp
+        delta = None
+        if combined_logit is not None:
+            delta = abs(float(res["full_logit"]) - float(combined_logit))
+        exp.update({
+            "available": True,
+            "status": "可用",
+            "reason": None,
+            "heatmap_png_b64": heatmap_to_b64_png(res["heatmap"], parsed.bgr),
+            "tiles": res["tiles"],
+            "geometry": res["geometry"],
+            "delta_logit_max": res["delta_max"],
+            "delta_logit_min": res["delta_min"],
+            "score_consistency_delta": None if delta is None else round(delta, 9),
+        })
+        if delta is not None and delta > 1e-6:
+            rep.uncertainty.append(
+                f"块级归因基准分数与 combined 头分数不一致（Δ={delta:.2e}），归因图仅供参考")
+        if res["flat_positive"]:
+            exp["note"] = ("所有块的留一贡献均 ≤ 0：分类器在粒度上未表现出正向依赖，"
+                           "该图仅示意权重分布，不代表关注区域")
+        return exp
+
     # ---- forensic clue list (L1 -> human-readable) ----
     def _l1_clues(self, feat: dict, parsed: ParsedInput) -> list:
         clues = []
@@ -151,6 +292,7 @@ class AIGCDetector:
     def detect_image(self, path: str, want_report: bool = True,
                      report_dir: str | None = None) -> tuple[DetectionReport, float]:
         t0 = time.perf_counter()
+        load_before = self._load_s
         latency = {}
         rep = DetectionReport(input_type="image")
 
@@ -173,7 +315,12 @@ class AIGCDetector:
         from l1_forensics import feature_vector
         from l1b_domain import extract_l1b_features, feature_vector_b
         x1 = feature_vector(feat)
+        # L1b is its own budget line: it was previously invisible in the per-stage
+        # latency breakdown (its cost only showed up in `total`), which breaks the
+        # manual ch.16.2 requirement to break the budget down per stage.
+        t = time.perf_counter()
         xb = feature_vector_b(extract_l1b_features(parsed))
+        latency["L1b"] = (time.perf_counter() - t) * 1000
 
         # domain forensics (L1 + L1b): always available, no deep model needed
         if self.forensic_pack is not None:
@@ -184,10 +331,13 @@ class AIGCDetector:
         budget = self.cfg.time_budget_s
 
         def _elapsed():
-            return time.perf_counter() - t0
+            # per-item work time only; model loading that happened inside this call is
+            # one-time setup, so it must not eat the per-item time budget
+            return time.perf_counter() - t0 - (self._load_s - load_before)
 
         clip_feat = None
         tile_feat = None
+        combined_logit = None
         if self.clip is not None and _elapsed() < budget - 1.5:
             t = time.perf_counter()
             import torch
@@ -216,9 +366,13 @@ class AIGCDetector:
                 parts = [x1, xb, clip_feat]
                 if tile_feat is not None:
                     parts.append(tile_feat)
-                scores.append(ModelScore("combined",
-                                         self._pack_logit(self.combined_pack,
-                                                          np.concatenate(parts))))
+                try:
+                    combined_logit = self._pack_logit(self.combined_pack, np.concatenate(parts))
+                    scores.append(ModelScore("combined", combined_logit))
+                except Exception as e:
+                    # a member is an evidence producer, not a gate (manual ch.4.2/16.3):
+                    # a missing tile block must degrade this member, not abort the item
+                    rep.uncertainty.append(f"combined 头不可用（降级运行）：{e}")
 
         if self.npr is not None and _elapsed() < budget - 0.8:
             t = time.perf_counter()
@@ -232,18 +386,49 @@ class AIGCDetector:
             scores.append(ModelScore("aeroblade", err, direction=-1))
             latency["L2_aeroblade"] = (time.perf_counter() - t) * 1000
 
+        # Classifier attention explanation (manual ch.9.2 "Grad-CAM (if available)").
+        # Kept strictly separate from L3: this only says which tiles the classifier
+        # relied on, it is NOT a tamper region. Skipped when the time budget is
+        # nearly exhausted; the report then says 不可用 with the reason.
+        t = time.perf_counter()
+        if _elapsed() < budget - 0.8:
+            try:
+                rep.explanation = self._attention_explanation(
+                    rep, parsed, x1, xb, clip_feat, tile_feat, combined_logit)
+            except Exception as e:
+                rep.explanation = self._unavailable_explanation(
+                    f"关注区域解释生成失败：{e}",
+                    gradcam={"available": False, "status": "不可用",
+                             "reason": f"关注区域解释生成失败：{e}"})
+                rep.uncertainty.append(f"关注区域解释生成失败：{e}")
+        else:
+            from l3_localization import ATTRIBUTION_METHOD, gradcam_supported
+            g_ok, g_reason = gradcam_supported(self.combined_pack)
+            rep.explanation = self._unavailable_explanation(
+                f"时间预算不足（已用 {_elapsed():.2f}s / {budget}s），跳过关注区域解释",
+                gradcam={"available": bool(g_ok), "status": "可用" if g_ok else "不可用",
+                         "reason": g_reason or "时间预算不足，归因未执行",
+                         "substitute": ATTRIBUTION_METHOD})
+        latency["explain"] = (time.perf_counter() - t) * 1000
+
         # L3 localization (only if needed: suspect/review path or always for demo)
         t = time.perf_counter()
+        loc_kind = "zero-weight forensic map (ELA+noise inconsistency)"
         try:
             from l3_localization import combined_anomaly_map, top_anomaly_boxes
             amap = combined_anomaly_map(parsed.bgr)
             boxes = top_anomaly_boxes(amap)
             rep.localization = {
-                "kind": "zero-weight forensic map (ELA+noise inconsistency)",
+                "available": True,
+                "kind": loc_kind,
                 "heatmap_png_b64": heatmap_to_b64_png(amap, parsed.bgr),
                 "boxes": boxes,
+                "reason": None,
             }
         except Exception as e:
+            rep.localization = {"available": False, "kind": loc_kind,
+                                "heatmap_png_b64": None, "boxes": [],
+                                "reason": f"L3定位分支不可用：{e}"}
             rep.uncertainty.append(f"L3定位分支不可用：{e}")
         latency["L3"] = (time.perf_counter() - t) * 1000
 
@@ -258,13 +443,12 @@ class AIGCDetector:
         rep.uncertainty.extend(dec.reasons)
         latency["fusion"] = (time.perf_counter() - t) * 1000
         latency["total"] = (time.perf_counter() - t0) * 1000
+        if self._load_s - load_before > 1e-9:
+            # only reported when this item paid the cold-start cost (manual ch.9.2
+            # timing is per item; the load row keeps `total` explainable)
+            latency["setup_load"] = (self._load_s - load_before) * 1000
         rep.latency_ms = {k: round(v, 1) for k, v in latency.items()}
-        rep.versions = {
-            "pipeline": "open-sz-01 v0.1",
-            "models": "+".join(rep.model_scores.keys()) or "none",
-            "thresholds": f"low={self.fusion.thr_low:.3f}/high={self.fusion.thr_high:.3f}",
-            "device": self.device,
-        }
+        rep.versions = self._traceability(rep)
         rep.finalize()
         return rep, dec.confidence
 
@@ -300,6 +484,7 @@ class AIGCDetector:
 
         from l1_forensics import feature_vector as _fv
         from l1b_domain import extract_l1b_features as _l1b, feature_vector_b as _fvb
+        _t_frames = time.perf_counter()
         for k, (idx, fr) in enumerate(frames):
             ts = idx / fps if fps else 0.0
             s: list[ModelScore] = []
@@ -325,6 +510,7 @@ class AIGCDetector:
             frame_scores.append(vid.VideoFrameScore(idx, ts, dec.confidence))
 
         agg = vid.aggregate([fs.score for fs in frame_scores]) if frame_scores else None
+        latency["frames_forensics"] = (time.perf_counter() - _t_frames) * 1000
         if agg:
             final = agg["mean"] * 0.5 + agg["p90"] * 0.5   # mean/p90 fusion (Stage-1 rule)
             rep.fused_score = round(final, 4)
@@ -332,12 +518,29 @@ class AIGCDetector:
             rep.verdict = ("suspect" if final >= self.fusion.thr_high
                            else "normal" if final <= self.fusion.thr_low else "review")
             rep.model_scores = {f"frame_{k}": round(v, 4) for k, v in agg.items()}
-        rep.localization = {"kind": "temporal segments",
+        rep.localization = {"available": True, "kind": "temporal segments", "reason": None,
+                            "heatmap_png_b64": None,
                             "suspicious_segments": vid.suspicious_ranges(frame_scores, self.fusion.thr_high),
-                            "note": "视频通道复用图像模型（批量全局CLIP+取证），分块CLIP仅用于图像入口"}
+                            "note": "视频通道复用图像模型（批量全局CLIP+取证），分块CLIP仅用于图像入口；"
+                                    "该通道不提供空间热力图"}
+        # no spatial attention map on the video channel: state it explicitly instead of
+        # leaving the field blank (manual ch.9.2)
+        rep.explanation = self._unavailable_explanation(
+            "视频通道（video-stage1）不产出空间关注区域解释；可疑片段见定位分节",
+            method="不适用：视频通道采用批量全局CLIP+取证打分，不产出块级特征",
+            disclaimer="关注区域解释 ≠ 伪造区域定位；视频通道无可视化关注区域。",
+            gradcam={"available": False, "status": "不可用",
+                     "reason": "video-stage1 通道对批量帧只做全局 CLIP + 取证打分，"
+                               "未生成块级特征，无可归因特征图",
+                     "substitute": "不适用（视频通道无可视化关注区域）"})
+        try:
+            rep.input_hash = sha256_file(path)
+        except Exception as e:
+            rep.uncertainty.append(f"视频输入哈希不可用：{e}")
         latency["total"] = (time.perf_counter() - t0) * 1000
         rep.latency_ms = {k: round(v, 1) for k, v in latency.items()}
-        rep.versions = {"pipeline": "open-sz-01 v0.2", "channel": "video-stage1",
-                        "frames": str(len(frame_scores)),
-                        "note": "合成烟测片用于验证通道；命题样本不含视频，视频指标非基准结果"}
+        rep.versions = self._traceability(rep, extra={
+            "pipeline": "open-sz-01 v0.2", "channel": "video-stage1",
+            "frames": str(len(frame_scores)),
+            "note": "合成烟测片用于验证通道；命题样本不含视频，视频指标非基准结果"})
         return rep.finalize()

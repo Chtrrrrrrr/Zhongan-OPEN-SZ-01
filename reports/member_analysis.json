@@ -1,0 +1,2626 @@
+{
+  "report": "member_analysis",
+  "headline": {
+    "n_samples": 119,
+    "members": [
+      "forensic",
+      "combined",
+      "clip_domain",
+      "clip_external",
+      "npr"
+    ],
+    "single_route_auc": {
+      "forensic": 0.9082,
+      "combined": 0.9657,
+      "clip_domain": 0.8951,
+      "clip_external": 0.6477,
+      "npr": 0.5692
+    },
+    "mean_pairwise_spearman": 0.4037,
+    "unanimous_fraction_at_frozen_threshold": 0.4706,
+    "mean_pairwise_disagreement_at_frozen_threshold": 0.2891,
+    "mean_fp_overlap_iou_at_frozen_threshold": 0.112,
+    "mean_fn_overlap_iou_at_frozen_threshold": 0.3238,
+    "incumbent_fusion_accuracy": 0.9412
+  },
+  "manual_sections": [
+    "12.1 多模型组合与错误相关性实验",
+    "15.1 诊断指标",
+    "2.3 多路信号的必要性"
+  ],
+  "generated_at": "2026-10-11T03:18:51+00:00",
+  "script": "repo/scripts/member_analysis.py",
+  "data": {
+    "n_samples": 119,
+    "class_balance": {
+      "ai": 56,
+      "real": 63
+    },
+    "score_definition": "out-of-fold calibrated probability per route (scripts/metrics_common.py; per-member temperature scaling fitted on inner-CV training logits)",
+    "correlation_scored_on": "calibrated OOF probability; Spearman is invariant to any monotone rescaling, Pearson is not",
+    "protocol": {
+      "cv": "stratified 5-fold outer (random_state=42); 4-fold inner for calibration fitting (random_state=100+fold)",
+      "note": "identical folds/seed/features as scripts/evaluate_system.py; no hyper-parameter or threshold selection on held-out folds",
+      "calibration": "per-member temperature scaling (Guo et al. 2017); the temperature of a fold is fitted on inner-CV logits of the training fold, then applied to the held-out fold",
+      "n_samples": 119,
+      "class_balance": {
+        "ai": 56,
+        "real": 63
+      }
+    }
+  },
+  "preset_decision_rule": {
+    "delta_tpr_at_fpr1_min": 0.02,
+    "delta_rationale": "1/56 AI samples = 1.79 pp, so 0.02 is 'less than one corrected AI sample'; the manual (ch.12.1) asks for a threshold fixed before the experiment",
+    "primary_fpr_level": 0.05,
+    "primary_fpr_rationale": "the 1% guardrail is not resolvable with 63 real samples (0.01 < 1/63 = 1.59%), so the retention decision is taken at FPR=5%, where the ROC curve has several real points; the 1% Δ is still reported for completeness",
+    "fp_overlap_iou_max": 0.5,
+    "overlap_rationale": "mean pairwise FP-set IoU >= 0.5 against every other route means the second route mostly repeats the first one's false alarms",
+    "declared_before_measurement": true
+  },
+  "deployed_fusion": {
+    "weights": {
+      "combined": 0.6,
+      "forensic": 0.25
+    },
+    "source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json",
+    "thr_high": 0.6742875975794557
+  },
+  "single_route_table": {
+    "forensic": {
+      "definition": "LR on L1(47)+L1b(20) forensic/domain features (trainable, deployed)",
+      "in_deployed_fusion": true,
+      "frozen_weight": 0.25,
+      "oof_auc": 0.9082,
+      "auc_of_fused_single_member": 0.9045,
+      "at_fp_budget_1_of_63": {
+        "accuracy": 0.6303,
+        "fpr": 0.0159,
+        "tpr": 0.2321,
+        "precision": 0.9286,
+        "confusion": {
+          "tp": 13,
+          "tn": 62,
+          "fp": 1,
+          "fn": 43
+        },
+        "threshold": 0.97585,
+        "allowed_fp": 1,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.1607,
+          "tpr_empirical": 0.1607,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.9045
+      },
+      "at_fp_budget_2_of_63": {
+        "accuracy": 0.6387,
+        "fpr": 0.0317,
+        "tpr": 0.2679,
+        "precision": 0.8824,
+        "confusion": {
+          "tp": 15,
+          "tn": 61,
+          "fp": 2,
+          "fn": 41
+        },
+        "threshold": 0.961202,
+        "allowed_fp": 2,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.1607,
+          "tpr_empirical": 0.1607,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.9045
+      },
+      "accuracy": 0.6387,
+      "fpr": 0.0317,
+      "tpr": 0.2679,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.1607,
+        "tpr_empirical": 0.1607,
+        "achieved_fpr_empirical": 0.0
+      },
+      "inference_cost": "see reports/resource_profile.json",
+      "note": "the 1% guardrail is not resolvable with 63 real samples (1 FP = 1.59% FPR); both integer budgets are reported"
+    },
+    "combined": {
+      "definition": "LR on L1(47)+L1b(20)+CLIP global(1024)+CLIP tiles(3072) (trainable, deployed)",
+      "in_deployed_fusion": true,
+      "frozen_weight": 0.6,
+      "oof_auc": 0.9657,
+      "auc_of_fused_single_member": 0.9634,
+      "at_fp_budget_1_of_63": {
+        "accuracy": 0.5378,
+        "fpr": 0.0159,
+        "tpr": 0.0357,
+        "precision": 0.6667,
+        "confusion": {
+          "tp": 2,
+          "tn": 62,
+          "fp": 1,
+          "fn": 54
+        },
+        "threshold": 0.99956,
+        "allowed_fp": 1,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.9634
+      },
+      "at_fp_budget_2_of_63": {
+        "accuracy": 0.916,
+        "fpr": 0.0317,
+        "tpr": 0.8571,
+        "precision": 0.96,
+        "confusion": {
+          "tp": 48,
+          "tn": 61,
+          "fp": 2,
+          "fn": 8
+        },
+        "threshold": 0.810381,
+        "allowed_fp": 2,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.9634
+      },
+      "accuracy": 0.916,
+      "fpr": 0.0317,
+      "tpr": 0.8571,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0,
+        "tpr_empirical": 0.0,
+        "achieved_fpr_empirical": 0.0
+      },
+      "inference_cost": "see reports/resource_profile.json",
+      "note": "the 1% guardrail is not resolvable with 63 real samples (1 FP = 1.59% FPR); both integer budgets are reported"
+    },
+    "clip_domain": {
+      "definition": "LR on CLIP global features(1024) only (trainable, ablation channel)",
+      "in_deployed_fusion": false,
+      "frozen_weight": 0.0,
+      "oof_auc": 0.8951,
+      "auc_of_fused_single_member": 0.8812,
+      "at_fp_budget_1_of_63": {
+        "accuracy": 0.5462,
+        "fpr": 0.0159,
+        "tpr": 0.0536,
+        "precision": 0.75,
+        "confusion": {
+          "tp": 3,
+          "tn": 62,
+          "fp": 1,
+          "fn": 53
+        },
+        "threshold": 0.994246,
+        "allowed_fp": 1,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.8812
+      },
+      "at_fp_budget_2_of_63": {
+        "accuracy": 0.6387,
+        "fpr": 0.0317,
+        "tpr": 0.2679,
+        "precision": 0.8824,
+        "confusion": {
+          "tp": 15,
+          "tn": 61,
+          "fp": 2,
+          "fn": 41
+        },
+        "threshold": 0.954914,
+        "allowed_fp": 2,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.8812
+      },
+      "accuracy": 0.6387,
+      "fpr": 0.0317,
+      "tpr": 0.2679,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0,
+        "tpr_empirical": 0.0,
+        "achieved_fpr_empirical": 0.0
+      },
+      "inference_cost": "see reports/resource_profile.json",
+      "note": "the 1% guardrail is not resolvable with 63 real samples (1 FP = 1.59% FPR); both integer budgets are reported"
+    },
+    "clip_external": {
+      "definition": "frozen CLIP probe trained on the 18-generator benchmark (never trained on the 119)",
+      "in_deployed_fusion": false,
+      "frozen_weight": 0.0,
+      "oof_auc": 0.6477,
+      "auc_of_fused_single_member": 0.6284,
+      "at_fp_budget_1_of_63": {
+        "accuracy": 0.5462,
+        "fpr": 0.0159,
+        "tpr": 0.0536,
+        "precision": 0.75,
+        "confusion": {
+          "tp": 3,
+          "tn": 62,
+          "fp": 1,
+          "fn": 53
+        },
+        "threshold": 0.537011,
+        "allowed_fp": 1,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0357,
+          "tpr_empirical": 0.0357,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.6284
+      },
+      "at_fp_budget_2_of_63": {
+        "accuracy": 0.5546,
+        "fpr": 0.0317,
+        "tpr": 0.0893,
+        "precision": 0.7143,
+        "confusion": {
+          "tp": 5,
+          "tn": 61,
+          "fp": 2,
+          "fn": 51
+        },
+        "threshold": 0.52191,
+        "allowed_fp": 2,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0357,
+          "tpr_empirical": 0.0357,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.6284
+      },
+      "accuracy": 0.5546,
+      "fpr": 0.0317,
+      "tpr": 0.0893,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0357,
+        "tpr_empirical": 0.0357,
+        "achieved_fpr_empirical": 0.0
+      },
+      "inference_cost": "see reports/resource_profile.json",
+      "note": "the 1% guardrail is not resolvable with 63 real samples (1 FP = 1.59% FPR); both integer budgets are reported"
+    },
+    "npr": {
+      "definition": "frozen NPR ResNet-18 logits on external benchmark shards (never trained on the 119)",
+      "in_deployed_fusion": false,
+      "frozen_weight": 0.0,
+      "oof_auc": 0.5692,
+      "auc_of_fused_single_member": 0.5584,
+      "at_fp_budget_1_of_63": {
+        "accuracy": 0.5462,
+        "fpr": 0.0159,
+        "tpr": 0.0536,
+        "precision": 0.75,
+        "confusion": {
+          "tp": 3,
+          "tn": 62,
+          "fp": 1,
+          "fn": 53
+        },
+        "threshold": 0.586797,
+        "allowed_fp": 1,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0536,
+          "tpr_empirical": 0.0536,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.5584
+      },
+      "at_fp_budget_2_of_63": {
+        "accuracy": 0.563,
+        "fpr": 0.0317,
+        "tpr": 0.1071,
+        "precision": 0.75,
+        "confusion": {
+          "tp": 6,
+          "tn": 61,
+          "fp": 2,
+          "fn": 50
+        },
+        "threshold": 0.569367,
+        "allowed_fp": 2,
+        "n_real": 63,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0536,
+          "tpr_empirical": 0.0536,
+          "achieved_fpr_empirical": 0.0
+        },
+        "auc": 0.5584
+      },
+      "accuracy": 0.563,
+      "fpr": 0.0317,
+      "tpr": 0.1071,
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0536,
+        "tpr_empirical": 0.0536,
+        "achieved_fpr_empirical": 0.0
+      },
+      "inference_cost": "see reports/resource_profile.json",
+      "note": "the 1% guardrail is not resolvable with 63 real samples (1 FP = 1.59% FPR); both integer budgets are reported"
+    }
+  },
+  "score_correlation": {
+    "pearson": {
+      "forensic": {
+        "forensic": 1.0,
+        "combined": 0.7545,
+        "clip_domain": 0.6568,
+        "clip_external": 0.2376,
+        "npr": 0.1707
+      },
+      "combined": {
+        "forensic": 0.7545,
+        "combined": 1.0,
+        "clip_domain": 0.8342,
+        "clip_external": 0.2412,
+        "npr": 0.1667
+      },
+      "clip_domain": {
+        "forensic": 0.6568,
+        "combined": 0.8342,
+        "clip_domain": 1.0,
+        "clip_external": 0.3143,
+        "npr": 0.2632
+      },
+      "clip_external": {
+        "forensic": 0.2376,
+        "combined": 0.2412,
+        "clip_domain": 0.3143,
+        "clip_external": 1.0,
+        "npr": 0.3201
+      },
+      "npr": {
+        "forensic": 0.1707,
+        "combined": 0.1667,
+        "clip_domain": 0.2632,
+        "clip_external": 0.3201,
+        "npr": 1.0
+      }
+    },
+    "spearman": {
+      "forensic": {
+        "forensic": 1.0,
+        "combined": 0.7412,
+        "clip_domain": 0.6384,
+        "clip_external": 0.244,
+        "npr": 0.1851
+      },
+      "combined": {
+        "forensic": 0.7412,
+        "combined": 1.0,
+        "clip_domain": 0.8325,
+        "clip_external": 0.2409,
+        "npr": 0.2028
+      },
+      "clip_domain": {
+        "forensic": 0.6384,
+        "combined": 0.8325,
+        "clip_domain": 1.0,
+        "clip_external": 0.3182,
+        "npr": 0.2785
+      },
+      "clip_external": {
+        "forensic": 0.244,
+        "combined": 0.2409,
+        "clip_domain": 0.3182,
+        "clip_external": 1.0,
+        "npr": 0.3558
+      },
+      "npr": {
+        "forensic": 0.1851,
+        "combined": 0.2028,
+        "clip_domain": 0.2785,
+        "clip_external": 0.3558,
+        "npr": 1.0
+      }
+    },
+    "pairs": {
+      "forensic|npr": {
+        "pearson": 0.1707,
+        "pearson_p": 0.0634,
+        "spearman": 0.1851,
+        "spearman_p": 0.0439
+      },
+      "combined|forensic": {
+        "pearson": 0.7545,
+        "pearson_p": 3.9e-23,
+        "spearman": 0.7412,
+        "spearman_p": 5.49e-22
+      },
+      "combined|npr": {
+        "pearson": 0.1667,
+        "pearson_p": 0.0699,
+        "spearman": 0.2028,
+        "spearman_p": 0.027
+      },
+      "clip_domain|forensic": {
+        "pearson": 0.6568,
+        "pearson_p": 5.03e-16,
+        "spearman": 0.6384,
+        "spearman_p": 5.74e-15
+      },
+      "clip_domain|combined": {
+        "pearson": 0.8342,
+        "pearson_p": 5.02e-32,
+        "spearman": 0.8325,
+        "spearman_p": 8.64e-32
+      },
+      "clip_domain|clip_external": {
+        "pearson": 0.3143,
+        "pearson_p": 0.000498,
+        "spearman": 0.3182,
+        "spearman_p": 0.00042
+      },
+      "clip_domain|npr": {
+        "pearson": 0.2632,
+        "pearson_p": 0.00383,
+        "spearman": 0.2785,
+        "spearman_p": 0.00216
+      },
+      "clip_external|forensic": {
+        "pearson": 0.2376,
+        "pearson_p": 0.00928,
+        "spearman": 0.244,
+        "spearman_p": 0.00748
+      },
+      "clip_external|combined": {
+        "pearson": 0.2412,
+        "pearson_p": 0.00823,
+        "spearman": 0.2409,
+        "spearman_p": 0.00832
+      },
+      "clip_external|npr": {
+        "pearson": 0.3201,
+        "pearson_p": 0.000387,
+        "spearman": 0.3558,
+        "spearman_p": 7.15e-05
+      }
+    }
+  },
+  "decision_disagreement_and_overlap": {
+    "own_fpr1pct": {
+      "note": "each route thresholded at its own order statistic admitting 0 false positives on the real OOF scores (target FPR 1% is unreachable at n_real=63, where one FP already costs 1.59%)",
+      "thresholds": {
+        "forensic": 0.980949,
+        "combined": 0.999992,
+        "clip_domain": 0.99748,
+        "clip_external": 0.547258,
+        "npr": 0.602657
+      },
+      "per_member_confusion": {
+        "forensic": {
+          "tp": 9,
+          "tn": 62,
+          "fp": 1,
+          "fn": 47
+        },
+        "combined": {
+          "tp": 0,
+          "tn": 63,
+          "fp": 0,
+          "fn": 56
+        },
+        "clip_domain": {
+          "tp": 0,
+          "tn": 62,
+          "fp": 1,
+          "fn": 56
+        },
+        "clip_external": {
+          "tp": 2,
+          "tn": 63,
+          "fp": 0,
+          "fn": 54
+        },
+        "npr": {
+          "tp": 3,
+          "tn": 63,
+          "fp": 0,
+          "fn": 53
+        }
+      },
+      "disagreement": {
+        "pairwise_disagreement_rate": {
+          "forensic": {
+            "forensic": 0.0,
+            "combined": 0.084,
+            "clip_domain": 0.0924,
+            "clip_external": 0.084,
+            "npr": 0.0924
+          },
+          "combined": {
+            "forensic": 0.084,
+            "combined": 0.0,
+            "clip_domain": 0.0084,
+            "clip_external": 0.0168,
+            "npr": 0.0252
+          },
+          "clip_domain": {
+            "forensic": 0.0924,
+            "combined": 0.0084,
+            "clip_domain": 0.0,
+            "clip_external": 0.0252,
+            "npr": 0.0336
+          },
+          "clip_external": {
+            "forensic": 0.084,
+            "combined": 0.0168,
+            "clip_domain": 0.0252,
+            "clip_external": 0.0,
+            "npr": 0.042
+          },
+          "npr": {
+            "forensic": 0.0924,
+            "combined": 0.0252,
+            "clip_domain": 0.0336,
+            "clip_external": 0.042,
+            "npr": 0.0
+          }
+        },
+        "mean_pairwise_disagreement": 0.0504,
+        "max_pairwise_disagreement": 0.0924,
+        "unanimous_fraction": 0.8824,
+        "unanimous_n": 105,
+        "n_samples": 119,
+        "majority_vote_confusion": {
+          "tp": 0,
+          "tn": 63,
+          "fp": 0,
+          "fn": 56
+        },
+        "majority_vote_positive_rate": 0.0,
+        "per_member_positive_rate": {
+          "forensic": 0.084,
+          "combined": 0.0,
+          "clip_domain": 0.0084,
+          "clip_external": 0.0168,
+          "npr": 0.0252
+        }
+      },
+      "error_overlap": {
+        "false_positive_sets": {
+          "per_member": {
+            "forensic": {
+              "n": 1,
+              "seqs": [
+                57
+              ]
+            },
+            "combined": {
+              "n": 0,
+              "seqs": []
+            },
+            "clip_domain": {
+              "n": 1,
+              "seqs": [
+                58
+              ]
+            },
+            "clip_external": {
+              "n": 0,
+              "seqs": []
+            },
+            "npr": {
+              "n": 0,
+              "seqs": []
+            }
+          },
+          "iou": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 0.0,
+              "clip_domain": 0.0,
+              "clip_external": 0.0,
+              "npr": 0.0
+            },
+            "combined": {
+              "forensic": 0.0,
+              "combined": null,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "clip_domain": {
+              "forensic": 0.0,
+              "combined": 0.0,
+              "clip_domain": 1.0,
+              "clip_external": 0.0,
+              "npr": 0.0
+            },
+            "clip_external": {
+              "forensic": 0.0,
+              "combined": null,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "npr": {
+              "forensic": 0.0,
+              "combined": null,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            }
+          },
+          "overlap_coefficient": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": null,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "combined": {
+              "forensic": null,
+              "combined": null,
+              "clip_domain": null,
+              "clip_external": null,
+              "npr": null
+            },
+            "clip_domain": {
+              "forensic": 0.0,
+              "combined": null,
+              "clip_domain": 1.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "clip_external": {
+              "forensic": null,
+              "combined": null,
+              "clip_domain": null,
+              "clip_external": null,
+              "npr": null
+            },
+            "npr": {
+              "forensic": null,
+              "combined": null,
+              "clip_domain": null,
+              "clip_external": null,
+              "npr": null
+            }
+          },
+          "detail": {
+            "forensic|npr": {
+              "size_a": 1,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "combined|forensic": {
+              "size_a": 0,
+              "size_b": 1,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "combined|npr": {
+              "size_a": 0,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 0,
+              "iou": null,
+              "overlap_coefficient": null
+            },
+            "clip_domain|forensic": {
+              "size_a": 1,
+              "size_b": 1,
+              "intersection": 0,
+              "union": 2,
+              "iou": 0.0,
+              "overlap_coefficient": 0.0
+            },
+            "clip_domain|combined": {
+              "size_a": 1,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_domain|clip_external": {
+              "size_a": 1,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_domain|npr": {
+              "size_a": 1,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_external|forensic": {
+              "size_a": 0,
+              "size_b": 1,
+              "intersection": 0,
+              "union": 1,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_external|combined": {
+              "size_a": 0,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 0,
+              "iou": null,
+              "overlap_coefficient": null
+            },
+            "clip_external|npr": {
+              "size_a": 0,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 0,
+              "iou": null,
+              "overlap_coefficient": null
+            }
+          },
+          "mean_pairwise_iou": 0.0,
+          "pairs_with_undefined_iou": 3
+        },
+        "false_negative_sets": {
+          "per_member": {
+            "forensic": {
+              "n": 47,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                36,
+                37,
+                41,
+                44,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            },
+            "combined": {
+              "n": 56,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            },
+            "clip_domain": {
+              "n": 56,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            },
+            "clip_external": {
+              "n": 54,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            },
+            "npr": {
+              "n": 53,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            }
+          },
+          "iou": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 0.8393,
+              "clip_domain": 0.8393,
+              "clip_external": 0.8364,
+              "npr": 0.8182
+            },
+            "combined": {
+              "forensic": 0.8393,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 0.9643,
+              "npr": 0.9464
+            },
+            "clip_domain": {
+              "forensic": 0.8393,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 0.9643,
+              "npr": 0.9464
+            },
+            "clip_external": {
+              "forensic": 0.8364,
+              "combined": 0.9643,
+              "clip_domain": 0.9643,
+              "clip_external": 1.0,
+              "npr": 0.9107
+            },
+            "npr": {
+              "forensic": 0.8182,
+              "combined": 0.9464,
+              "clip_domain": 0.9464,
+              "clip_external": 0.9107,
+              "npr": 1.0
+            }
+          },
+          "overlap_coefficient": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 0.9787,
+              "npr": 0.9574
+            },
+            "combined": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "clip_domain": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "clip_external": {
+              "forensic": 0.9787,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 0.9623
+            },
+            "npr": {
+              "forensic": 0.9574,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 0.9623,
+              "npr": 1.0
+            }
+          },
+          "detail": {
+            "forensic|npr": {
+              "size_a": 47,
+              "size_b": 53,
+              "intersection": 45,
+              "union": 55,
+              "iou": 0.8182,
+              "overlap_coefficient": 0.9574
+            },
+            "combined|forensic": {
+              "size_a": 56,
+              "size_b": 47,
+              "intersection": 47,
+              "union": 56,
+              "iou": 0.8393,
+              "overlap_coefficient": 1.0
+            },
+            "combined|npr": {
+              "size_a": 56,
+              "size_b": 53,
+              "intersection": 53,
+              "union": 56,
+              "iou": 0.9464,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|forensic": {
+              "size_a": 56,
+              "size_b": 47,
+              "intersection": 47,
+              "union": 56,
+              "iou": 0.8393,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|combined": {
+              "size_a": 56,
+              "size_b": 56,
+              "intersection": 56,
+              "union": 56,
+              "iou": 1.0,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|clip_external": {
+              "size_a": 56,
+              "size_b": 54,
+              "intersection": 54,
+              "union": 56,
+              "iou": 0.9643,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|npr": {
+              "size_a": 56,
+              "size_b": 53,
+              "intersection": 53,
+              "union": 56,
+              "iou": 0.9464,
+              "overlap_coefficient": 1.0
+            },
+            "clip_external|forensic": {
+              "size_a": 54,
+              "size_b": 47,
+              "intersection": 46,
+              "union": 55,
+              "iou": 0.8364,
+              "overlap_coefficient": 0.9787
+            },
+            "clip_external|combined": {
+              "size_a": 54,
+              "size_b": 56,
+              "intersection": 54,
+              "union": 56,
+              "iou": 0.9643,
+              "overlap_coefficient": 1.0
+            },
+            "clip_external|npr": {
+              "size_a": 54,
+              "size_b": 53,
+              "intersection": 51,
+              "union": 56,
+              "iou": 0.9107,
+              "overlap_coefficient": 0.9623
+            }
+          },
+          "mean_pairwise_iou": 0.9065,
+          "pairs_with_undefined_iou": 0
+        }
+      }
+    },
+    "frozen_common": {
+      "note": "every route compared against the frozen deployed thr_high from models/fusion.json, i.e. the decision the shipped pipeline would make if that route had been the only evidence",
+      "thresholds": {
+        "forensic": 0.674288,
+        "combined": 0.674288,
+        "clip_domain": 0.674288,
+        "clip_external": 0.674288,
+        "npr": 0.674288
+      },
+      "per_member_confusion": {
+        "forensic": {
+          "tp": 33,
+          "tn": 59,
+          "fp": 4,
+          "fn": 23
+        },
+        "combined": {
+          "tp": 53,
+          "tn": 61,
+          "fp": 2,
+          "fn": 3
+        },
+        "clip_domain": {
+          "tp": 35,
+          "tn": 56,
+          "fp": 7,
+          "fn": 21
+        },
+        "clip_external": {
+          "tp": 0,
+          "tn": 63,
+          "fp": 0,
+          "fn": 56
+        },
+        "npr": {
+          "tp": 0,
+          "tn": 63,
+          "fp": 0,
+          "fn": 56
+        }
+      },
+      "disagreement": {
+        "pairwise_disagreement_rate": {
+          "forensic": {
+            "forensic": 0.0,
+            "combined": 0.2017,
+            "clip_domain": 0.2437,
+            "clip_external": 0.3109,
+            "npr": 0.3109
+          },
+          "combined": {
+            "forensic": 0.2017,
+            "combined": 0.0,
+            "clip_domain": 0.1933,
+            "clip_external": 0.4622,
+            "npr": 0.4622
+          },
+          "clip_domain": {
+            "forensic": 0.2437,
+            "combined": 0.1933,
+            "clip_domain": 0.0,
+            "clip_external": 0.3529,
+            "npr": 0.3529
+          },
+          "clip_external": {
+            "forensic": 0.3109,
+            "combined": 0.4622,
+            "clip_domain": 0.3529,
+            "clip_external": 0.0,
+            "npr": 0.0
+          },
+          "npr": {
+            "forensic": 0.3109,
+            "combined": 0.4622,
+            "clip_domain": 0.3529,
+            "clip_external": 0.0,
+            "npr": 0.0
+          }
+        },
+        "mean_pairwise_disagreement": 0.2891,
+        "max_pairwise_disagreement": 0.4622,
+        "unanimous_fraction": 0.4706,
+        "unanimous_n": 56,
+        "n_samples": 119,
+        "majority_vote_confusion": {
+          "tp": 23,
+          "tn": 61,
+          "fp": 2,
+          "fn": 33
+        },
+        "majority_vote_positive_rate": 0.2101,
+        "per_member_positive_rate": {
+          "forensic": 0.3109,
+          "combined": 0.4622,
+          "clip_domain": 0.3529,
+          "clip_external": 0.0,
+          "npr": 0.0
+        }
+      },
+      "error_overlap": {
+        "false_positive_sets": {
+          "per_member": {
+            "forensic": {
+              "n": 4,
+              "seqs": [
+                57,
+                58,
+                65,
+                83
+              ]
+            },
+            "combined": {
+              "n": 2,
+              "seqs": [
+                57,
+                58
+              ]
+            },
+            "clip_domain": {
+              "n": 7,
+              "seqs": [
+                57,
+                58,
+                67,
+                68,
+                81,
+                82,
+                92
+              ]
+            },
+            "clip_external": {
+              "n": 0,
+              "seqs": []
+            },
+            "npr": {
+              "n": 0,
+              "seqs": []
+            }
+          },
+          "iou": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 0.5,
+              "clip_domain": 0.2222,
+              "clip_external": 0.0,
+              "npr": 0.0
+            },
+            "combined": {
+              "forensic": 0.5,
+              "combined": 1.0,
+              "clip_domain": 0.2857,
+              "clip_external": 0.0,
+              "npr": 0.0
+            },
+            "clip_domain": {
+              "forensic": 0.2222,
+              "combined": 0.2857,
+              "clip_domain": 1.0,
+              "clip_external": 0.0,
+              "npr": 0.0
+            },
+            "clip_external": {
+              "forensic": 0.0,
+              "combined": 0.0,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "npr": {
+              "forensic": 0.0,
+              "combined": 0.0,
+              "clip_domain": 0.0,
+              "clip_external": null,
+              "npr": null
+            }
+          },
+          "overlap_coefficient": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 0.5,
+              "clip_external": null,
+              "npr": null
+            },
+            "combined": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "clip_domain": {
+              "forensic": 0.5,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": null,
+              "npr": null
+            },
+            "clip_external": {
+              "forensic": null,
+              "combined": null,
+              "clip_domain": null,
+              "clip_external": null,
+              "npr": null
+            },
+            "npr": {
+              "forensic": null,
+              "combined": null,
+              "clip_domain": null,
+              "clip_external": null,
+              "npr": null
+            }
+          },
+          "detail": {
+            "forensic|npr": {
+              "size_a": 4,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 4,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "combined|forensic": {
+              "size_a": 2,
+              "size_b": 4,
+              "intersection": 2,
+              "union": 4,
+              "iou": 0.5,
+              "overlap_coefficient": 1.0
+            },
+            "combined|npr": {
+              "size_a": 2,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 2,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_domain|forensic": {
+              "size_a": 7,
+              "size_b": 4,
+              "intersection": 2,
+              "union": 9,
+              "iou": 0.2222,
+              "overlap_coefficient": 0.5
+            },
+            "clip_domain|combined": {
+              "size_a": 7,
+              "size_b": 2,
+              "intersection": 2,
+              "union": 7,
+              "iou": 0.2857,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|clip_external": {
+              "size_a": 7,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 7,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_domain|npr": {
+              "size_a": 7,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 7,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_external|forensic": {
+              "size_a": 0,
+              "size_b": 4,
+              "intersection": 0,
+              "union": 4,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_external|combined": {
+              "size_a": 0,
+              "size_b": 2,
+              "intersection": 0,
+              "union": 2,
+              "iou": 0.0,
+              "overlap_coefficient": null
+            },
+            "clip_external|npr": {
+              "size_a": 0,
+              "size_b": 0,
+              "intersection": 0,
+              "union": 0,
+              "iou": null,
+              "overlap_coefficient": null
+            }
+          },
+          "mean_pairwise_iou": 0.112,
+          "pairs_with_undefined_iou": 1
+        },
+        "false_negative_sets": {
+          "per_member": {
+            "forensic": {
+              "n": 23,
+              "seqs": [
+                3,
+                5,
+                6,
+                15,
+                16,
+                19,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                28,
+                29,
+                30,
+                31,
+                33,
+                48,
+                49,
+                50,
+                52,
+                54,
+                55
+              ]
+            },
+            "combined": {
+              "n": 3,
+              "seqs": [
+                3,
+                9,
+                29
+              ]
+            },
+            "clip_domain": {
+              "n": 21,
+              "seqs": [
+                1,
+                2,
+                3,
+                5,
+                9,
+                15,
+                17,
+                18,
+                21,
+                22,
+                23,
+                26,
+                27,
+                29,
+                30,
+                31,
+                32,
+                42,
+                45,
+                47,
+                48
+              ]
+            },
+            "clip_external": {
+              "n": 56,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            },
+            "npr": {
+              "n": 56,
+              "seqs": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56
+              ]
+            }
+          },
+          "iou": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 0.0833,
+              "clip_domain": 0.3333,
+              "clip_external": 0.4107,
+              "npr": 0.4107
+            },
+            "combined": {
+              "forensic": 0.0833,
+              "combined": 1.0,
+              "clip_domain": 0.1429,
+              "clip_external": 0.0536,
+              "npr": 0.0536
+            },
+            "clip_domain": {
+              "forensic": 0.3333,
+              "combined": 0.1429,
+              "clip_domain": 1.0,
+              "clip_external": 0.375,
+              "npr": 0.375
+            },
+            "clip_external": {
+              "forensic": 0.4107,
+              "combined": 0.0536,
+              "clip_domain": 0.375,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "npr": {
+              "forensic": 0.4107,
+              "combined": 0.0536,
+              "clip_domain": 0.375,
+              "clip_external": 1.0,
+              "npr": 1.0
+            }
+          },
+          "overlap_coefficient": {
+            "forensic": {
+              "forensic": 1.0,
+              "combined": 0.6667,
+              "clip_domain": 0.5238,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "combined": {
+              "forensic": 0.6667,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "clip_domain": {
+              "forensic": 0.5238,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "clip_external": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            },
+            "npr": {
+              "forensic": 1.0,
+              "combined": 1.0,
+              "clip_domain": 1.0,
+              "clip_external": 1.0,
+              "npr": 1.0
+            }
+          },
+          "detail": {
+            "forensic|npr": {
+              "size_a": 23,
+              "size_b": 56,
+              "intersection": 23,
+              "union": 56,
+              "iou": 0.4107,
+              "overlap_coefficient": 1.0
+            },
+            "combined|forensic": {
+              "size_a": 3,
+              "size_b": 23,
+              "intersection": 2,
+              "union": 24,
+              "iou": 0.0833,
+              "overlap_coefficient": 0.6667
+            },
+            "combined|npr": {
+              "size_a": 3,
+              "size_b": 56,
+              "intersection": 3,
+              "union": 56,
+              "iou": 0.0536,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|forensic": {
+              "size_a": 21,
+              "size_b": 23,
+              "intersection": 11,
+              "union": 33,
+              "iou": 0.3333,
+              "overlap_coefficient": 0.5238
+            },
+            "clip_domain|combined": {
+              "size_a": 21,
+              "size_b": 3,
+              "intersection": 3,
+              "union": 21,
+              "iou": 0.1429,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|clip_external": {
+              "size_a": 21,
+              "size_b": 56,
+              "intersection": 21,
+              "union": 56,
+              "iou": 0.375,
+              "overlap_coefficient": 1.0
+            },
+            "clip_domain|npr": {
+              "size_a": 21,
+              "size_b": 56,
+              "intersection": 21,
+              "union": 56,
+              "iou": 0.375,
+              "overlap_coefficient": 1.0
+            },
+            "clip_external|forensic": {
+              "size_a": 56,
+              "size_b": 23,
+              "intersection": 23,
+              "union": 56,
+              "iou": 0.4107,
+              "overlap_coefficient": 1.0
+            },
+            "clip_external|combined": {
+              "size_a": 56,
+              "size_b": 3,
+              "intersection": 3,
+              "union": 56,
+              "iou": 0.0536,
+              "overlap_coefficient": 1.0
+            },
+            "clip_external|npr": {
+              "size_a": 56,
+              "size_b": 56,
+              "intersection": 56,
+              "union": 56,
+              "iou": 1.0,
+              "overlap_coefficient": 1.0
+            }
+          },
+          "mean_pairwise_iou": 0.3238,
+          "pairs_with_undefined_iou": 0
+        }
+      }
+    }
+  },
+  "add_one_in_vs_incumbent_fusion": {
+    "incumbent": {
+      "members": [
+        "forensic",
+        "combined"
+      ],
+      "weights": {
+        "combined": 0.6,
+        "forensic": 0.25
+      },
+      "accuracy": 0.9412,
+      "fpr": 0.0317,
+      "tpr": 0.9107,
+      "auc": 0.966,
+      "threshold": 0.672378,
+      "error_seqs": [
+        3,
+        9,
+        29,
+        30,
+        31,
+        57,
+        58
+      ]
+    },
+    "operating_point": "threshold from the real OOF scores with a false-positive budget of 2 (target FPR 3% at 7:3)",
+    "add": {
+      "clip_domain": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "clip_domain": 0.15
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "clip_domain"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.9632,
+        "delta_accuracy_vs_incumbent": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      },
+      "clip_external": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "clip_external": 0.15
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "clip_external"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.966,
+        "delta_accuracy_vs_incumbent": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      },
+      "npr": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "npr": 0.1
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "npr"
+        ],
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "auc": 0.9657,
+        "delta_accuracy_vs_incumbent": -0.0084,
+        "delta_tpr_at_fpr1": 0.0,
+        "errors_fixed_n": 0,
+        "errors_fixed_seqs": [],
+        "errors_introduced_n": 1,
+        "errors_introduced_seqs": [
+          54
+        ],
+        "net_errors": 1
+      }
+    }
+  },
+  "stepwise_incremental": {
+    "order": [
+      "combined",
+      "forensic",
+      "clip_domain",
+      "clip_external",
+      "npr"
+    ],
+    "rows": [
+      {
+        "combination": "combined",
+        "added": "combined",
+        "auc": 0.9634,
+        "accuracy": 0.916,
+        "fpr": 0.0317,
+        "tpr": 0.8571,
+        "tpr@fpr=1%": 0.0,
+        "tpr@fpr=5%": 0.9464,
+        "delta_tpr_at_fpr1_vs_previous_row": null,
+        "delta_tpr_at_fpr5_vs_previous_row": null,
+        "weights": {
+          "combined": 0.4
+        }
+      },
+      {
+        "combination": "combined + forensic",
+        "added": "forensic",
+        "auc": 0.9666,
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "tpr@fpr=1%": 0.0,
+        "tpr@fpr=5%": 0.9643,
+        "delta_tpr_at_fpr1_vs_previous_row": 0.0,
+        "delta_tpr_at_fpr5_vs_previous_row": 0.0179,
+        "weights": {
+          "combined": 0.4,
+          "forensic": 0.2
+        }
+      },
+      {
+        "combination": "combined + forensic + clip_domain",
+        "added": "clip_domain",
+        "auc": 0.9617,
+        "accuracy": 0.9328,
+        "fpr": 0.0317,
+        "tpr": 0.8929,
+        "tpr@fpr=1%": 0.0,
+        "tpr@fpr=5%": 0.9286,
+        "delta_tpr_at_fpr1_vs_previous_row": 0.0,
+        "delta_tpr_at_fpr5_vs_previous_row": -0.0357,
+        "weights": {
+          "combined": 0.4,
+          "forensic": 0.2,
+          "clip_domain": 0.15
+        }
+      },
+      {
+        "combination": "combined + forensic + clip_domain + clip_external",
+        "added": "clip_external",
+        "auc": 0.9617,
+        "accuracy": 0.8992,
+        "fpr": 0.0317,
+        "tpr": 0.8214,
+        "tpr@fpr=1%": 0.0,
+        "tpr@fpr=5%": 0.9286,
+        "delta_tpr_at_fpr1_vs_previous_row": 0.0,
+        "delta_tpr_at_fpr5_vs_previous_row": 0.0,
+        "weights": {
+          "combined": 0.4,
+          "forensic": 0.2,
+          "clip_domain": 0.15,
+          "clip_external": 0.15
+        }
+      },
+      {
+        "combination": "combined + forensic + clip_domain + clip_external + npr",
+        "added": "npr",
+        "auc": 0.9612,
+        "accuracy": 0.8739,
+        "fpr": 0.0317,
+        "tpr": 0.7679,
+        "tpr@fpr=1%": 0.0,
+        "tpr@fpr=5%": 0.9286,
+        "delta_tpr_at_fpr1_vs_previous_row": 0.0,
+        "delta_tpr_at_fpr5_vs_previous_row": 0.0,
+        "weights": {
+          "combined": 0.4,
+          "forensic": 0.2,
+          "clip_domain": 0.15,
+          "clip_external": 0.15,
+          "npr": 0.1
+        }
+      }
+    ]
+  },
+  "leave_one_out": {
+    "deployed_frozen": {
+      "weights": {
+        "combined": 0.6,
+        "forensic": 0.25
+      },
+      "members": [
+        "forensic",
+        "combined"
+      ],
+      "routes_not_in_this_table": [
+        "clip_domain",
+        "clip_external",
+        "npr"
+      ],
+      "full_combination": {
+        "auc": 0.966,
+        "accuracy": 0.9412,
+        "fpr": 0.0317,
+        "tpr": 0.9107,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": 0.9464,
+        "threshold": 0.672378
+      },
+      "granularity_note": "TPR@FPR=1% is an integer count over 63 real samples: the 0.01 target is below the smallest achievable non-zero FPR (1/63 = 1.59%), so Δ values at 1% are dominated by one sample. The accompanying FPR-grid curve and the 5% column show the region where the ranking is resolvable.",
+      "remove": {
+        "forensic": {
+          "members_after_removal": [
+            "combined"
+          ],
+          "auc": 0.9634,
+          "accuracy": 0.916,
+          "fpr": 0.0317,
+          "tpr": 0.8571,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+          "delta_accuracy": 0.0252,
+          "delta_auc": 0.0026,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0714,
+            "fpr=0.030": 0.0714,
+            "fpr=0.050": 0.0,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+        },
+        "combined": {
+          "members_after_removal": [
+            "forensic"
+          ],
+          "auc": 0.9045,
+          "accuracy": 0.6387,
+          "fpr": 0.0317,
+          "tpr": 0.2679,
+          "tpr@fpr=1%": 0.1607,
+          "delta_tpr_at_fpr1_full_minus_removed": -0.1607,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.4107,
+          "delta_accuracy": 0.3025,
+          "delta_auc": 0.0615,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": -0.1607,
+            "fpr=0.010": -0.1607,
+            "fpr=0.020": -0.1071,
+            "fpr=0.030": -0.1071,
+            "fpr=0.050": 0.4107,
+            "fpr=0.100": 0.125
+          },
+          "contribution_verdict": "contributes at least the pre-registered ΔTPR margin"
+        }
+      }
+    },
+    "extended_5route": {
+      "weights": {
+        "combined": 0.4,
+        "forensic": 0.2,
+        "clip_domain": 0.15,
+        "clip_external": 0.15,
+        "npr": 0.1
+      },
+      "members": [
+        "forensic",
+        "combined",
+        "clip_domain",
+        "clip_external",
+        "npr"
+      ],
+      "routes_not_in_this_table": [],
+      "full_combination": {
+        "auc": 0.9612,
+        "accuracy": 0.8739,
+        "fpr": 0.0317,
+        "tpr": 0.7679,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0,
+          "tpr_empirical": 0.0,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": 0.9286,
+        "threshold": 0.72631
+      },
+      "granularity_note": "TPR@FPR=1% is an integer count over 63 real samples: the 0.01 target is below the smallest achievable non-zero FPR (1/63 = 1.59%), so Δ values at 1% are dominated by one sample. The accompanying FPR-grid curve and the 5% column show the region where the ranking is resolvable.",
+      "remove": {
+        "forensic": {
+          "members_after_removal": [
+            "combined",
+            "clip_domain",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.9578,
+          "accuracy": 0.8403,
+          "fpr": 0.0317,
+          "tpr": 0.6964,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": -0.0178,
+          "delta_accuracy": 0.0336,
+          "delta_auc": 0.0034,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0536,
+            "fpr=0.030": 0.0536,
+            "fpr=0.050": -0.0178,
+            "fpr=0.100": 0.0179
+          },
+          "contribution_verdict": "below the pre-registered |ΔTPR| >= 0.02 gate at FPR=5% - candidate for removal",
+          "contribution_verdict_basis": "delta_tpr_at_fpr5%"
+        },
+        "combined": {
+          "members_after_removal": [
+            "forensic",
+            "clip_domain",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.9342,
+          "accuracy": 0.7059,
+          "fpr": 0.0317,
+          "tpr": 0.4107,
+          "tpr@fpr=1%": 0.0893,
+          "delta_tpr_at_fpr1_full_minus_removed": -0.0893,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.1607,
+          "delta_accuracy": 0.168,
+          "delta_auc": 0.027,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": -0.0893,
+            "fpr=0.010": -0.0893,
+            "fpr=0.020": -0.0178,
+            "fpr=0.030": -0.0178,
+            "fpr=0.050": 0.1607,
+            "fpr=0.100": 0.1072
+          },
+          "contribution_verdict": "clears the pre-registered |ΔTPR| gate at FPR=5%",
+          "contribution_verdict_basis": "delta_tpr_at_fpr5%"
+        },
+        "clip_domain": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.9663,
+          "accuracy": 0.9244,
+          "fpr": 0.0317,
+          "tpr": 0.875,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": -0.0357,
+          "delta_accuracy": -0.0505,
+          "delta_auc": -0.0051,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": -0.0357,
+            "fpr=0.030": -0.0357,
+            "fpr=0.050": -0.0357,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "clears the pre-registered |ΔTPR| gate at FPR=5%",
+          "contribution_verdict_basis": "delta_tpr_at_fpr5%"
+        },
+        "clip_external": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_domain",
+            "npr"
+          ],
+          "auc": 0.9617,
+          "accuracy": 0.916,
+          "fpr": 0.0317,
+          "tpr": 0.8571,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+          "delta_accuracy": -0.0421,
+          "delta_auc": -0.0005,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0,
+            "fpr=0.030": 0.0,
+            "fpr=0.050": 0.0,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "below the pre-registered |ΔTPR| >= 0.02 gate at FPR=5% - candidate for removal",
+          "contribution_verdict_basis": "delta_tpr_at_fpr5%"
+        },
+        "npr": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_domain",
+            "clip_external"
+          ],
+          "auc": 0.9617,
+          "accuracy": 0.8992,
+          "fpr": 0.0317,
+          "tpr": 0.8214,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+          "delta_accuracy": -0.0253,
+          "delta_auc": -0.0005,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0,
+            "fpr=0.030": 0.0,
+            "fpr=0.050": 0.0,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "below the pre-registered |ΔTPR| >= 0.02 gate at FPR=5% - candidate for removal",
+          "contribution_verdict_basis": "delta_tpr_at_fpr5%"
+        }
+      }
+    },
+    "equal_5route": {
+      "weights": {
+        "forensic": 1.0,
+        "combined": 1.0,
+        "clip_domain": 1.0,
+        "clip_external": 1.0,
+        "npr": 1.0
+      },
+      "members": [
+        "forensic",
+        "combined",
+        "clip_domain",
+        "clip_external",
+        "npr"
+      ],
+      "routes_not_in_this_table": [],
+      "full_combination": {
+        "auc": 0.9572,
+        "accuracy": 0.7983,
+        "fpr": 0.0317,
+        "tpr": 0.6071,
+        "tpr@fpr=1%": {
+          "target_fpr": 0.01,
+          "tpr_interp": 0.0179,
+          "tpr_empirical": 0.0179,
+          "achieved_fpr_empirical": 0.0
+        },
+        "tpr@fpr=5%": 0.9286,
+        "threshold": 0.728839
+      },
+      "granularity_note": "TPR@FPR=1% is an integer count over 63 real samples: the 0.01 target is below the smallest achievable non-zero FPR (1/63 = 1.59%), so Δ values at 1% are dominated by one sample. The accompanying FPR-grid curve and the 5% column show the region where the ranking is resolvable.",
+      "remove": {
+        "forensic": {
+          "members_after_removal": [
+            "combined",
+            "clip_domain",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.949,
+          "accuracy": 0.7395,
+          "fpr": 0.0317,
+          "tpr": 0.4821,
+          "tpr@fpr=1%": 0.0,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0179,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.1072,
+          "delta_accuracy": 0.0588,
+          "delta_auc": 0.0082,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0179,
+            "fpr=0.010": 0.0179,
+            "fpr=0.020": 0.0714,
+            "fpr=0.030": 0.0714,
+            "fpr=0.050": 0.1072,
+            "fpr=0.100": -0.0178
+          },
+          "contribution_verdict": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+        },
+        "combined": {
+          "members_after_removal": [
+            "forensic",
+            "clip_domain",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.9294,
+          "accuracy": 0.6975,
+          "fpr": 0.0317,
+          "tpr": 0.3929,
+          "tpr@fpr=1%": 0.0714,
+          "delta_tpr_at_fpr1_full_minus_removed": -0.0535,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.1429,
+          "delta_accuracy": 0.1008,
+          "delta_auc": 0.0278,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": -0.0535,
+            "fpr=0.010": -0.0535,
+            "fpr=0.020": 0.0,
+            "fpr=0.030": 0.0,
+            "fpr=0.050": 0.1429,
+            "fpr=0.100": 0.1072
+          },
+          "contribution_verdict": "contributes at least the pre-registered ΔTPR margin"
+        },
+        "clip_domain": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_external",
+            "npr"
+          ],
+          "auc": 0.9649,
+          "accuracy": 0.8403,
+          "fpr": 0.0317,
+          "tpr": 0.6964,
+          "tpr@fpr=1%": 0.0179,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": -0.0178,
+          "delta_accuracy": -0.042,
+          "delta_auc": -0.0077,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": -0.0357,
+            "fpr=0.030": -0.0357,
+            "fpr=0.050": -0.0178,
+            "fpr=0.100": -0.0535
+          },
+          "contribution_verdict": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+        },
+        "clip_external": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_domain",
+            "npr"
+          ],
+          "auc": 0.9575,
+          "accuracy": 0.8403,
+          "fpr": 0.0317,
+          "tpr": 0.6964,
+          "tpr@fpr=1%": 0.0179,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+          "delta_accuracy": -0.042,
+          "delta_auc": -0.0003,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0179,
+            "fpr=0.030": 0.0179,
+            "fpr=0.050": 0.0,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+        },
+        "npr": {
+          "members_after_removal": [
+            "forensic",
+            "combined",
+            "clip_domain",
+            "clip_external"
+          ],
+          "auc": 0.9586,
+          "accuracy": 0.8235,
+          "fpr": 0.0317,
+          "tpr": 0.6607,
+          "tpr@fpr=1%": 0.0179,
+          "delta_tpr_at_fpr1_full_minus_removed": 0.0,
+          "delta_tpr_at_fpr5pct_full_minus_removed": 0.0,
+          "delta_accuracy": -0.0252,
+          "delta_auc": -0.0014,
+          "delta_curve_tpr_at_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0,
+            "fpr=0.030": 0.0,
+            "fpr=0.050": 0.0,
+            "fpr=0.100": 0.0
+          },
+          "contribution_verdict": "below the pre-registered 0.02 ΔTPR@FPR=1% gate - candidate for removal"
+        }
+      }
+    }
+  },
+  "retention_gate": {
+    "forensic": {
+      "mean_fp_iou_vs_others": 0.1805,
+      "pairs_used": 4,
+      "passes_overlap_gate": true
+    },
+    "combined": {
+      "mean_fp_iou_vs_others": 0.1964,
+      "pairs_used": 4,
+      "passes_overlap_gate": true
+    },
+    "clip_domain": {
+      "mean_fp_iou_vs_others": 0.127,
+      "pairs_used": 4,
+      "passes_overlap_gate": true
+    },
+    "clip_external": {
+      "mean_fp_iou_vs_others": 0.0,
+      "pairs_used": 3,
+      "passes_overlap_gate": true
+    },
+    "npr": {
+      "mean_fp_iou_vs_others": 0.0,
+      "pairs_used": 3,
+      "passes_overlap_gate": true
+    }
+  },
+  "conclusions": {
+    "routes_below_gate_primary_fpr5": [
+      "forensic",
+      "clip_external",
+      "npr"
+    ],
+    "routes_below_gate_fpr1_informational": [
+      "forensic",
+      "clip_domain",
+      "clip_external",
+      "npr"
+    ],
+    "loo_delta_at_fpr1pct": {
+      "forensic": 0.0,
+      "combined": -0.0893,
+      "clip_domain": 0.0,
+      "clip_external": 0.0,
+      "npr": 0.0
+    },
+    "loo_delta_at_fpr5pct": {
+      "forensic": -0.0178,
+      "combined": 0.1607,
+      "clip_domain": -0.0357,
+      "clip_external": 0.0,
+      "npr": 0.0
+    },
+    "single_member_auc_note": "a one-member fusion equals that route's clipped calibrated probability, so its AUC can differ from oof_auc in the 4th decimal (fusion.py clips at 1e-6)",
+    "npr_note": "npr is the weakest route (see single_route_table) and the stepwise table shows whether its incremental ΔTPR clears the pre-registered gate",
+    "closest_pairs_by_correlation": [
+      [
+        "clip_domain|combined",
+        {
+          "pearson": 0.8342,
+          "pearson_p": 5.02e-32,
+          "spearman": 0.8325,
+          "spearman_p": 8.64e-32
+        }
+      ],
+      [
+        "combined|forensic",
+        {
+          "pearson": 0.7545,
+          "pearson_p": 3.9e-23,
+          "spearman": 0.7412,
+          "spearman_p": 5.49e-22
+        }
+      ],
+      [
+        "clip_domain|forensic",
+        {
+          "pearson": 0.6568,
+          "pearson_p": 5.03e-16,
+          "spearman": 0.6384,
+          "spearman_p": 5.74e-15
+        }
+      ]
+    ],
+    "highest_fp_overlap_pairs": [
+      [
+        "combined|forensic",
+        0.5
+      ],
+      [
+        "clip_domain|combined",
+        0.2857
+      ],
+      [
+        "clip_domain|forensic",
+        0.2222
+      ]
+    ],
+    "reading": "a route is retained only if it clears the ΔTPR gate AND its errors are not dominated by overlap with the existing routes (manual ch.12.1)"
+  },
+  "limitations": [
+    "All numbers are out-of-fold on the 119 competition samples; the analysis tables that include clip_domain/npr are analysis configurations, not the deployed fusion (models/fusion.json uses combined+forensic only).",
+    "TPR@FPR=1% cannot be measured exactly with 63 real samples (1 FP = 1.59%); the interpolated ROC value is reported and the integer granularity is noted wherever a Δ of one sample is discussed.",
+    "Error-set overlap is computed at a fixed operating point; a route that is redundant under one threshold can be complementary under another, so both conventions are reported."
+  ]
+}

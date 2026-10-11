@@ -1,0 +1,415 @@
+{
+  "report": "threshold_stability",
+  "manual_sections": [
+    "13.1 阈值标定与置信度校准",
+    "表 13-1 步骤 3-6",
+    "表 13-2 阈值标定记录",
+    "17.1 多次标定的波动"
+  ],
+  "generated_at": "2026-10-11T03:18:51+00:00",
+  "script": "repo/scripts/threshold_stability.py",
+  "calibration_set": {
+    "n_real": 63,
+    "n_ai": 56,
+    "source": "out-of-fold fused scores of the real samples in the 119-sample competition set (scripts/metrics_common.py, deployed per-fold path)",
+    "score_statistics": {
+      "min": 0.001195,
+      "p25": 0.033778,
+      "median": 0.070912,
+      "p75": 0.132401,
+      "p90": 0.234893,
+      "p95": 0.345094,
+      "max": 0.999673,
+      "mean": 0.117205,
+      "std": 0.181067,
+      "iqr": 0.098623
+    },
+    "proxy_source_mix": {
+      "note": "proxy labels derived from L1b features; not human annotation (see reports/stratified_analysis.json for the rule)",
+      "digital_render_proxy": 12,
+      "camera_capture_proxy": 12,
+      "ambiguous": 39
+    },
+    "independence": "THE 119 SAMPLES ARE THE ONLY LABELLED DOMAIN DATA: real scores are out-of-fold but not drawn from an independent pure-real calibration corpus, so every interval below underestimates the true uncertainty of a deployment threshold"
+  },
+  "point_estimates": {
+    "high_tier_deployed_rule_fp_budget_2": {
+      "threshold": 0.671855,
+      "rule": "order statistic admitting at most 2 false positive(s)",
+      "empirical_fpr_on_calibration_set": 0.0317,
+      "allowed_fp": 2,
+      "achieved_fp": 2
+    },
+    "high_tier_target_1pct_fp_budget_0": {
+      "threshold": 0.999673,
+      "rule": "order statistic admitting at most 0 false positive(s)",
+      "empirical_fpr_on_calibration_set": 0.0,
+      "allowed_fp": 0,
+      "achieved_fp": 0
+    },
+    "high_tier_quantile_97pct": {
+      "threshold": 0.440159,
+      "rule": "empirical 97th percentile (initial estimate only; the manual forbids treating '99th percentile == FPR 1%' as an identity)",
+      "empirical_fpr_on_calibration_set": 0.0317
+    },
+    "low_tier_median": {
+      "threshold": 0.070912,
+      "rule": "median of the pure-real calibration scores (the deployed thr_low rule)",
+      "empirical_fpr_on_calibration_set": 0.5079
+    },
+    "frozen_deployed_thresholds": {
+      "thr_high": 0.6742875975794557,
+      "thr_low": 0.036440409414102856,
+      "source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json",
+      "empirical_fpr_at_thr_high": 0.0317,
+      "note": "the value actually shipped in models/fusion.json, derived by evaluate_system.py on the same protocol"
+    }
+  },
+  "bootstrap": {
+    "absolute_budget_2_deployed_rule": {
+      "rule": "resample the 63 real scores with replacement, recompute the order statistic with a false-positive budget of 2",
+      "point_estimate": 0.671855,
+      "bootstrap": {
+        "draws": 2000,
+        "median": 0.671855,
+        "mean": 0.639893,
+        "std": 0.281471,
+        "ci95_percentile": [
+          0.262367,
+          0.999673
+        ],
+        "width_ci95": 0.737306,
+        "min": 0.187659,
+        "max": 0.999673
+      }
+    },
+    "absolute_budget_0_strict_1pct": {
+      "rule": "resample the 63 real scores with replacement, recompute the order statistic with a false-positive budget of 0",
+      "point_estimate": 0.999673,
+      "bootstrap": {
+        "draws": 2000,
+        "median": 0.999673,
+        "mean": 0.915754,
+        "std": 0.217122,
+        "ci95_percentile": [
+          0.347223,
+          0.999673
+        ],
+        "width_ci95": 0.65245,
+        "min": 0.20119,
+        "max": 0.999673
+      }
+    },
+    "scaled_budget_floor_3pct_of_n": {
+      "rule": "resample the 63 real scores with replacement, recompute the order statistic with a false-positive budget of 1",
+      "point_estimate": 0.996664,
+      "bootstrap": {
+        "draws": 2000,
+        "median": 0.993655,
+        "mean": 0.822881,
+        "std": 0.232085,
+        "ci95_percentile": [
+          0.325935,
+          0.999673
+        ],
+        "width_ci95": 0.673738,
+        "min": 0.222869,
+        "max": 0.999673
+      }
+    }
+  },
+  "frozen_threshold_fpr": {
+    "empirical_fpr_of_frozen_threshold": {
+      "frozen_threshold": 0.674288,
+      "empirical_fpr_calibration_set": 0.0317,
+      "bootstrap_ci95": [
+        0.0,
+        0.079365
+      ],
+      "bootstrap_mean": 0.03181,
+      "bootstrap_std": 0.021746,
+      "target_fpr": 0.03,
+      "verdict": "95% CI upper bound above the 3% acceptance level"
+    },
+    "fraction_of_bootstrap_draws_with_zero_fp": {
+      "rule": "share of resamples of the real calibration scores in which the frozen threshold admits no false positive at all",
+      "value": 0.142
+    }
+  },
+  "sensitivity": {
+    "target_fpr_curve": {
+      "target_fpr=0.005": {
+        "threshold": 0.999673,
+        "allowed_fp": 0,
+        "empirical_fpr": 0.0
+      },
+      "target_fpr=0.010": {
+        "threshold": 0.999673,
+        "allowed_fp": 0,
+        "empirical_fpr": 0.0
+      },
+      "target_fpr=0.020": {
+        "threshold": 0.996664,
+        "allowed_fp": 1,
+        "empirical_fpr": 0.0159
+      },
+      "target_fpr=0.030": {
+        "threshold": 0.996664,
+        "allowed_fp": 1,
+        "empirical_fpr": 0.0159
+      },
+      "target_fpr=0.050": {
+        "threshold": 0.348639,
+        "allowed_fp": 3,
+        "empirical_fpr": 0.0476
+      },
+      "target_fpr=0.100": {
+        "threshold": 0.262367,
+        "allowed_fp": 6,
+        "empirical_fpr": 0.0952
+      }
+    },
+    "target_fpr_slope_score_units_per_1pct_fpr": {
+      "at_1pct": -0.300862,
+      "at_3pct": -32.480877,
+      "sign_convention": "negative = a looser (higher) FPR target lowers the threshold",
+      "reading": "how far the threshold moves per percentage point of target FPR; a steep slope means the operating point is fragile to FPR re-negotiation, and a large magnitude here means the real-score distribution has a wide gap where the threshold must sit"
+    },
+    "location_shift": {
+      "rule": "add a constant to every real calibration score, then recompute the threshold (a distribution whose quantiles drift upward/downward)",
+      "iqr": 0.098623,
+      "table": [
+        {
+          "shift": -0.1,
+          "threshold": 0.571855,
+          "delta_threshold": -0.1,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": -1.014
+        },
+        {
+          "shift": -0.05,
+          "threshold": 0.621855,
+          "delta_threshold": -0.05,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": -0.507
+        },
+        {
+          "shift": -0.02,
+          "threshold": 0.651855,
+          "delta_threshold": -0.02,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": -0.2028
+        },
+        {
+          "shift": 0.0,
+          "threshold": 0.671855,
+          "delta_threshold": 0.0,
+          "drift_ratio": null,
+          "delta_in_iqr_units": 0.0
+        },
+        {
+          "shift": 0.02,
+          "threshold": 0.691855,
+          "delta_threshold": 0.02,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": 0.2028
+        },
+        {
+          "shift": 0.05,
+          "threshold": 0.721855,
+          "delta_threshold": 0.05,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": 0.507
+        },
+        {
+          "shift": 0.1,
+          "threshold": 0.771855,
+          "delta_threshold": 0.1,
+          "drift_ratio": 1.0,
+          "delta_in_iqr_units": 1.014
+        }
+      ],
+      "max_abs_delta_threshold": 0.1,
+      "interpretation": "the order-statistic threshold tracks a pure location shift one-for-one (drift_ratio ~1); what changes the *false positive count* is the shape, not the shift"
+    },
+    "scale_change": {
+      "rule": "stretch the real scores around their median by a factor, then recompute the threshold",
+      "table": [
+        {
+          "factor": 0.8,
+          "threshold": 0.551667,
+          "delta_threshold": -0.120188
+        },
+        {
+          "factor": 0.9,
+          "threshold": 0.611761,
+          "delta_threshold": -0.060094
+        },
+        {
+          "factor": 1.0,
+          "threshold": 0.671855,
+          "delta_threshold": 0.0
+        },
+        {
+          "factor": 1.1,
+          "threshold": 0.73195,
+          "delta_threshold": 0.060095
+        },
+        {
+          "factor": 1.2,
+          "threshold": 0.792044,
+          "delta_threshold": 0.120189
+        }
+      ],
+      "max_abs_delta_threshold": 0.120189
+    },
+    "calibration_set_size": {
+      "rule": "subsample the real calibration scores without replacement and recompute the threshold (how much a smaller calibration set moves it)",
+      "table": {
+        "n=20": {
+          "threshold_mean": 0.282409,
+          "threshold_std": 0.129683,
+          "threshold_ci95": [
+            0.136065,
+            0.671183
+          ],
+          "draws": 500
+        },
+        "n=30": {
+          "threshold_mean": 0.376461,
+          "threshold_std": 0.159686,
+          "threshold_ci95": [
+            0.188266,
+            0.671855
+          ],
+          "draws": 500
+        },
+        "n=40": {
+          "threshold_mean": 0.461146,
+          "threshold_std": 0.172004,
+          "threshold_ci95": [
+            0.254852,
+            0.671855
+          ],
+          "draws": 500
+        },
+        "n=50": {
+          "threshold_mean": 0.543695,
+          "threshold_std": 0.162899,
+          "threshold_ci95": [
+            0.306385,
+            0.671855
+          ],
+          "draws": 500
+        },
+        "n=63": {
+          "threshold_mean": 0.671855,
+          "threshold_std": 0.0,
+          "threshold_ci95": [
+            0.671855,
+            0.671855
+          ],
+          "draws": 500
+        }
+      },
+      "reading": "the threshold spread grows as the calibration set shrinks - the reason the manual asks for a calibration-set size to be reported next to every threshold"
+    }
+  },
+  "repeated_calibration": {
+    "protocol": "500 random half/half splits of the 63 real scores: the threshold is calibrated on one half and the empirical FPR is measured on the other half (manual 表 13-1 step 6); both halves are out-of-fold scores of real samples",
+    "policies": {
+      "absolute_budget_2": {
+        "budget_rule": "2 false positives regardless of calibration size (deployed rule)",
+        "calibrated_threshold": {
+          "mean": 0.382134,
+          "std": 0.161915,
+          "ci95": [
+            0.195781,
+            0.671855
+          ],
+          "full_set_threshold": 0.671855
+        },
+        "holdout_empirical_fpr": {
+          "mean": 0.0766,
+          "median": 0.0625,
+          "ci95": [
+            0.0,
+            0.2188
+          ],
+          "share_above_3pct": 0.76
+        },
+        "holdout_empirical_fpr_of_frozen_threshold": {
+          "mean": 0.0314,
+          "ci95": [
+            0.0,
+            0.0625
+          ],
+          "share_above_3pct": 0.76
+        }
+      },
+      "scaled_budget_floor_3pct": {
+        "budget_rule": "floor(3% * calibration-set size)",
+        "calibrated_threshold": {
+          "mean": 0.806336,
+          "std": 0.301955,
+          "ci95": [
+            0.286835,
+            0.999673
+          ],
+          "full_set_threshold": 0.671855
+        },
+        "holdout_empirical_fpr": {
+          "mean": 0.0347,
+          "median": 0.0312,
+          "ci95": [
+            0.0,
+            0.1562
+          ],
+          "share_above_3pct": 0.516
+        },
+        "holdout_empirical_fpr_of_frozen_threshold": {
+          "mean": 0.0331,
+          "ci95": [
+            0.0,
+            0.0625
+          ],
+          "share_above_3pct": 0.772
+        }
+      }
+    },
+    "reading": "half-size calibration halves have a different real-score composition, so the calibrated threshold moves; the hold-out FPR spread is the honest statement of how well a 3% target transfers. The absolute-budget policy allows 2 false positives on a 31-sample half (6.5%), which is why its hold-out FPR reads higher than the scaled-budget policy - both are reported rather than picking the flattering one."
+  },
+  "granularity": {
+    "n_real": 63,
+    "one_false_positive_equals_fpr": 0.0159,
+    "two_false_positives_equal_fpr": 0.0317,
+    "note": "the 1% guardrail cannot be resolved exactly at this sample size; the 3% acceptance level corresponds to exactly 2 false positives out of 63"
+  },
+  "headline": {
+    "calibration_set_n_real": 63,
+    "threshold_deployed_rule": 0.671855,
+    "threshold_frozen_shipped": 0.6742875975794557,
+    "threshold_bootstrap_median": 0.671855,
+    "threshold_bootstrap_ci95": [
+      0.262367,
+      0.999673
+    ],
+    "threshold_bootstrap_width": 0.737306,
+    "bootstrap_draws": 2000,
+    "empirical_fpr_frozen_threshold": 0.0317,
+    "empirical_fpr_frozen_threshold_ci95": [
+      0.0,
+      0.079365
+    ],
+    "holdout_fpr_mean_scaled_budget": 0.0347,
+    "holdout_fpr_mean_absolute_budget": 0.0766,
+    "sensitivity_max_threshold_drift_location_shift": 0.1,
+    "sensitivity_max_threshold_drift_scale_change": 0.120189,
+    "sensitivity_slope_at_3pct": -32.480877
+  },
+  "limitations": [
+    "The calibration set is the out-of-fold real scores of the 119 competition samples, not an independent pure-real corpus (none exists in this workspace); bootstrap intervals therefore describe sampling noise within this set only.",
+    "Real samples dominate the calibration set with digital/render-like material; the difficult negatives (low light, glare, blur, creases, screenshots) named in manual ch.13.1 are not separately available.",
+    "The threshold rule (order statistic with an absolute false-positive budget) is the deployed rule; other rules (e.g. fitting the score distribution) would produce different sensitivities."
+  ]
+}

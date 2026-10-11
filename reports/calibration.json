@@ -1,0 +1,1431 @@
+{
+  "report": "calibration_analysis",
+  "manual_sections": [
+    "13.1 阈值标定与置信度校准",
+    "15.1 护栏与操作点指标",
+    "3.2 误报硬护栏"
+  ],
+  "generated_at": "2026-10-11T03:18:49+00:00",
+  "script": "repo/scripts/calibration_analysis.py",
+  "data": {
+    "n_samples": 119,
+    "class_balance": {
+      "ai": 56,
+      "real": 63
+    },
+    "source": "out-of-fold scores from scripts/metrics_common.py (same folds/seed/features as scripts/evaluate_system.py)",
+    "protocol": {
+      "cv": "stratified 5-fold outer (random_state=42); 4-fold inner for calibration fitting (random_state=100+fold)",
+      "note": "identical folds/seed/features as scripts/evaluate_system.py; no hyper-parameter or threshold selection on held-out folds",
+      "calibration": "per-member temperature scaling (Guo et al. 2017); the temperature of a fold is fitted on inner-CV logits of the training fold, then applied to the held-out fold",
+      "n_samples": 119,
+      "class_balance": {
+        "ai": 56,
+        "real": 63
+      }
+    }
+  },
+  "operating_point": {
+    "score_definition": "fused probability = sigmoid(weighted mean of member logits after per-member temperature scaling), src/fusion.py FusionEngine.fuse",
+    "deployed_frozen_weights": {
+      "combined": 0.6,
+      "forensic": 0.25
+    },
+    "deployed_weights_source": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\fusion.json",
+    "deployed_thresholds": {
+      "thr_low": 0.036440409414102856,
+      "thr_high": 0.6742875975794557
+    },
+    "guardrails": {
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0,
+        "tpr_empirical": 0.0,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=1.59%(1/63)": {
+        "target_fpr": 0.015873015873015872,
+        "tpr_interp": 0.125,
+        "tpr_empirical": 0.125,
+        "achieved_fpr_empirical": 0.0159
+      },
+      "fpr@tpr=95%": {
+        "target_tpr": 0.95,
+        "fpr": 0.0317,
+        "reachable": true,
+        "tpr_at_that_point": 0.9643
+      },
+      "tpr_curve_vs_fpr": {
+        "fpr=0.005": 0.0,
+        "fpr=0.010": 0.0,
+        "fpr=0.020": 0.125,
+        "fpr=0.030": 0.125,
+        "fpr=0.050": 0.9643,
+        "fpr=0.100": 0.9643
+      },
+      "fpr_curve_vs_tpr": {
+        "tpr=0.50": 0.0317,
+        "tpr=0.75": 0.0317,
+        "tpr=0.90": 0.0317,
+        "tpr=0.95": 0.0317,
+        "tpr=0.99": 0.1746
+      },
+      "auc": 0.966,
+      "fixed_threshold_operating_point": {
+        "threshold": 0.674288,
+        "source": "models/fusion.json thr_high (frozen deployed threshold)",
+        "note": "descriptive: one global frozen threshold applied to the whole OOF score vector. The deployed pipeline derives a threshold per fold from its training-fold real scores, which is why its confusion matrix differs slightly from this row.",
+        "accuracy": 0.9412,
+        "fpr": 0.0317,
+        "tpr": 0.9107,
+        "precision": 0.9623,
+        "confusion": {
+          "tp": 51,
+          "tn": 61,
+          "fp": 2,
+          "fn": 5
+        }
+      },
+      "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+    },
+    "guardrails_raw_before_calibration": {
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0357,
+        "tpr_empirical": 0.0357,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=1.59%(1/63)": {
+        "target_fpr": 0.015873015873015872,
+        "tpr_interp": 0.375,
+        "tpr_empirical": 0.375,
+        "achieved_fpr_empirical": 0.0159
+      },
+      "fpr@tpr=95%": {
+        "target_tpr": 0.95,
+        "fpr": 0.0317,
+        "reachable": true,
+        "tpr_at_that_point": 0.9643
+      },
+      "tpr_curve_vs_fpr": {
+        "fpr=0.005": 0.0357,
+        "fpr=0.010": 0.0357,
+        "fpr=0.020": 0.375,
+        "fpr=0.030": 0.375,
+        "fpr=0.050": 0.9643,
+        "fpr=0.100": 0.9643
+      },
+      "fpr_curve_vs_tpr": {
+        "tpr=0.50": 0.0317,
+        "tpr=0.75": 0.0317,
+        "tpr=0.90": 0.0317,
+        "tpr=0.95": 0.0317,
+        "tpr=0.99": 0.2698
+      },
+      "auc": 0.9688,
+      "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+    },
+    "guardrails_after_final_temperature": {
+      "tpr@fpr=1%": {
+        "target_fpr": 0.01,
+        "tpr_interp": 0.0,
+        "tpr_empirical": 0.0,
+        "achieved_fpr_empirical": 0.0
+      },
+      "tpr@fpr=1.59%(1/63)": {
+        "target_fpr": 0.015873015873015872,
+        "tpr_interp": 0.0714,
+        "tpr_empirical": 0.0714,
+        "achieved_fpr_empirical": 0.0159
+      },
+      "fpr@tpr=95%": {
+        "target_tpr": 0.95,
+        "fpr": 0.127,
+        "reachable": true,
+        "tpr_at_that_point": 0.9821
+      },
+      "tpr_curve_vs_fpr": {
+        "fpr=0.005": 0.0,
+        "fpr=0.010": 0.0,
+        "fpr=0.020": 0.0714,
+        "fpr=0.030": 0.0714,
+        "fpr=0.050": 0.9464,
+        "fpr=0.100": 0.9464
+      },
+      "fpr_curve_vs_tpr": {
+        "tpr=0.50": 0.0317,
+        "tpr=0.75": 0.0317,
+        "tpr=0.90": 0.0317,
+        "tpr=0.95": 0.127,
+        "tpr=0.99": 0.2063
+      },
+      "auc": 0.9629,
+      "fixed_threshold_operating_point": {
+        "threshold": 0.674288,
+        "source": "models/fusion.json thr_high (frozen deployed threshold)",
+        "note": "descriptive: one global frozen threshold applied to the whole OOF score vector. The deployed pipeline derives a threshold per fold from its training-fold real scores, which is why its confusion matrix differs slightly from this row.",
+        "accuracy": 0.9412,
+        "fpr": 0.0317,
+        "tpr": 0.9107,
+        "precision": 0.9623,
+        "confusion": {
+          "tp": 51,
+          "tn": 61,
+          "fp": 2,
+          "fn": 5
+        }
+      },
+      "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+    },
+    "alternative_fusion_tables": {
+      "nominal_3route": {
+        "weights": {
+          "combined": 0.6,
+          "forensic": 0.25,
+          "clip_external": 0.15
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "clip_external"
+        ],
+        "scope": "analysis configuration - not the deployed fusion",
+        "ece_uniform_10": 0.0816,
+        "ece_uniform_15": 0.0927,
+        "brier": 0.0501,
+        "log_loss": 0.2573,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.125,
+            "tpr_empirical": 0.125,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.0476,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.125,
+            "fpr=0.030": 0.125,
+            "fpr=0.050": 0.9643,
+            "fpr=0.100": 0.9643
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.0476,
+            "tpr=0.99": 0.1746
+          },
+          "auc": 0.966,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "extended_5route": {
+        "weights": {
+          "combined": 0.4,
+          "forensic": 0.2,
+          "clip_domain": 0.15,
+          "clip_external": 0.15,
+          "npr": 0.1
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "clip_domain",
+          "clip_external",
+          "npr"
+        ],
+        "scope": "analysis configuration - not the deployed fusion",
+        "ece_uniform_10": 0.1129,
+        "ece_uniform_15": 0.1316,
+        "brier": 0.0629,
+        "log_loss": 0.2841,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0893,
+            "tpr_empirical": 0.0893,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.0952,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0893,
+            "fpr=0.030": 0.0893,
+            "fpr=0.050": 0.9286,
+            "fpr=0.100": 0.9643
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.0952,
+            "tpr=0.99": 0.2222
+          },
+          "auc": 0.9612,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "equal_5route": {
+        "weights": {
+          "forensic": 1.0,
+          "combined": 1.0,
+          "clip_domain": 1.0,
+          "clip_external": 1.0,
+          "npr": 1.0
+        },
+        "members": [
+          "forensic",
+          "combined",
+          "clip_domain",
+          "clip_external",
+          "npr"
+        ],
+        "scope": "analysis configuration - not the deployed fusion",
+        "ece_uniform_10": 0.1841,
+        "ece_uniform_15": 0.1894,
+        "brier": 0.0872,
+        "log_loss": 0.3382,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0179,
+            "tpr_empirical": 0.0179,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0893,
+            "tpr_empirical": 0.0893,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.2063,
+            "reachable": true,
+            "tpr_at_that_point": 0.9821
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0179,
+            "fpr=0.010": 0.0179,
+            "fpr=0.020": 0.0893,
+            "fpr=0.030": 0.0893,
+            "fpr=0.050": 0.9286,
+            "fpr=0.100": 0.9286
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.2063,
+            "tpr=0.99": 0.254
+          },
+          "auc": 0.9572,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      }
+    }
+  },
+  "calibration": {
+    "stages": {
+      "raw": {
+        "definition": "sigmoid(fused logit) with no temperature at all",
+        "ece_uniform_10": 0.0478,
+        "ece_uniform_15": 0.0456,
+        "ece_quantile_10": 0.0522,
+        "ece_quantile_15": 0.0586,
+        "mce_uniform_10": 0.7946,
+        "mce_uniform_15": 0.7946,
+        "brier": 0.0436,
+        "log_loss": 0.2216,
+        "mean_confidence": 0.4526,
+        "base_rate_positive": 0.4706,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0357,
+            "tpr_empirical": 0.0357,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.375,
+            "tpr_empirical": 0.375,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.0317,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0357,
+            "fpr=0.010": 0.0357,
+            "fpr=0.020": 0.375,
+            "fpr=0.030": 0.375,
+            "fpr=0.050": 0.9643,
+            "fpr=0.100": 0.9643
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.0317,
+            "tpr=0.99": 0.2698
+          },
+          "auc": 0.9688,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        },
+        "ece_ci95": {
+          "uniform_10": {
+            "bins": 10,
+            "draws": 2000,
+            "ece_ci95": [
+              0.023,
+              0.0876
+            ],
+            "ece_std": 0.0163
+          },
+          "uniform_15": {
+            "bins": 15,
+            "draws": 2000,
+            "ece_ci95": [
+              0.0278,
+              0.0872
+            ],
+            "ece_std": 0.0156
+          }
+        }
+      },
+      "before_member_temperature": {
+        "definition": "per-member temperature scaling only (the confidence the deployed pipeline reports)",
+        "ece_uniform_10": 0.0716,
+        "ece_uniform_15": 0.083,
+        "ece_quantile_10": 0.0768,
+        "ece_quantile_15": 0.0976,
+        "mce_uniform_10": 0.4875,
+        "mce_uniform_15": 0.4875,
+        "brier": 0.0482,
+        "log_loss": 0.2483,
+        "mean_confidence": 0.4679,
+        "base_rate_positive": 0.4706,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.125,
+            "tpr_empirical": 0.125,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.0317,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.125,
+            "fpr=0.030": 0.125,
+            "fpr=0.050": 0.9643,
+            "fpr=0.100": 0.9643
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.0317,
+            "tpr=0.99": 0.1746
+          },
+          "auc": 0.966,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        },
+        "ece_ci95": {
+          "uniform_10": {
+            "bins": 10,
+            "draws": 2000,
+            "ece_ci95": [
+              0.0613,
+              0.1158
+            ],
+            "ece_std": 0.014
+          },
+          "uniform_15": {
+            "bins": 15,
+            "draws": 2000,
+            "ece_ci95": [
+              0.0727,
+              0.1283
+            ],
+            "ece_std": 0.0145
+          }
+        }
+      },
+      "after_member_and_final_temperature": {
+        "definition": "per-member temperature + one global temperature on the fused logit, fitted out-of-fold",
+        "ece_uniform_10": 0.084,
+        "ece_uniform_15": 0.0961,
+        "ece_quantile_10": 0.0775,
+        "ece_quantile_15": 0.0839,
+        "mce_uniform_10": 0.4876,
+        "mce_uniform_15": 0.4876,
+        "brier": 0.0508,
+        "log_loss": 0.3756,
+        "mean_confidence": 0.466,
+        "base_rate_positive": 0.4706,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0714,
+            "tpr_empirical": 0.0714,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.127,
+            "reachable": true,
+            "tpr_at_that_point": 0.9821
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0714,
+            "fpr=0.030": 0.0714,
+            "fpr=0.050": 0.9464,
+            "fpr=0.100": 0.9464
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.127,
+            "tpr=0.99": 0.2063
+          },
+          "auc": 0.9629,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        },
+        "ece_ci95": {
+          "uniform_10": {
+            "bins": 10,
+            "draws": 2000,
+            "ece_ci95": [
+              0.066,
+              0.125
+            ],
+            "ece_std": 0.0152
+          },
+          "uniform_15": {
+            "bins": 15,
+            "draws": 2000,
+            "ece_ci95": [
+              0.0758,
+              0.1368
+            ],
+            "ece_std": 0.0157
+          }
+        }
+      }
+    },
+    "final_temperature": {
+      "per_fold": [
+        1.0539,
+        1.0726,
+        1.0082,
+        0.4736,
+        1.0007
+      ],
+      "median": 1.0082,
+      "mean": 0.9218,
+      "min": 0.4736,
+      "max": 1.0726,
+      "in_sample_reference": 0.9286,
+      "note": "T>1 means the fused confidence was over-confident; T<1 the opposite"
+    },
+    "headline_delta_ece": {
+      "ece_uniform_10_raw_minus_after": -0.0362,
+      "ece_uniform_15_raw_minus_after": -0.0505,
+      "ece_uniform_10_before_minus_after": -0.0124,
+      "ece_uniform_15_before_minus_after": -0.0131,
+      "brier_before_minus_after": -0.0026,
+      "sign_convention": "positive => the 'after' stage is better calibrated"
+    },
+    "interpretation": {
+      "final_temperature_improves_ece_vs_raw": false,
+      "final_temperature_improves_ece_vs_member_temperature": false,
+      "note": "the bootstrap CIs of the two stages overlap, so on 119 samples neither ordering is statistically established; the per-member table shows where temperature scaling is clearly necessary (the frozen clip_external / npr channels are severely over-confident before scaling)"
+    },
+    "per_member": {
+      "forensic": {
+        "definition": "LR on L1(47)+L1b(20) forensic/domain features (trainable, deployed)",
+        "frozen_weight": 0.25,
+        "auc_oof": 0.9082,
+        "ece_uniform_10_raw": 0.0797,
+        "ece_uniform_10_calibrated": 0.1125,
+        "ece_uniform_15_calibrated": 0.1251,
+        "brier_calibrated": 0.1237,
+        "log_loss_calibrated": 0.4233,
+        "temperature_per_fold": [
+          1.33,
+          1.6315,
+          1.5251,
+          0.8673,
+          2.6959
+        ],
+        "temperature_median": 1.5251,
+        "in_deployed_fusion": true,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.1607,
+            "tpr_empirical": 0.1607,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.2321,
+            "tpr_empirical": 0.2321,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.3492,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.1607,
+            "fpr=0.010": 0.1607,
+            "fpr=0.020": 0.2321,
+            "fpr=0.030": 0.2321,
+            "fpr=0.050": 0.5357,
+            "fpr=0.100": 0.8393
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0476,
+            "tpr=0.75": 0.0794,
+            "tpr=0.90": 0.2222,
+            "tpr=0.95": 0.3492,
+            "tpr=0.99": 0.8571
+          },
+          "auc": 0.9045,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "combined": {
+        "definition": "LR on L1(47)+L1b(20)+CLIP global(1024)+CLIP tiles(3072) (trainable, deployed)",
+        "frozen_weight": 0.6,
+        "auc_oof": 0.9657,
+        "ece_uniform_10_raw": 0.0468,
+        "ece_uniform_10_calibrated": 0.058,
+        "ece_uniform_15_calibrated": 0.058,
+        "brier_calibrated": 0.0482,
+        "log_loss_calibrated": 0.2768,
+        "temperature_per_fold": [
+          1.7628,
+          1.9918,
+          1.8725,
+          1.1447,
+          2.0924
+        ],
+        "temperature_median": 1.8725,
+        "in_deployed_fusion": true,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0536,
+            "tpr_empirical": 0.0536,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.0952,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0536,
+            "fpr=0.030": 0.0536,
+            "fpr=0.050": 0.9464,
+            "fpr=0.100": 0.9643
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0317,
+            "tpr=0.75": 0.0317,
+            "tpr=0.90": 0.0317,
+            "tpr=0.95": 0.0952,
+            "tpr=0.99": 0.1746
+          },
+          "auc": 0.9634,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "clip_domain": {
+        "definition": "LR on CLIP global features(1024) only (trainable, ablation channel)",
+        "frozen_weight": 0.0,
+        "auc_oof": 0.8951,
+        "ece_uniform_10_raw": 0.1068,
+        "ece_uniform_10_calibrated": 0.1012,
+        "ece_uniform_15_calibrated": 0.1232,
+        "brier_calibrated": 0.1328,
+        "log_loss_calibrated": 0.4632,
+        "temperature_per_fold": [
+          3.3683,
+          2.1459,
+          2.0021,
+          1.4244,
+          2.3568
+        ],
+        "temperature_median": 2.1459,
+        "in_deployed_fusion": false,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0,
+            "tpr_empirical": 0.0,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0893,
+            "tpr_empirical": 0.0893,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.381,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0,
+            "fpr=0.010": 0.0,
+            "fpr=0.020": 0.0893,
+            "fpr=0.030": 0.0893,
+            "fpr=0.050": 0.4107,
+            "fpr=0.100": 0.5893
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.0635,
+            "tpr=0.75": 0.127,
+            "tpr=0.90": 0.2063,
+            "tpr=0.95": 0.381,
+            "tpr=0.99": 0.873
+          },
+          "auc": 0.8812,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "clip_external": {
+        "definition": "frozen CLIP probe trained on the 18-generator benchmark (never trained on the 119)",
+        "frozen_weight": 0.0,
+        "auc_oof": 0.6477,
+        "ece_uniform_10_raw": 0.3846,
+        "ece_uniform_10_calibrated": 0.0665,
+        "ece_uniform_15_calibrated": 0.0742,
+        "brier_calibrated": 0.2431,
+        "log_loss_calibrated": 0.6792,
+        "temperature_per_fold": [
+          9.4839,
+          12.0806,
+          15.288,
+          14.2727,
+          14.7038
+        ],
+        "temperature_median": 14.2727,
+        "in_deployed_fusion": false,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0357,
+            "tpr_empirical": 0.0357,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.0893,
+            "tpr_empirical": 0.0893,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 0.9365,
+            "reachable": true,
+            "tpr_at_that_point": 0.9643
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0357,
+            "fpr=0.010": 0.0357,
+            "fpr=0.020": 0.0893,
+            "fpr=0.030": 0.0893,
+            "fpr=0.050": 0.1429,
+            "fpr=0.100": 0.1964
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.3333,
+            "tpr=0.75": 0.4921,
+            "tpr=0.90": 0.873,
+            "tpr=0.95": 0.9365,
+            "tpr=0.99": 1.0
+          },
+          "auc": 0.6284,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      },
+      "npr": {
+        "definition": "frozen NPR ResNet-18 logits on external benchmark shards (never trained on the 119)",
+        "frozen_weight": 0.0,
+        "auc_oof": 0.5692,
+        "ece_uniform_10_raw": 0.2909,
+        "ece_uniform_10_calibrated": 0.0572,
+        "ece_uniform_15_calibrated": 0.0579,
+        "brier_calibrated": 0.2479,
+        "log_loss_calibrated": 0.689,
+        "temperature_per_fold": [
+          8.9932,
+          12.9712,
+          16.9668,
+          11.1106,
+          11.6691
+        ],
+        "temperature_median": 11.6691,
+        "in_deployed_fusion": false,
+        "guardrails": {
+          "tpr@fpr=1%": {
+            "target_fpr": 0.01,
+            "tpr_interp": 0.0536,
+            "tpr_empirical": 0.0536,
+            "achieved_fpr_empirical": 0.0
+          },
+          "tpr@fpr=1.59%(1/63)": {
+            "target_fpr": 0.015873015873015872,
+            "tpr_interp": 0.1071,
+            "tpr_empirical": 0.1071,
+            "achieved_fpr_empirical": 0.0159
+          },
+          "fpr@tpr=95%": {
+            "target_tpr": 0.95,
+            "fpr": 1.0,
+            "reachable": true,
+            "tpr_at_that_point": 1.0
+          },
+          "tpr_curve_vs_fpr": {
+            "fpr=0.005": 0.0536,
+            "fpr=0.010": 0.0536,
+            "fpr=0.020": 0.1071,
+            "fpr=0.030": 0.1071,
+            "fpr=0.050": 0.1071,
+            "fpr=0.100": 0.1964
+          },
+          "fpr_curve_vs_tpr": {
+            "tpr=0.50": 0.3968,
+            "tpr=0.75": 0.7302,
+            "tpr=0.90": 0.873,
+            "tpr=0.95": 1.0,
+            "tpr=0.99": 1.0
+          },
+          "auc": 0.5584,
+          "convention_note": "tpr_interp linearly interpolates the ROC curve at the requested FPR; tpr_empirical is the best attainable TPR whose measured FPR is <= the target and therefore matches the step-function convention used by reports/metrics.json -> roc_frontier."
+        }
+      }
+    },
+    "reliability_diagram": {
+      "before": {
+        "uniform_10": {
+          "n_bins": 10,
+          "strategy": "uniform",
+          "ece": 0.0716,
+          "mce": 0.4875,
+          "n": 119,
+          "bins": [
+            {
+              "index": 0,
+              "lo": 0.0,
+              "hi": 0.1,
+              "count": 45,
+              "mean_confidence": 0.0465,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0465
+            },
+            {
+              "index": 1,
+              "lo": 0.1,
+              "hi": 0.2,
+              "count": 10,
+              "mean_confidence": 0.1483,
+              "empirical_positive_rate": 0.1,
+              "gap": 0.0483
+            },
+            {
+              "index": 2,
+              "lo": 0.2,
+              "hi": 0.3,
+              "count": 5,
+              "mean_confidence": 0.2336,
+              "empirical_positive_rate": 0.2,
+              "gap": 0.0336
+            },
+            {
+              "index": 3,
+              "lo": 0.3,
+              "hi": 0.4,
+              "count": 4,
+              "mean_confidence": 0.3439,
+              "empirical_positive_rate": 0.25,
+              "gap": 0.0939
+            },
+            {
+              "index": 4,
+              "lo": 0.4,
+              "hi": 0.5,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 5,
+              "lo": 0.5,
+              "hi": 0.6,
+              "count": 1,
+              "mean_confidence": 0.5125,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.4875
+            },
+            {
+              "index": 6,
+              "lo": 0.6,
+              "hi": 0.7,
+              "count": 2,
+              "mean_confidence": 0.6612,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.3388
+            },
+            {
+              "index": 7,
+              "lo": 0.7,
+              "hi": 0.8,
+              "count": 4,
+              "mean_confidence": 0.765,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.235
+            },
+            {
+              "index": 8,
+              "lo": 0.8,
+              "hi": 0.9,
+              "count": 16,
+              "mean_confidence": 0.8553,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.1447
+            },
+            {
+              "index": 9,
+              "lo": 0.9,
+              "hi": 1.0,
+              "count": 32,
+              "mean_confidence": 0.9682,
+              "empirical_positive_rate": 0.9375,
+              "gap": 0.0307
+            }
+          ]
+        },
+        "uniform_15": {
+          "n_bins": 15,
+          "strategy": "uniform",
+          "ece": 0.083,
+          "mce": 0.4875,
+          "n": 119,
+          "bins": [
+            {
+              "index": 0,
+              "lo": 0.0,
+              "hi": 0.0667,
+              "count": 31,
+              "mean_confidence": 0.0305,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0305
+            },
+            {
+              "index": 1,
+              "lo": 0.0667,
+              "hi": 0.1333,
+              "count": 16,
+              "mean_confidence": 0.0863,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0863
+            },
+            {
+              "index": 2,
+              "lo": 0.1333,
+              "hi": 0.2,
+              "count": 8,
+              "mean_confidence": 0.1563,
+              "empirical_positive_rate": 0.125,
+              "gap": 0.0313
+            },
+            {
+              "index": 3,
+              "lo": 0.2,
+              "hi": 0.2667,
+              "count": 4,
+              "mean_confidence": 0.2204,
+              "empirical_positive_rate": 0.25,
+              "gap": 0.0296
+            },
+            {
+              "index": 4,
+              "lo": 0.2667,
+              "hi": 0.3333,
+              "count": 2,
+              "mean_confidence": 0.3064,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.3064
+            },
+            {
+              "index": 5,
+              "lo": 0.3333,
+              "hi": 0.4,
+              "count": 3,
+              "mean_confidence": 0.3499,
+              "empirical_positive_rate": 0.3333,
+              "gap": 0.0166
+            },
+            {
+              "index": 6,
+              "lo": 0.4,
+              "hi": 0.4667,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 7,
+              "lo": 0.4667,
+              "hi": 0.5333,
+              "count": 1,
+              "mean_confidence": 0.5125,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.4875
+            },
+            {
+              "index": 8,
+              "lo": 0.5333,
+              "hi": 0.6,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 9,
+              "lo": 0.6,
+              "hi": 0.6667,
+              "count": 1,
+              "mean_confidence": 0.6453,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.3547
+            },
+            {
+              "index": 10,
+              "lo": 0.6667,
+              "hi": 0.7333,
+              "count": 2,
+              "mean_confidence": 0.7026,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.2974
+            },
+            {
+              "index": 11,
+              "lo": 0.7333,
+              "hi": 0.8,
+              "count": 3,
+              "mean_confidence": 0.7774,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.2226
+            },
+            {
+              "index": 12,
+              "lo": 0.8,
+              "hi": 0.8667,
+              "count": 10,
+              "mean_confidence": 0.8378,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.1622
+            },
+            {
+              "index": 13,
+              "lo": 0.8667,
+              "hi": 0.9333,
+              "count": 13,
+              "mean_confidence": 0.9039,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.0961
+            },
+            {
+              "index": 14,
+              "lo": 0.9333,
+              "hi": 1.0,
+              "count": 25,
+              "mean_confidence": 0.9816,
+              "empirical_positive_rate": 0.92,
+              "gap": 0.0616
+            }
+          ]
+        }
+      },
+      "after": {
+        "uniform_10": {
+          "n_bins": 10,
+          "strategy": "uniform",
+          "ece": 0.084,
+          "mce": 0.4876,
+          "n": 119,
+          "bins": [
+            {
+              "index": 0,
+              "lo": 0.0,
+              "hi": 0.1,
+              "count": 44,
+              "mean_confidence": 0.0421,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0421
+            },
+            {
+              "index": 1,
+              "lo": 0.1,
+              "hi": 0.2,
+              "count": 11,
+              "mean_confidence": 0.1511,
+              "empirical_positive_rate": 0.0909,
+              "gap": 0.0602
+            },
+            {
+              "index": 2,
+              "lo": 0.2,
+              "hi": 0.3,
+              "count": 6,
+              "mean_confidence": 0.2356,
+              "empirical_positive_rate": 0.3333,
+              "gap": 0.0978
+            },
+            {
+              "index": 3,
+              "lo": 0.3,
+              "hi": 0.4,
+              "count": 3,
+              "mean_confidence": 0.3479,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.3479
+            },
+            {
+              "index": 4,
+              "lo": 0.4,
+              "hi": 0.5,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 5,
+              "lo": 0.5,
+              "hi": 0.6,
+              "count": 1,
+              "mean_confidence": 0.5124,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.4876
+            },
+            {
+              "index": 6,
+              "lo": 0.6,
+              "hi": 0.7,
+              "count": 2,
+              "mean_confidence": 0.66,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.34
+            },
+            {
+              "index": 7,
+              "lo": 0.7,
+              "hi": 0.8,
+              "count": 4,
+              "mean_confidence": 0.7544,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.2456
+            },
+            {
+              "index": 8,
+              "lo": 0.8,
+              "hi": 0.9,
+              "count": 17,
+              "mean_confidence": 0.8508,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.1492
+            },
+            {
+              "index": 9,
+              "lo": 0.9,
+              "hi": 1.0,
+              "count": 31,
+              "mean_confidence": 0.9731,
+              "empirical_positive_rate": 0.9355,
+              "gap": 0.0376
+            }
+          ]
+        },
+        "uniform_15": {
+          "n_bins": 15,
+          "strategy": "uniform",
+          "ece": 0.0961,
+          "mce": 0.4876,
+          "n": 119,
+          "bins": [
+            {
+              "index": 0,
+              "lo": 0.0,
+              "hi": 0.0667,
+              "count": 32,
+              "mean_confidence": 0.0259,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0259
+            },
+            {
+              "index": 1,
+              "lo": 0.0667,
+              "hi": 0.1333,
+              "count": 15,
+              "mean_confidence": 0.0919,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.0919
+            },
+            {
+              "index": 2,
+              "lo": 0.1333,
+              "hi": 0.2,
+              "count": 8,
+              "mean_confidence": 0.1636,
+              "empirical_positive_rate": 0.125,
+              "gap": 0.0386
+            },
+            {
+              "index": 3,
+              "lo": 0.2,
+              "hi": 0.2667,
+              "count": 5,
+              "mean_confidence": 0.2234,
+              "empirical_positive_rate": 0.4,
+              "gap": 0.1766
+            },
+            {
+              "index": 4,
+              "lo": 0.2667,
+              "hi": 0.3333,
+              "count": 1,
+              "mean_confidence": 0.2965,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.2965
+            },
+            {
+              "index": 5,
+              "lo": 0.3333,
+              "hi": 0.4,
+              "count": 3,
+              "mean_confidence": 0.3479,
+              "empirical_positive_rate": 0.0,
+              "gap": 0.3479
+            },
+            {
+              "index": 6,
+              "lo": 0.4,
+              "hi": 0.4667,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 7,
+              "lo": 0.4667,
+              "hi": 0.5333,
+              "count": 1,
+              "mean_confidence": 0.5124,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.4876
+            },
+            {
+              "index": 8,
+              "lo": 0.5333,
+              "hi": 0.6,
+              "count": 0,
+              "mean_confidence": null,
+              "empirical_positive_rate": null,
+              "gap": null
+            },
+            {
+              "index": 9,
+              "lo": 0.6,
+              "hi": 0.6667,
+              "count": 1,
+              "mean_confidence": 0.6442,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.3558
+            },
+            {
+              "index": 10,
+              "lo": 0.6667,
+              "hi": 0.7333,
+              "count": 2,
+              "mean_confidence": 0.7011,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.2989
+            },
+            {
+              "index": 11,
+              "lo": 0.7333,
+              "hi": 0.8,
+              "count": 3,
+              "mean_confidence": 0.7637,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.2363
+            },
+            {
+              "index": 12,
+              "lo": 0.8,
+              "hi": 0.8667,
+              "count": 11,
+              "mean_confidence": 0.8336,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.1664
+            },
+            {
+              "index": 13,
+              "lo": 0.8667,
+              "hi": 0.9333,
+              "count": 11,
+              "mean_confidence": 0.8973,
+              "empirical_positive_rate": 1.0,
+              "gap": 0.1027
+            },
+            {
+              "index": 14,
+              "lo": 0.9333,
+              "hi": 1.0,
+              "count": 26,
+              "mean_confidence": 0.9842,
+              "empirical_positive_rate": 0.9231,
+              "gap": 0.0611
+            }
+          ]
+        }
+      },
+      "reading": "each bucket lists [lo, hi), sample count, mean predicted confidence, empirical positive rate and their absolute gap; a well-calibrated detector has gap ~= 0 in every bucket"
+    }
+  },
+  "consistency_check": {
+    "reference": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\reports\\metrics.json",
+    "checked": true,
+    "deployed_oof_reproduced": {
+      "accuracy": 0.958,
+      "fpr": 0.0317,
+      "tpr": 0.9464,
+      "precision": 0.9636,
+      "confusion": {
+        "tp": 53,
+        "tn": 61,
+        "fp": 2,
+        "fn": 3
+      }
+    },
+    "reports_metrics_json_oof_overall": {
+      "accuracy": 0.958,
+      "fpr": 0.0317,
+      "tpr": 0.9464,
+      "precision": 0.9636,
+      "confusion": {
+        "tp": 53,
+        "tn": 61,
+        "fp": 2,
+        "fn": 3
+      },
+      "three_tier": {
+        "suspect": 55,
+        "normal": 32,
+        "review": 32
+      }
+    },
+    "matches": true,
+    "recomputation_max_abs_deviation": 0.0
+  },
+  "headline": {
+    "n_samples": 119,
+    "n_ai": 56,
+    "n_real": 63,
+    "fused_auc": 0.966,
+    "tpr_at_fpr_1pct_interp": 0.0,
+    "tpr_at_fpr_1pct_empirical": 0.0,
+    "fpr_at_tpr_95pct": 0.0317,
+    "precision_at_frozen_threshold": 0.9623,
+    "recall_at_frozen_threshold": 0.9107,
+    "ece10_before": 0.0716,
+    "ece10_after": 0.084,
+    "ece15_before": 0.083,
+    "ece15_after": 0.0961,
+    "ece10_raw_no_temperature": 0.0478,
+    "brier_before": 0.0482,
+    "brier_after": 0.0508,
+    "final_temperature_median": 1.0082,
+    "reproduces_reports_metrics_json": true
+  },
+  "limitations": [
+    "The 119 samples are the only labelled domain data; the OOF split is not an independent test set and the class ratio (56 AI / 63 real) differs from the stated 7:3 evaluation ratio.",
+    "TPR@FPR=1% is granularity-limited: with 63 real samples, one false positive costs 1.59% FPR, so the exact 1% point is only reachable by interpolation (tpr_interp); tpr_empirical is the attainable value at FPR<=1%.",
+    "ECE on 119 samples is noisy; bootstrap 95% CIs are reported next to every ECE value and the intervals overlap between the before/after stages.",
+    "The final temperature is fitted out-of-fold, but on the same 119 samples used for evaluation - the estimate is therefore optimistic in absolute terms while still being an unbiased comparison of the two stages."
+  ]
+}

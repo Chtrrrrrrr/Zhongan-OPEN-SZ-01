@@ -24,8 +24,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ---------- 鏁版嵁涓庡ぇ鏂囦欢锛堜笉鍏ュ簱锛? Data & large files (not tracked) ----------
-# 鍛介鎻愪緵鐨?246MB xlsx銆佹彁鍙栧嚭鐨勫浘鐗囩瓑鍘熷鏁版嵁涓€寰嬩笉鍏ュ簱
+# ---------- 閺佺増宓佹稉搴°亣閺傚洣娆㈤敍鍫滅瑝閸忋儱绨遍敍? Data & large files (not tracked) ----------
+# 閸涗粙顣介幓鎰返閻?246MB xlsx閵嗕焦褰侀崣鏍у毉閻ㄥ嫬娴橀悧鍥╃搼閸樼喎顫愰弫鐗堝祦娑撯偓瀵板绗夐崗銉ョ氨
 *.xlsx
 *.xls
 data/images/
@@ -45,15 +45,14 @@ data/interim/
 *.mov
 *.mkv
 
-# 鏂囨。绫婚潤鎬佽祫婧愮櫧鍚嶅崟锛圧EADME/鏂囨。閰嶅浘鏀惧湪 assets/锛屽厑璁稿叆搴擄級
-!assets/**/*.png
+# 閺傚洦銆傜猾濠氭饯閹浇绁┃鎰閸氬秴宕熼敍鍦ADME/閺傚洦銆傞柊宥呮禈閺€鎯ф躬 assets/閿涘苯鍘戠拋绋垮弳鎼存搫绱?!assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
 !assets/**/*.gif
 !assets/**/*.webp
 
-# ---------- 妯″瀷鏉冮噸锛堜笉鍏ュ簱锛涘闇€鍏变韩璇蜂娇鐢?Git LFS 鎴栧閮ㄥ垎鍙戯級 ----------
-# 鎺ㄨ崘锛歡it lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
+# ---------- 濡€崇€烽弶鍐櫢閿涘牅绗夐崗銉ョ氨閿涙稑顩ч棁鈧崗鍙橀煩鐠囪渹濞囬悽?Git LFS 閹存牕顦婚柈銊ュ瀻閸欐埊绱?----------
+# 閹恒劏宕橀敍姝t lfs track "*.pt" "*.pth" "*.onnx" "*.bin" "*.safetensors"
 models/*
 !models/.gitkeep
 *.pt
@@ -66,7 +65,7 @@ models/*
 *.pkl
 *.joblib
 
-# ---------- 杩愯浜х墿 ----------
+# ---------- 鏉╂劘顢戞禍褏澧?----------
 reports/*
 !reports/.gitkeep
 !reports/metrics.json
@@ -76,7 +75,16 @@ reports/*
 !reports/error_analysis.csv
 !reports/npr_ablation.json
 !reports/robustness_matrix.json
+reports/api/
+reports/batch/
+!reports/robustness_smoke.json
 !reports/video_smoke.json
+# metrics pack (manual ch.12.1 / 13.1 / 15.1 / 16.2)
+!reports/calibration.json
+!reports/member_analysis.json
+!reports/threshold_stability.json
+!reports/stratified_analysis.json
+!reports/resource_profile.json
 *.log
 outputs/
 runs/

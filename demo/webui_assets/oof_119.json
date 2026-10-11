@@ -1,0 +1,3509 @@
+{
+ "note": "折外判定数据；由 models/oof_bundle_119.json 精简导出，字段含义见 assets 内 README",
+ "protocol": {
+  "cv": "stratified 5-fold outer (random_state=42); 4-fold inner for calibration fitting (random_state=100+fold)",
+  "note": "identical folds/seed/features as scripts/evaluate_system.py; no hyper-parameter or threshold selection on held-out folds",
+  "calibration": "per-member temperature scaling (Guo et al. 2017); the temperature of a fold is fitted on inner-CV logits of the training fold, then applied to the held-out fold",
+  "n_samples": 119,
+  "class_balance": {
+   "ai": 56,
+   "real": 63
+  }
+ },
+ "weights": {
+  "combined": 0.6,
+  "forensic": 0.25,
+  "clip_external": 0.15
+ },
+ "members": {
+  "forensic": "LR on L1(47)+L1b(20) forensic/domain features (trainable, deployed)",
+  "combined": "LR on L1(47)+L1b(20)+CLIP global(1024)+CLIP tiles(3072) (trainable, deployed)",
+  "clip_domain": "LR on CLIP global features(1024) only (trainable, ablation channel)",
+  "clip_external": "frozen CLIP probe trained on the 18-generator benchmark (never trained on the 119)",
+  "npr": "frozen NPR ResNet-18 logits on external benchmark shards (never trained on the 119)"
+ },
+ "per_member_auc": {
+  "forensic": 0.9082,
+  "combined": 0.9657,
+  "clip_domain": 0.8951,
+  "clip_external": 0.6477,
+  "npr": 0.5692
+ },
+ "guardrails": {
+  "tpr@fpr=1%": {
+   "target_fpr": 0.01,
+   "tpr_interp": 0.0,
+   "tpr_empirical": 0.0,
+   "achieved_fpr_empirical": 0.0
+  },
+  "fpr@tpr=95%": {
+   "target_tpr": 0.95,
+   "fpr": 0.0317,
+   "reachable": true,
+   "tpr_at_that_point": 0.9643
+  }
+ },
+ "deployed_metrics": {
+  "accuracy": 0.958,
+  "fpr": 0.0317,
+  "tpr": 0.9464,
+  "precision": 0.9636,
+  "confusion": {
+   "tp": 53,
+   "tn": 61,
+   "fp": 2,
+   "fn": 3
+  },
+  "three_tier": {
+   "suspect": 55,
+   "normal": 32,
+   "review": 32
+  }
+ },
+ "error_analysis": {
+  "false_positives_real_seqs": [
+   57,
+   58
+  ],
+  "false_negatives_ai_seqs": [
+   3,
+   29,
+   30
+  ]
+ },
+ "counts": {
+  "n": 119,
+  "outcome": {
+   "true_positive": 53,
+   "true_negative": 61,
+   "false_positive": 2,
+   "false_negative": 3
+  },
+  "three_tier": {
+   "suspect": 55,
+   "normal": 32,
+   "review": 32
+  }
+ },
+ "sources": {
+  "oof_bundle": {
+   "path": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\models\\oof_bundle_119.json",
+   "sha256": "9f97ed1c5f03a9993a248f45d7d234b89a04fe385cef8f21f91c51b85c8fd5be"
+  },
+  "manifest": {
+   "path": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\data\\manifest.json",
+   "sha256": "09c4a6112322fb46ee6e3ada0dabb67969d5b2ccf881794c5f11bbc03a08f61a"
+  },
+  "metrics": {
+   "path": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\reports\\metrics.json",
+   "sha256": "398dfa4fd545b875abccbfeb551d46ca92c7ef934549d8a76bcef870652f8019"
+  }
+ },
+ "generator": "demo/webui_assets/build_assets.py",
+ "samples": [
+  {
+   "seq": 1,
+   "file": "001.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1238,
+   "height": 1704,
+   "sha256": "f40204f5571717278b8c50b481458caa73cfd9f46fc7ac6db30e86e95747b889",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.824434,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.736266,
+    "combined": 0.909542,
+    "clip_domain": 0.482877,
+    "clip_external": 0.347037,
+    "npr": 0.350633
+   }
+  },
+  {
+   "seq": 2,
+   "file": "002.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1129,
+   "height": 1920,
+   "sha256": "8a36b0acfb9ff5d9c6da9b7d4856c5e429523ed68abb0c0608e2b43c33117ae6",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.864488,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.684112,
+    "combined": 0.944987,
+    "clip_domain": 0.558515,
+    "clip_external": 0.423492,
+    "npr": 0.366443
+   }
+  },
+  {
+   "seq": 3,
+   "file": "003.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1920,
+   "height": 1189,
+   "sha256": "b2a70dd81531b73457ec0914116e2a539878547fb14e6a27ba44b01ca074d83f",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.219445,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "false_negative",
+   "member_scores": {
+    "forensic": 0.587699,
+    "combined": 0.125066,
+    "clip_domain": 0.048912,
+    "clip_external": 0.395806,
+    "npr": 0.434405
+   }
+  },
+  {
+   "seq": 4,
+   "file": "004.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1238,
+   "height": 1704,
+   "sha256": "8efeac634b7b8d098f1ee13e0c802d9299b0dfafbeb21ce3266aa3d88d446d1c",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.922825,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.793279,
+    "combined": 0.976103,
+    "clip_domain": 0.973097,
+    "clip_external": 0.368595,
+    "npr": 0.439455
+   }
+  },
+  {
+   "seq": 5,
+   "file": "005.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1150,
+   "height": 760,
+   "sha256": "338159cf3a73bd1041cbca5e27a1e04ab0395b6a6c241f8a0780d73a74e8531b",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.788151,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.64596,
+    "combined": 0.884802,
+    "clip_domain": 0.673959,
+    "clip_external": 0.401727,
+    "npr": 0.434906
+   }
+  },
+  {
+   "seq": 6,
+   "file": "006.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 870,
+   "height": 1001,
+   "sha256": "1a99b5357889f17a424bd3bcdd5881d3348b36e67f1ad02a024f70735eb14189",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.849345,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.339979,
+    "combined": 0.938572,
+    "clip_domain": 0.956192,
+    "clip_external": 0.617031,
+    "npr": 0.465696
+   }
+  },
+  {
+   "seq": 7,
+   "file": "007.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 750,
+   "height": 896,
+   "sha256": "3ec5f9b1e59aa857c1b606f3b1d2e2a8b8fb21c6c59d7d68d1636806d66881d3",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.986427,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.976115,
+    "combined": 0.996475,
+    "clip_domain": 0.994353,
+    "clip_external": 0.453034,
+    "npr": 0.523741
+   }
+  },
+  {
+   "seq": 8,
+   "file": "008.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 955,
+   "height": 976,
+   "sha256": "15043e6489a8d1ecfd4d0bff8526c7377f06f06325d1f02520b38a779c6c1ba0",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.891628,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.963875,
+    "combined": 0.834417,
+    "clip_domain": 0.99605,
+    "clip_external": 0.513862,
+    "npr": 0.562967
+   }
+  },
+  {
+   "seq": 9,
+   "file": "009.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 485,
+   "height": 759,
+   "sha256": "b6a1385959fd47360989a373c79b7993ecf13eaf1194e2e087cdb66d4ac9ec2f",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.352535,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.681181,
+    "combined": 0.222216,
+    "clip_domain": 0.081652,
+    "clip_external": 0.423876,
+    "npr": 0.519199
+   }
+  },
+  {
+   "seq": 10,
+   "file": "010.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2535,
+   "height": 3000,
+   "sha256": "21629ad5422320dc145cc87f9d319da9c67fd86ea8a885326c9dd4e2349836ee",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.961985,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.967908,
+    "combined": 0.982431,
+    "clip_domain": 0.84839,
+    "clip_external": 0.442002,
+    "npr": 0.440699
+   }
+  },
+  {
+   "seq": 11,
+   "file": "011.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "8e757843f7e369126d1327e74e3d010e398f8dbdf56c37b716374fc677e10819",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.945595,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.920885,
+    "combined": 0.953577,
+    "clip_domain": 0.931249,
+    "clip_external": 0.473596,
+    "npr": 0.523082
+   }
+  },
+  {
+   "seq": 12,
+   "file": "012.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "20aa4658e0fd90638c5ccdcbcd30737b210d034773c30875bb43eade92df0bf9",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.980339,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.987171,
+    "combined": 0.991186,
+    "clip_domain": 0.769334,
+    "clip_external": 0.483199,
+    "npr": 0.563135
+   }
+  },
+  {
+   "seq": 13,
+   "file": "013.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "2e3a07d19fe1edb761c0ff45478a72aff6bc92342d44e537e1ed5a55b9a87e96",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.997025,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.999223,
+    "combined": 0.998775,
+    "clip_domain": 0.963862,
+    "clip_external": 0.504548,
+    "npr": 0.551354
+   }
+  },
+  {
+   "seq": 14,
+   "file": "014.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "3af952c8be1104b6408f24ffa8d38124e247ea62fe1b3edd01992c153cae1958",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.977819,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.979507,
+    "combined": 0.977076,
+    "clip_domain": 0.968648,
+    "clip_external": 0.535924,
+    "npr": 0.526864
+   }
+  },
+  {
+   "seq": 15,
+   "file": "015.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 960,
+   "height": 1136,
+   "sha256": "e7c17ce1a3d65459dbee658b3f9b2c9f27cd6c7aefc88c6ccfc2975e6567db0e",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.879098,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.536079,
+    "combined": 0.968958,
+    "clip_domain": 0.654097,
+    "clip_external": 0.314666,
+    "npr": 0.524442
+   }
+  },
+  {
+   "seq": 16,
+   "file": "016.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 960,
+   "height": 1136,
+   "sha256": "f4ffb739aa7e3ddbab109ddb1d1301bbe46f982213809ccc6f6f2c56089c920d",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.910301,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.420945,
+    "combined": 0.984704,
+    "clip_domain": 0.963932,
+    "clip_external": 0.336556,
+    "npr": 0.459929
+   }
+  },
+  {
+   "seq": 17,
+   "file": "017.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "04e9fe544a1b43aa29589e64e352a6f2ca88dbd3727832c5e9b931d3894b5942",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.970288,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.940499,
+    "combined": 0.991874,
+    "clip_domain": 0.612108,
+    "clip_external": 0.359311,
+    "npr": 0.530212
+   }
+  },
+  {
+   "seq": 18,
+   "file": "018.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2880,
+   "height": 2160,
+   "sha256": "e6882df6731a2b682616ffc08fa3759d8fc5d58aa39837d5514fcce8094ccf92",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.896614,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.870358,
+    "combined": 0.94786,
+    "clip_domain": 0.662011,
+    "clip_external": 0.407664,
+    "npr": 0.52254
+   }
+  },
+  {
+   "seq": 19,
+   "file": "019.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 960,
+   "height": 1136,
+   "sha256": "3fb2473dcc91cca8458667bb9b0888fbfed985e57e45593463f53fb86d3ab9c1",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.960086,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.08438,
+    "combined": 0.998296,
+    "clip_domain": 0.971936,
+    "clip_external": 0.421725,
+    "npr": 0.498787
+   }
+  },
+  {
+   "seq": 20,
+   "file": "020.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 960,
+   "height": 1136,
+   "sha256": "a9d613308346d0275d2120e0f39b34cb6320ecaf38118379c276d0e43b76a406",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.944502,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.799271,
+    "combined": 0.968918,
+    "clip_domain": 0.960885,
+    "clip_external": 0.421047,
+    "npr": 0.516311
+   }
+  },
+  {
+   "seq": 21,
+   "file": "021.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1284,
+   "height": 1016,
+   "sha256": "7fdd8da40530becc8d37270a7fbbf1573c8c915f6b3a21c312a10864bd8b0440",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.818454,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.568477,
+    "combined": 0.882728,
+    "clip_domain": 0.553776,
+    "clip_external": 0.375804,
+    "npr": 0.480073
+   }
+  },
+  {
+   "seq": 22,
+   "file": "022.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1284,
+   "height": 766,
+   "sha256": "a5c9526d86af8e9ab329ee9f0152e6600f7830db6ae3a3e18db16b6e7e3913ba",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.843008,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.64091,
+    "combined": 0.894705,
+    "clip_domain": 0.382929,
+    "clip_external": 0.395842,
+    "npr": 0.484957
+   }
+  },
+  {
+   "seq": 23,
+   "file": "023.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1284,
+   "height": 755,
+   "sha256": "47ac27ce03c0725cd5c0edfada363df38ef6fc08c40be5a0c0ddcecc2138771c",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.816918,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.592844,
+    "combined": 0.876773,
+    "clip_domain": 0.34902,
+    "clip_external": 0.401624,
+    "npr": 0.493731
+   }
+  },
+  {
+   "seq": 24,
+   "file": "024.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1259,
+   "height": 799,
+   "sha256": "9e1169ff7440fa66f20ab2e18e31b7cb83b56ac74b79c38bfa97366261b8bc2f",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.843247,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.478101,
+    "combined": 0.952811,
+    "clip_domain": 0.869324,
+    "clip_external": 0.341264,
+    "npr": 0.54635
+   }
+  },
+  {
+   "seq": 25,
+   "file": "025.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1259,
+   "height": 799,
+   "sha256": "2b1e1468d4572d3cef6514209eab0c34fce430fafb3723209880e4c0e92bf0bd",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.875452,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.540473,
+    "combined": 0.967371,
+    "clip_domain": 0.784706,
+    "clip_external": 0.304156,
+    "npr": 0.566931
+   }
+  },
+  {
+   "seq": 26,
+   "file": "026.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 1758,
+   "sha256": "ba1dfea9d2d48db6d074e9a170e22dff8973bbfc3fc644a34a7a5549c9486aba",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.843413,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.62887,
+    "combined": 0.936669,
+    "clip_domain": 0.653827,
+    "clip_external": 0.394325,
+    "npr": 0.526476
+   }
+  },
+  {
+   "seq": 27,
+   "file": "027.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 2028,
+   "sha256": "70a0390a1b2645d529b4c6e148f548243319b586450ed4c8800295f8b18fafbc",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.918939,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.888275,
+    "combined": 0.92929,
+    "clip_domain": 0.450911,
+    "clip_external": 0.419213,
+    "npr": 0.526622
+   }
+  },
+  {
+   "seq": 28,
+   "file": "028.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3072,
+   "height": 2143,
+   "sha256": "1abc5dc315f27274ebd77e3b7a9c80e236552ef32cdca8226f092511285921de",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.85034,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.588049,
+    "combined": 0.909934,
+    "clip_domain": 0.710935,
+    "clip_external": 0.390787,
+    "npr": 0.441353
+   }
+  },
+  {
+   "seq": 29,
+   "file": "029.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 733,
+   "sha256": "9a9c8f029b86a95abd2eeca014d43869a5c1a72bfaf704aaad4f0ddc97372c16",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.158008,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "false_negative",
+   "member_scores": {
+    "forensic": 0.22684,
+    "combined": 0.134782,
+    "clip_domain": 0.263997,
+    "clip_external": 0.398939,
+    "npr": 0.474359
+   }
+  },
+  {
+   "seq": 30,
+   "file": "030.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 682,
+   "sha256": "468130b2539b990a5a223eda5c3572235c24e658784ec8326889221e4bcf001b",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.512457,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "false_negative",
+   "member_scores": {
+    "forensic": 0.022436,
+    "combined": 0.83798,
+    "clip_domain": 0.208985,
+    "clip_external": 0.469929,
+    "npr": 0.431539
+   }
+  },
+  {
+   "seq": 31,
+   "file": "031.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 886,
+   "height": 1920,
+   "sha256": "b8ee9b44f1d9848b0d121ec731065896433f0823fd613bb6eecf1930c762463d",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.645269,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.236382,
+    "combined": 0.791863,
+    "clip_domain": 0.632465,
+    "clip_external": 0.493741,
+    "npr": 0.547856
+   }
+  },
+  {
+   "seq": 32,
+   "file": "032.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 886,
+   "height": 1920,
+   "sha256": "1a267dca440d28b2eb51d8902d7c916c6c12ed106b36b35004985b39807c9490",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.792498,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.902481,
+    "combined": 0.807042,
+    "clip_domain": 0.511968,
+    "clip_external": 0.377912,
+    "npr": 0.361423
+   }
+  },
+  {
+   "seq": 33,
+   "file": "033.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1390,
+   "height": 1920,
+   "sha256": "bfdd2d64620e128f9854d2354d46bdd0f91f5ddd4386028264f485e9aefbad48",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.727919,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.632436,
+    "combined": 0.762785,
+    "clip_domain": 0.752723,
+    "clip_external": 0.396446,
+    "npr": 0.40401
+   }
+  },
+  {
+   "seq": 34,
+   "file": "034.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "073afb2c849a752973bdbbb26adc9d4b981ca3c7164c989e2e03896dbaa8bc1c",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.981348,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.927727,
+    "combined": 0.989551,
+    "clip_domain": 0.835353,
+    "clip_external": 0.415777,
+    "npr": 0.448853
+   }
+  },
+  {
+   "seq": 35,
+   "file": "035.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "b267c4107da833cd0e702531dc26117c5f3b954ddd5222a2c6fe23f7b8317b6e",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.998894,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.995167,
+    "combined": 0.999896,
+    "clip_domain": 0.99256,
+    "clip_external": 0.448259,
+    "npr": 0.446625
+   }
+  },
+  {
+   "seq": 36,
+   "file": "036.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "3b3800308c0b2187108786177db74f3d5c73b4aecac3772e54403a5bc4acdf9a",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.984699,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.741727,
+    "combined": 0.995765,
+    "clip_domain": 0.944477,
+    "clip_external": 0.511844,
+    "npr": 0.542184
+   }
+  },
+  {
+   "seq": 37,
+   "file": "037.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "fce9668d34951aea09b00ee84065ed0576494d488425e2af76e7e2710007e156",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.992708,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.943935,
+    "combined": 0.999152,
+    "clip_domain": 0.988854,
+    "clip_external": 0.441965,
+    "npr": 0.603321
+   }
+  },
+  {
+   "seq": 38,
+   "file": "038.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "4b8cd6b8d21601bfc25df9da2457b3ff641fdf84dc97a305da22e4db4b9df5cf",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.994066,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.984977,
+    "combined": 0.998999,
+    "clip_domain": 0.951845,
+    "clip_external": 0.388355,
+    "npr": 0.495134
+   }
+  },
+  {
+   "seq": 39,
+   "file": "039.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "713d764610ad10fe2ecd5e5cb5dc3b2f9e7dff8838b6a1a65d77a995d9a03c55",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.996581,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.9981,
+    "combined": 0.999029,
+    "clip_domain": 0.99573,
+    "clip_external": 0.412809,
+    "npr": 0.498558
+   }
+  },
+  {
+   "seq": 40,
+   "file": "040.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "44cc0bdc4e44d9cc8f905392b327cd9aac764ff0bb0188c892c85a203959f217",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.995098,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.997978,
+    "combined": 0.998264,
+    "clip_domain": 0.941286,
+    "clip_external": 0.417399,
+    "npr": 0.471082
+   }
+  },
+  {
+   "seq": 41,
+   "file": "041.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1179,
+   "height": 2556,
+   "sha256": "81704540f87f3b922deea811aa73d2fb8b8222be79c25e5ecc99004273cd07da",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.993377,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.980033,
+    "combined": 0.998761,
+    "clip_domain": 0.992226,
+    "clip_external": 0.536255,
+    "npr": 0.498476
+   }
+  },
+  {
+   "seq": 42,
+   "file": "042.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1536,
+   "height": 1950,
+   "sha256": "9cbc7374d944fd9830138ea22c3bb4018257da469d1e49d8f2788b82419a93a8",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.99195,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.984016,
+    "combined": 0.99833,
+    "clip_domain": 0.215335,
+    "clip_external": 0.414079,
+    "npr": 0.385072
+   }
+  },
+  {
+   "seq": 43,
+   "file": "043.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1088,
+   "height": 2368,
+   "sha256": "96a571da1fba90deeb8f087e9f7061eb7bbd338a57048e35475f8655bfc8e0e6",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.998941,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 1.0,
+    "combined": 0.996352,
+    "clip_domain": 0.948815,
+    "clip_external": 0.548511,
+    "npr": 0.575828
+   }
+  },
+  {
+   "seq": 44,
+   "file": "044.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2506,
+   "height": 1536,
+   "sha256": "03ec05e3e20b24297cfd668f4f7f6a048154d896530e95bebb19659e20d0a5b9",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.940212,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.680129,
+    "combined": 0.973118,
+    "clip_domain": 0.960049,
+    "clip_external": 0.475283,
+    "npr": 0.499713
+   }
+  },
+  {
+   "seq": 45,
+   "file": "045.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 1088,
+   "height": 2368,
+   "sha256": "82ec8ab0f588e90f6c31db4183d4f3aa35ce61e6df9ae83bff14b51236fea286",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.97929,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.994087,
+    "combined": 0.965368,
+    "clip_domain": 0.539982,
+    "clip_external": 0.471355,
+    "npr": 0.606641
+   }
+  },
+  {
+   "seq": 46,
+   "file": "046.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2368,
+   "height": 1088,
+   "sha256": "fad92c5871ea75617ed26630ef9487ffecc5b9ef1e25ae6ffaa1231949af4c1a",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.891775,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.745366,
+    "combined": 0.957749,
+    "clip_domain": 0.704392,
+    "clip_external": 0.446726,
+    "npr": 0.667817
+   }
+  },
+  {
+   "seq": 47,
+   "file": "047.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2368,
+   "height": 1088,
+   "sha256": "382aca55c54d16454cc046dcb8cae1de86081585fe95884dac125def88925519",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.921318,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.810755,
+    "combined": 0.972329,
+    "clip_domain": 0.644193,
+    "clip_external": 0.435493,
+    "npr": 0.546367
+   }
+  },
+  {
+   "seq": 48,
+   "file": "048.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 4000,
+   "sha256": "360491ea527721899b1813adc58d9b6851cbe5ee92a08811787e47dfd649a072",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.824427,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.358912,
+    "combined": 0.946467,
+    "clip_domain": 0.566297,
+    "clip_external": 0.447188,
+    "npr": 0.4846
+   }
+  },
+  {
+   "seq": 49,
+   "file": "049.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 4000,
+   "sha256": "3bb9c3486ef9eab7e52c83c82aed8d3acc21e4e21aea078ae08c138d740deb2d",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.928934,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.664495,
+    "combined": 0.966323,
+    "clip_domain": 0.92463,
+    "clip_external": 0.444429,
+    "npr": 0.490969
+   }
+  },
+  {
+   "seq": 50,
+   "file": "050.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 4000,
+   "sha256": "f82c6d8471bc97d532c70f46b3994dacf371eaa927eabf995cba3b4b722b2c9a",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.924417,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.632323,
+    "combined": 0.981537,
+    "clip_domain": 0.979423,
+    "clip_external": 0.473948,
+    "npr": 0.524678
+   }
+  },
+  {
+   "seq": 51,
+   "file": "051.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3000,
+   "height": 1690,
+   "sha256": "733fe98ea7874ff9052091115eeba5011298d9908289a68783c4e2bbc30e6f95",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.976833,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.747376,
+    "combined": 0.997444,
+    "clip_domain": 0.762324,
+    "clip_external": 0.325099,
+    "npr": 0.467662
+   }
+  },
+  {
+   "seq": 52,
+   "file": "052.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 2250,
+   "height": 3000,
+   "sha256": "f0668b0603d678d3310d041bc83e9a8fd0ee96a0247ea5239dc53812eb9d7c93",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.916147,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.587036,
+    "combined": 0.980849,
+    "clip_domain": 0.843954,
+    "clip_external": 0.403769,
+    "npr": 0.50628
+   }
+  },
+  {
+   "seq": 53,
+   "file": "053.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 779,
+   "height": 774,
+   "sha256": "abaddaa1a5bdd1da26c97805eb3d0e6d7b3c95ec9695ff41123881b9de1bec50",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.751438,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.847949,
+    "combined": 0.765597,
+    "clip_domain": 0.912755,
+    "clip_external": 0.44436,
+    "npr": 0.57166
+   }
+  },
+  {
+   "seq": 54,
+   "file": "054.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 670,
+   "height": 839,
+   "sha256": "719c9d6fb82a39f1c445e6d9d0a09d7a65a8b0fa53086fa008471833b0e7602f",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.677191,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.299504,
+    "combined": 0.802758,
+    "clip_domain": 0.749121,
+    "clip_external": 0.507595,
+    "npr": 0.564676
+   }
+  },
+  {
+   "seq": 55,
+   "file": "055.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 561,
+   "height": 690,
+   "sha256": "623079cee96e0a38ea21b0c05ac639b920100832ddfcad8ff027cb0fa5db120f",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.872909,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.586163,
+    "combined": 0.929874,
+    "clip_domain": 0.866214,
+    "clip_external": 0.440889,
+    "npr": 0.55959
+   }
+  },
+  {
+   "seq": 56,
+   "file": "056.png",
+   "label": "ai",
+   "label_cn": "AI 生成/篡改",
+   "width": 3024,
+   "height": 4032,
+   "sha256": "227980847e022aaf897ce77fc18b4fef3c2150f5d4d1ee0a9587196577d58dbb",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.999002,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "true_positive",
+   "member_scores": {
+    "forensic": 0.976341,
+    "combined": 0.999951,
+    "clip_domain": 0.928262,
+    "clip_external": 0.542484,
+    "npr": 0.580472
+   }
+  },
+  {
+   "seq": 57,
+   "file": "057.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 3024,
+   "height": 4032,
+   "sha256": "857e9e3e1683a7b44d2fe05a8f41a23ffbdfe20e1a23fc215de147bffcf4e01b",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.999673,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "false_positive",
+   "member_scores": {
+    "forensic": 0.980949,
+    "combined": 0.999992,
+    "clip_domain": 0.991011,
+    "clip_external": 0.500176,
+    "npr": 0.570937
+   }
+  },
+  {
+   "seq": 58,
+   "file": "058.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1736,
+   "sha256": "1610647035aba3811ac2f989823d536e7b084677830c1054c5ee839a74ed044b",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.993655,
+   "pred": 1,
+   "verdict": "suspect",
+   "verdict_cn": "疑似生成/篡改",
+   "outcome": "false_positive",
+   "member_scores": {
+    "forensic": 0.97075,
+    "combined": 0.999129,
+    "clip_domain": 0.99748,
+    "clip_external": 0.419853,
+    "npr": 0.602657
+   }
+  },
+  {
+   "seq": 59,
+   "file": "059.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1440,
+   "sha256": "c5c6a53d132f3c733785626ed1c25863aafd60447ceb26c284cadc8e08571153",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.20119,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.635518,
+    "combined": 0.1011,
+    "clip_domain": 0.459498,
+    "clip_external": 0.370968,
+    "npr": 0.496551
+   }
+  },
+  {
+   "seq": 60,
+   "file": "060.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 990,
+   "height": 1920,
+   "sha256": "ec39bf95b927a0b05466e9d24632131cda242e39d563059bae27a16301f13c58",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.350055,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.034039,
+    "combined": 0.621632,
+    "clip_domain": 0.448053,
+    "clip_external": 0.369296,
+    "npr": 0.47918
+   }
+  },
+  {
+   "seq": 61,
+   "file": "061.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 889,
+   "height": 1920,
+   "sha256": "8751675ce79a7a49cb5a0caf77b82b9a8aae338d54dab248c46726df1c0661fd",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.003519,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.034058,
+    "combined": 0.000342,
+    "clip_domain": 0.010666,
+    "clip_external": 0.465156,
+    "npr": 0.542252
+   }
+  },
+  {
+   "seq": 62,
+   "file": "062.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 889,
+   "height": 1920,
+   "sha256": "8dcf74b909a8f0d87cbe92a1b135fef510dff47b29903bbe2906d93c890e912c",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.060077,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.097485,
+    "combined": 0.027543,
+    "clip_domain": 0.209261,
+    "clip_external": 0.408768,
+    "npr": 0.500607
+   }
+  },
+  {
+   "seq": 63,
+   "file": "063.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 864,
+   "height": 1920,
+   "sha256": "9d81a7fe687166628a7afedf0d256bc7095182a7c53cf4e65e7f1a398fe19e09",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.222869,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.410909,
+    "combined": 0.133063,
+    "clip_domain": 0.652938,
+    "clip_external": 0.442771,
+    "npr": 0.480877
+   }
+  },
+  {
+   "seq": 64,
+   "file": "064.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1920,
+   "sha256": "0f3493e78831e74d1c6bf85702c99e7824b4867c6e35048cee0e2bbcde7859a3",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.187659,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.376734,
+    "combined": 0.133997,
+    "clip_domain": 0.562299,
+    "clip_external": 0.426378,
+    "npr": 0.484118
+   }
+  },
+  {
+   "seq": 65,
+   "file": "065.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1383,
+   "height": 1920,
+   "sha256": "b22c4cfca98fe184b3f0ab10db6eba087a6a436b82a813a5982eb15282f8f5bc",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.008929,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.692106,
+    "combined": 0.000284,
+    "clip_domain": 0.145473,
+    "clip_external": 0.480513,
+    "npr": 0.469968
+   }
+  },
+  {
+   "seq": 66,
+   "file": "066.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 864,
+   "height": 1920,
+   "sha256": "7d2241e74b11bfedf7cc84d742b57c2b02f1a7bee67a1a92f28c80bbb7952667",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.15321,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.121249,
+    "combined": 0.12126,
+    "clip_domain": 0.591556,
+    "clip_external": 0.456536,
+    "npr": 0.481234
+   }
+  },
+  {
+   "seq": 67,
+   "file": "067.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1320,
+   "height": 1916,
+   "sha256": "2dc281f0e50716b73bd69a581914d2b0978494a4469c9d8c9ff9f65c34e484ab",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.347223,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.127171,
+    "combined": 0.477087,
+    "clip_domain": 0.881821,
+    "clip_external": 0.465744,
+    "npr": 0.498478
+   }
+  },
+  {
+   "seq": 68,
+   "file": "068.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1080,
+   "height": 1920,
+   "sha256": "f65c216ba862a59b76cf6e53af4b71b045316f9d4301dda1aeb96427e0013324",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.094486,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.343553,
+    "combined": 0.032885,
+    "clip_domain": 0.810217,
+    "clip_external": 0.38634,
+    "npr": 0.495267
+   }
+  },
+  {
+   "seq": 69,
+   "file": "069.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1079,
+   "height": 1920,
+   "sha256": "e2b85ca8622d976e09706954d1f585c98a2edb022453ee2faae45a8a1501b89f",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.084086,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.505318,
+    "combined": 0.018999,
+    "clip_domain": 0.224127,
+    "clip_external": 0.455324,
+    "npr": 0.52981
+   }
+  },
+  {
+   "seq": 70,
+   "file": "070.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1079,
+   "height": 1920,
+   "sha256": "76704bdd9b93db649379f3f75b6a71078aff404691d92400da284c69f5d5a82e",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.015535,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.004008,
+    "combined": 0.011813,
+    "clip_domain": 0.240327,
+    "clip_external": 0.31841,
+    "npr": 0.567796
+   }
+  },
+  {
+   "seq": 71,
+   "file": "071.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "c5b9d746ac8461f23b6394127b4f7c00baf27fb27f5b7a0980a666772ec123b0",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.036914,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.218505,
+    "combined": 0.016471,
+    "clip_domain": 0.037118,
+    "clip_external": 0.386705,
+    "npr": 0.479316
+   }
+  },
+  {
+   "seq": 72,
+   "file": "072.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "3306c3858580ade2a6cdae95d7ffcd285a4c225602d22927716d17b186490263",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.018837,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.004514,
+    "combined": 0.033844,
+    "clip_domain": 0.313947,
+    "clip_external": 0.415108,
+    "npr": 0.444336
+   }
+  },
+  {
+   "seq": 73,
+   "file": "073.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 916,
+   "height": 1920,
+   "sha256": "926fffc475bddfa379e708a82ef701da0730718fd7fa0f725e70c85f2abc932d",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.136025,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.034551,
+    "combined": 0.165021,
+    "clip_domain": 0.341417,
+    "clip_external": 0.428229,
+    "npr": 0.536337
+   }
+  },
+  {
+   "seq": 74,
+   "file": "074.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 916,
+   "sha256": "b85bbc9e1835defeb88d18ea75890d80b8ec8e9b4a896ef5d2e3b1d792704be6",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.079808,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.187319,
+    "combined": 0.054566,
+    "clip_domain": 0.113839,
+    "clip_external": 0.394764,
+    "npr": 0.491656
+   }
+  },
+  {
+   "seq": 75,
+   "file": "075.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 916,
+   "sha256": "75b40dbe09031ebfa687e0e02db2184fcb510b92564b400218a6af6de29d1cbf",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.081378,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.316752,
+    "combined": 0.04256,
+    "clip_domain": 0.141858,
+    "clip_external": 0.389366,
+    "npr": 0.534526
+   }
+  },
+  {
+   "seq": 76,
+   "file": "076.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 916,
+   "height": 1920,
+   "sha256": "a0ac718af34e9ad10dddbf764591350d038316fee2b5600ea20d37f8579ac928",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.089723,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.295579,
+    "combined": 0.051145,
+    "clip_domain": 0.135076,
+    "clip_external": 0.349009,
+    "npr": 0.517043
+   }
+  },
+  {
+   "seq": 77,
+   "file": "077.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 888,
+   "sha256": "d7efaa0f0ec96e4db578f37c12373bf638849bae5a0bce3256b7ae26a396ce1a",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.080988,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.123622,
+    "combined": 0.041191,
+    "clip_domain": 0.088242,
+    "clip_external": 0.416033,
+    "npr": 0.448249
+   }
+  },
+  {
+   "seq": 78,
+   "file": "078.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "f49ce8183f9f05dcc0f88a8c84ba8f73c340b43e488c2c88c8659359ec89ff41",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.050933,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.118665,
+    "combined": 0.03529,
+    "clip_domain": 0.144052,
+    "clip_external": 0.438825,
+    "npr": 0.437495
+   }
+  },
+  {
+   "seq": 79,
+   "file": "079.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 888,
+   "sha256": "ef6a42030727cd6ac645c15df514613b01fef0a3aea1d4e028023875ec320ec8",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.021244,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.069396,
+    "combined": 0.012812,
+    "clip_domain": 0.058495,
+    "clip_external": 0.517055,
+    "npr": 0.452077
+   }
+  },
+  {
+   "seq": 80,
+   "file": "080.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "0a0627c770a60de9c9120538d1530b89d17c9eb0aefdcba884b15de1d59f3639",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.070912,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.181999,
+    "combined": 0.028457,
+    "clip_domain": 0.300124,
+    "clip_external": 0.37168,
+    "npr": 0.516276
+   }
+  },
+  {
+   "seq": 81,
+   "file": "081.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1171,
+   "sha256": "5f45bc01b742732ff918f9058c9bf50444c8afd9182978f038fa6df99982912a",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.153663,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.255609,
+    "combined": 0.122209,
+    "clip_domain": 0.727096,
+    "clip_external": 0.507537,
+    "npr": 0.559644
+   }
+  },
+  {
+   "seq": 82,
+   "file": "082.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1366,
+   "height": 1920,
+   "sha256": "87248d320590bb70385a766d695e6576710796a3cab0cbe8c578362a0bdd9fcd",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.325935,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.040564,
+    "combined": 0.557447,
+    "clip_domain": 0.918816,
+    "clip_external": 0.378724,
+    "npr": 0.382802
+   }
+  },
+  {
+   "seq": 83,
+   "file": "083.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1360,
+   "sha256": "b91343a8ca77c16844ab0b94f206e19e29492fb159bd5fed33151ea44a50108b",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.080069,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.951653,
+    "combined": 0.005352,
+    "clip_domain": 0.066014,
+    "clip_external": 0.4152,
+    "npr": 0.382194
+   }
+  },
+  {
+   "seq": 84,
+   "file": "084.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "d0dff79e719254198d7174e443a2acb4265087ca27198347d1fafd097b1df530",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.039173,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.018562,
+    "combined": 0.027467,
+    "clip_domain": 0.09203,
+    "clip_external": 0.389075,
+    "npr": 0.504334
+   }
+  },
+  {
+   "seq": 85,
+   "file": "085.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "29f6390ae35d29e477875a1986f36514d9cbec5a9938d60520dcb567baa74305",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.011084,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.010396,
+    "combined": 0.004066,
+    "clip_domain": 0.033449,
+    "clip_external": 0.415111,
+    "npr": 0.513347
+   }
+  },
+  {
+   "seq": 86,
+   "file": "086.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1446,
+   "sha256": "aace81a5e1670c4a715fe724656320a94abaad2e02cec82a6b462ad1a886b0f5",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.028456,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.024801,
+    "combined": 0.030129,
+    "clip_domain": 0.161928,
+    "clip_external": 0.41574,
+    "npr": 0.510063
+   }
+  },
+  {
+   "seq": 87,
+   "file": "087.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1440,
+   "sha256": "4cbf7ca612a39d4ce9222339d37d31d9ce73f7fcc6897d3a2410bf3712dff196",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.045404,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.148412,
+    "combined": 0.015334,
+    "clip_domain": 0.034768,
+    "clip_external": 0.322161,
+    "npr": 0.527653
+   }
+  },
+  {
+   "seq": 88,
+   "file": "088.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 1440,
+   "sha256": "4fe256b2423e96559346b6a9f408b4275704bc9f383a071aa4e460557c9bf055",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.143145,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.229979,
+    "combined": 0.09325,
+    "clip_domain": 0.110859,
+    "clip_external": 0.306392,
+    "npr": 0.509536
+   }
+  },
+  {
+   "seq": 89,
+   "file": "089.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "1b7d9f3552f9df05b9a07ce163719d017b6a95ffb0f499226a141f6803c59ebd",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.033464,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.154414,
+    "combined": 0.007868,
+    "clip_domain": 0.153867,
+    "clip_external": 0.440405,
+    "npr": 0.500845
+   }
+  },
+  {
+   "seq": 90,
+   "file": "090.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "2bb5e7f03ac3cf6fd654005979305358fbd3457fb163c5183c20a470aca3fb0a",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.102987,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.071461,
+    "combined": 0.084867,
+    "clip_domain": 0.1788,
+    "clip_external": 0.344405,
+    "npr": 0.514073
+   }
+  },
+  {
+   "seq": 91,
+   "file": "091.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "b02ee8d604693ab79a7eb078e0c66feb107e4976efb9620f8b59c70bff728350",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.07689,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.220802,
+    "combined": 0.030156,
+    "clip_domain": 0.06747,
+    "clip_external": 0.357909,
+    "npr": 0.472592
+   }
+  },
+  {
+   "seq": 92,
+   "file": "092.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1080,
+   "height": 1920,
+   "sha256": "af2b3124b8bf32219d687cf01a9e645c136d541aec701cfd0eba7929280c7d0a",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.128986,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.40902,
+    "combined": 0.072263,
+    "clip_domain": 0.817731,
+    "clip_external": 0.368081,
+    "npr": 0.499048
+   }
+  },
+  {
+   "seq": 93,
+   "file": "093.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1080,
+   "height": 1920,
+   "sha256": "343fff9c78879f72b3a7ac4a1372f869b5e7dd994279ba30e06e6ffc8f4d9ff6",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.086276,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.191852,
+    "combined": 0.06042,
+    "clip_domain": 0.28737,
+    "clip_external": 0.386666,
+    "npr": 0.521463
+   }
+  },
+  {
+   "seq": 94,
+   "file": "094.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1080,
+   "height": 1920,
+   "sha256": "08e4c6a878d9d292f4ed39ac8675516f107d5637895f95b144c26bbcd3b4863f",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.029987,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.001941,
+    "combined": 0.046457,
+    "clip_domain": 0.080895,
+    "clip_external": 0.334839,
+    "npr": 0.478498
+   }
+  },
+  {
+   "seq": 95,
+   "file": "095.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1615,
+   "height": 1079,
+   "sha256": "804b2ddb2d7ca1b751b40bc0c75ddde222e29bb3920899519f1f79b3c0c63e1d",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.045668,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.064735,
+    "combined": 0.039415,
+    "clip_domain": 0.060251,
+    "clip_external": 0.377823,
+    "npr": 0.445383
+   }
+  },
+  {
+   "seq": 96,
+   "file": "096.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1615,
+   "height": 1079,
+   "sha256": "0381f3718f6231c87ed669c1152f40537de319b6c49839bce3e38a58741a07ea",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.055655,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.237276,
+    "combined": 0.028623,
+    "clip_domain": 0.047802,
+    "clip_external": 0.382423,
+    "npr": 0.433842
+   }
+  },
+  {
+   "seq": 97,
+   "file": "097.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1615,
+   "height": 1079,
+   "sha256": "2f73139ec31e78c1e9abdf6b970b9c8e4bb2019e47cf1a28bace1088a85c77e2",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.043229,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.314861,
+    "combined": 0.016898,
+    "clip_domain": 0.037693,
+    "clip_external": 0.380486,
+    "npr": 0.420696
+   }
+  },
+  {
+   "seq": 98,
+   "file": "098.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1615,
+   "height": 1079,
+   "sha256": "b004e955d32be085b873e1273f2c69db7862c34d14230224a1b1a4b63013b070",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.036753,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.19445,
+    "combined": 0.009149,
+    "clip_domain": 0.146551,
+    "clip_external": 0.339554,
+    "npr": 0.399574
+   }
+  },
+  {
+   "seq": 99,
+   "file": "099.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "9269425a669a904a451c44d4c6fededa7f0fdc96b2eb7e85ff4e00b953fcafdb",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.237899,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.492213,
+    "combined": 0.162962,
+    "clip_domain": 0.05179,
+    "clip_external": 0.382408,
+    "npr": 0.501679
+   }
+  },
+  {
+   "seq": 100,
+   "file": "100.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "51e10d02b72fcdebc808c4b288e3bfc0a08d8417df6728d91a71e4e6a4bb1530",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.024342,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.187332,
+    "combined": 0.009782,
+    "clip_domain": 0.28786,
+    "clip_external": 0.40164,
+    "npr": 0.554631
+   }
+  },
+  {
+   "seq": 101,
+   "file": "101.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "3cac15405168862d7b40059d1a7c390585b664aaf55a9f4828b5d8cf297e5cec",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.135816,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.481213,
+    "combined": 0.069772,
+    "clip_domain": 0.050073,
+    "clip_external": 0.40491,
+    "npr": 0.484724
+   }
+  },
+  {
+   "seq": 102,
+   "file": "102.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "b2685b09f22e37f539893a4fef8c621d8d2cbedf1d1e3dd43a123319bb91bf86",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.082599,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.202849,
+    "combined": 0.03709,
+    "clip_domain": 0.077956,
+    "clip_external": 0.322377,
+    "npr": 0.427539
+   }
+  },
+  {
+   "seq": 103,
+   "file": "103.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "9d358057876f8dc8d8044dfb1510b0281e0817dc2ee4a3be6124062605b88ab9",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.058351,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.27331,
+    "combined": 0.028401,
+    "clip_domain": 0.051634,
+    "clip_external": 0.388616,
+    "npr": 0.461598
+   }
+  },
+  {
+   "seq": 104,
+   "file": "104.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1440,
+   "height": 1920,
+   "sha256": "f8a41fbc86da5339fc34e8258b048500b27c5381e28ca7b3650d7f229d5f6397",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.045964,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.29897,
+    "combined": 0.01905,
+    "clip_domain": 0.128386,
+    "clip_external": 0.388429,
+    "npr": 0.539479
+   }
+  },
+  {
+   "seq": 105,
+   "file": "105.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 850,
+   "sha256": "bf501578e4d52e6e91d0bffed731b7ae28b8f8d02277e76849ca7005291d9697",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.04397,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.007763,
+    "combined": 0.045765,
+    "clip_domain": 0.021512,
+    "clip_external": 0.426849,
+    "npr": 0.482857
+   }
+  },
+  {
+   "seq": 106,
+   "file": "106.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "05c7e4584195f68a308cb81047c3dc57ac5624f9cd471d6711b4e783645e9c64",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.073672,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.197141,
+    "combined": 0.03054,
+    "clip_domain": 0.381127,
+    "clip_external": 0.330439,
+    "npr": 0.465258
+   }
+  },
+  {
+   "seq": 107,
+   "file": "107.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 850,
+   "sha256": "eaa698839fc86becd0f91992f507280bd114ab28b8a0ad05ac6f93ef52260376",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.183011,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.039542,
+    "combined": 0.237516,
+    "clip_domain": 0.309531,
+    "clip_external": 0.502066,
+    "npr": 0.534014
+   }
+  },
+  {
+   "seq": 108,
+   "file": "108.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1920,
+   "height": 866,
+   "sha256": "857231a4f41a8183e37ee91702c542a2dccda72b88af4858476fdb6e4e20666e",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.286835,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.439266,
+    "combined": 0.205988,
+    "clip_domain": 0.308006,
+    "clip_external": 0.433394,
+    "npr": 0.536249
+   }
+  },
+  {
+   "seq": 109,
+   "file": "109.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 880,
+   "height": 1920,
+   "sha256": "45eaf35c0fe50f741c7a3d56d81bd7000fbbaa57b752352d92f4bd6bdd40d6b1",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.00348,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.003445,
+    "combined": 0.000888,
+    "clip_domain": 0.062052,
+    "clip_external": 0.458567,
+    "npr": 0.488831
+   }
+  },
+  {
+   "seq": 110,
+   "file": "110.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 880,
+   "height": 1920,
+   "sha256": "a7dfd4645ffe9cf0771d583d54fb5a6c55cf347db47642d92dbc6af81ba917cc",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.001195,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.000137,
+    "combined": 0.000565,
+    "clip_domain": 0.090534,
+    "clip_external": 0.471186,
+    "npr": 0.509818
+   }
+  },
+  {
+   "seq": 111,
+   "file": "111.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 880,
+   "height": 1920,
+   "sha256": "17d52f2800f406bd1e4cbb4dbf20fb38b5889621c766129ebf757ae658985b4c",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.03678,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.107098,
+    "combined": 0.023153,
+    "clip_domain": 0.256722,
+    "clip_external": 0.41006,
+    "npr": 0.531224
+   }
+  },
+  {
+   "seq": 112,
+   "file": "112.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 880,
+   "height": 1920,
+   "sha256": "cf1f02272b00590694ef9d96526b992afa7de6787f0755f70c077f37f39bb27c",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.0935,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.569553,
+    "combined": 0.020153,
+    "clip_domain": 0.098032,
+    "clip_external": 0.481319,
+    "npr": 0.567002
+   }
+  },
+  {
+   "seq": 113,
+   "file": "113.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 1280,
+   "height": 1706,
+   "sha256": "7319faa96a560386de78a1fafab64248b26fdc8216138ecf688dc837a1c94d7e",
+   "fold": 2,
+   "thr_low": 0.0914,
+   "thr_high": 0.6748,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.042326,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.065505,
+    "combined": 0.018571,
+    "clip_domain": 0.107253,
+    "clip_external": 0.378841,
+    "npr": 0.513337
+   }
+  },
+  {
+   "seq": 114,
+   "file": "114.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 898,
+   "height": 600,
+   "sha256": "50b1fac228955521cb8dc158d2bad6769c6a2bb92abefce3ad741a9af07d9f23",
+   "fold": 3,
+   "thr_low": 0.0717,
+   "thr_high": 0.6141,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.02357,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.176746,
+    "combined": 0.009617,
+    "clip_domain": 0.066723,
+    "clip_external": 0.383321,
+    "npr": 0.458843
+   }
+  },
+  {
+   "seq": 115,
+   "file": "115.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 870,
+   "height": 1920,
+   "sha256": "37a27f2a3923640eeff7592d08a18ab19568910e0be22e8e82969ee0c4c22b49",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.009194,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.194249,
+    "combined": 0.000721,
+    "clip_domain": 0.088771,
+    "clip_external": 0.526765,
+    "npr": 0.566405
+   }
+  },
+  {
+   "seq": 116,
+   "file": "116.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 714,
+   "height": 489,
+   "sha256": "cf27c9b8001f5142c7a34a6febe800de3288112719bbeb723bf241ba142010da",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.029982,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.093873,
+    "combined": 0.008987,
+    "clip_domain": 0.130462,
+    "clip_external": 0.357203,
+    "npr": 0.401606
+   }
+  },
+  {
+   "seq": 117,
+   "file": "117.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 714,
+   "height": 489,
+   "sha256": "acc140f311013b298401dfd7e1f76cfebbd41145639b350fe70cee1b6c58c19a",
+   "fold": 5,
+   "thr_low": 0.0724,
+   "thr_high": 0.7304,
+   "members": [
+    "combined",
+    "forensic"
+   ],
+   "fused_score": 0.034091,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.205131,
+    "combined": 0.015172,
+    "clip_domain": 0.127564,
+    "clip_external": 0.378158,
+    "npr": 0.413283
+   }
+  },
+  {
+   "seq": 118,
+   "file": "118.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 714,
+   "height": 489,
+   "sha256": "f735893c26d2323c2aab60ae1b600b7d4c095016b696597c473954324cbdc66f",
+   "fold": 4,
+   "thr_low": 0.0159,
+   "thr_high": 0.2878,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.006716,
+   "pred": 0,
+   "verdict": "normal",
+   "verdict_cn": "正常",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.023079,
+    "combined": 0.001316,
+    "clip_domain": 0.013132,
+    "clip_external": 0.368317,
+    "npr": 0.404343
+   }
+  },
+  {
+   "seq": 119,
+   "file": "119.png",
+   "label": "real",
+   "label_cn": "真实",
+   "width": 716,
+   "height": 1033,
+   "sha256": "a9050d1d0dbd5f917543f74293d3258910ef42a6a7667d209caf073d057f14f9",
+   "fold": 1,
+   "thr_low": 0.0725,
+   "thr_high": 0.6994,
+   "members": [
+    "combined",
+    "forensic",
+    "clip_external"
+   ],
+   "fused_score": 0.074847,
+   "pred": 0,
+   "verdict": "review",
+   "verdict_cn": "待复核",
+   "outcome": "true_negative",
+   "member_scores": {
+    "forensic": 0.021387,
+    "combined": 0.066286,
+    "clip_domain": 0.192081,
+    "clip_external": 0.547258,
+    "npr": 0.474896
+   }
+  }
+ ]
+}
