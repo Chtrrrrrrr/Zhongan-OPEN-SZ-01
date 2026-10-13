@@ -16,8 +16,11 @@ from pathlib import Path
 
 import numpy as np
 
-WS = Path(r"C:\Files\Deepseek Harness\Zhongan-OPEN-SZ-01")
-REPO = WS / "repo"
+# Portable: repo/ = parent of this file's directory (scripts/ -> repo/). Do NOT hardcode an
+# absolute machine path here -- a reviewer clones to an arbitrary location and the script
+# must still work (and must write inside THEIR clone, not someone else's working copy).
+REPO = Path(__file__).resolve().parent.parent
+WS = REPO.parent
 
 dep = json.loads((REPO / "models" / "deployment_metrics.json").read_text(encoding="utf-8"))
 S = np.asarray(dep["_oof_fused_scores"], dtype=float)

@@ -19,8 +19,10 @@ from pathlib import Path
 
 import numpy as np
 
-WS = Path(r"C:\Files\Deepseek Harness\Zhongan-OPEN-SZ-01")
-REPO = WS / "repo"
+# Portable: repo/ = parent of this file's directory. Do NOT hardcode an absolute machine
+# path -- a reviewer clones anywhere and this must use THEIR checkout.
+REPO = Path(__file__).resolve().parent.parent
+WS = REPO.parent
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts"))
 
@@ -86,7 +88,7 @@ def main():
         v = np.array([r["model_scores"].get(m, np.nan) for r in rows], dtype=float)
         print(f"    {m:14s} mean={np.nanmean(v):.4f} median={np.nanmedian(v):.4f}")
 
-    out = WS / "work" / "improve" / "real41_domain_gap.json"
+    out = REPO / "reports" / "real41_domain_gap.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
         "models_dir": str(md), "source": src,
