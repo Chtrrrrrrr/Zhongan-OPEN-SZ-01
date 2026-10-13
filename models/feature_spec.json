@@ -1,0 +1,13 @@
+{
+ "name": "C8-meanmax+patch",
+ "scales": [
+  {
+   "grid": 6,
+   "overlap": 0.3,
+   "max_side": null
+  }
+ ],
+ "aggregation": "meanmax",
+ "patch_tokens": true,
+ "patch_max_side": 1600
+}

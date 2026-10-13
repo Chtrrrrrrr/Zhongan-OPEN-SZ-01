@@ -1,0 +1,2417 @@
+{
+ "report": "decision_gate_negative_result",
+ "kind": "negative_result_canonical_record",
+ "schema_version": 1,
+ "task": "t11",
+ "generated_at_utc": "2026-10-12T15:54:36Z",
+ "baseline_predecessor": "repo/reports/baseline_improvement.json (task t1)",
+ "upstream_task": {
+  "id": "t3",
+  "outcome": "failed",
+  "classification": "methodologically unsatisfiable, NOT an implementation failure",
+  "meaning": "the pre-registered gate was implemented and evaluated exactly as frozen; it is the rule itself that cannot satisfy the acceptance contract on this sample set"
+ },
+ "status": "NEGATIVE_RESULT_NOT_ADMISSIBLE_AS_AN_IMPROVEMENT",
+ "headline": "The pre-registered saturation gate (sat_mean > 0.33, demote suspect -> real) clears both persistent false positives 057/058 and drives FPR to 0/63 in protocols A and C, but it simultaneously demotes genuine AI images 006/008/054/055 and therefore LOWERS accuracy in all three protocols (C 0.9678->0.9524, A 0.9244->0.9146, B 0.9258->0.9132), costing 23 true positives over 6 rounds under protocol C. It must not be wired into production.",
+ "decision": {
+  "wire_into_production": false,
+  "verdict_zh": "该门控不得接入生产。",
+  "verdict_en": "This gate must NOT be wired into production.",
+  "classification": "measured negative result + methodological impossibility proof",
+  "reasons": [
+   "AI recall is not preserved: the gate converts genuine AI images 006/008/054/055 from suspect to real, costing 23 true-positive instances over 6 rounds under protocol C (19 under A, 21 under B).",
+   "The accuracy floor is met by no protocol: C 0.9678->0.9524, A 0.9244->0.9146, B 0.9258->0.9132; every one of the 6 rounds is worse or unchanged.",
+   "The trade is unfavourable on its own terms: removing 2 false positives costs 4 distinct AI true positives, i.e. the gate pays more recall than the FPR problem it repairs.",
+   "The entire measured benefit rests on exactly two images: with 057/058 removed the gate has no false positive left to remove and its mean accuracy delta is -0.0271 / -0.0299 / -0.0328 (A/B/C).",
+   "No flat threshold can satisfy the contract on this set: AI 054 (sat_mean 0.3933) is more saturated than the real false positive 058 (sat_mean 0.3501), so any threshold low enough to flip 058 also flips 054; any threshold high enough to spare all four AI images (> 0.4262) cannot flip 058.",
+   "The only thresholds that clear both false positives without AI recall loss are bands fitted to these exact 119 values (e.g. 0.33 < sat_mean < 0.39 plus sat_mean > 0.50), which the pre-registration protocol forbids."
+  ],
+  "reversal_condition": "This decision is reversible only by new evidence, not by re-tuning: a pre-registered, non-flat, multi-variable signal evaluated on a held-out set that contains real near-shot high-saturation images as a named sub-domain.",
+  "admissible_form_if_ever_wanted": "An optional fusion-layer config key defaulting to DISABLED, e.g. content_gate={'enabled': false, 'type': 'sat_mean_gt', 'threshold': 0.33}, carrying the measured cost above. No such change is made by this task."
+ },
+ "gate_rule": {
+  "gate_id": "sat_mean_gt_0.33_v1",
+  "kind": "pre_registered_gate_rule",
+  "frozen_threshold_constant": 0.33,
+  "comparison": "sat_mean > 0.33 (strict greater-than)",
+  "threshold_is_frozen": true,
+  "threshold_changed_after_the_fact": false,
+  "threshold_role": "fixed constant, NOT searched on the 119 labelled samples",
+  "preregistered_at_utc": "2026-10-12T15:39:20Z",
+  "preregistered_before": "any saturation value was computed and before any evaluation metric of this gate was produced",
+  "variable": {
+   "name": "sat_mean",
+   "exact_formula": "mean over all pixels of channel 1 (S) of cv2.cvtColor(cv2.imread(path, cv2.IMREAD_COLOR), cv2.COLOR_BGR2HSV), divided by 255.0 to yield a value in [0,1]",
+   "decoder": "opencv-python (cv2.imread, IMREAD_COLOR -> BGR 8-bit 3-channel)",
+   "colour_space": "HSV as produced by cv2.COLOR_BGR2HSV (H in [0,179], S in [0,255], V in [0,255])",
+   "resolution": "full original resolution, no resize, no crop, no normalisation of the image before the conversion",
+   "masking": "none (every pixel of the decoded image contributes equally)",
+   "input_path_template": "data/images/{seq:03d}.png (workspace root, relative to C:/Files/Deepseek Harness/Zhongan-OPEN-SZ-01)",
+   "units": "dimensionless fraction in [0,1]"
+  },
+  "application": {
+   "side": "candidate-negative side only, i.e. samples the frozen detector already flags as AI/suspect",
+   "rule": "if (base_prediction == 1 / suspect) and (sat_mean > 0.33) then override the prediction to real/normal; samples already predicted real are never touched",
+   "effective_effect": "the gate can only convert AI->real; it can never create a new AI flag",
+   "cost_model": "every AI image whose sat_mean exceeds 0.33 and that the base detector currently scores as suspect is converted into a false negative; this cost is measured, not assumed"
+  },
+  "intended_effect": "remove the two persistent false positives seq 057 and seq 058 from the flagged set, which are the sole reason the measured FPR (3.17%) exceeds the required <=3% under the deployed pooled threshold",
+  "evaluation_commitments": [
+   "the threshold 0.33 above is used as-is for the headline result; it is never re-fitted on the 119 samples",
+   "any threshold sweep is reported only in a separate, explicitly-labelled 'optimistic upper bound' section and never as the headline",
+   "the evaluation reuses the archived out-of-fold fused scores repo/models/deployment_metrics.json::_oof_fused_scores, so no model is re-fitted",
+   "the honest deployment protocol is used: per-fold threshold = order statistic (fp_budget = 2) of the TRAINING-fold pure-real fused scores, archived per fold, metrics computed on the held-out fold only",
+   "a control without seq 057 and 058 is reported alongside the headline"
+  ],
+  "provenance_of_the_constant": "supplied as a pre-registered constant by the delegating audit (reported AI-class median sat_mean = 0.128, AI-class max = 0.426; real outliers 057 = 0.561, 058 = 0.350)"
+ },
+ "preregistration_integrity": {
+  "path": "work/improve/gate_rule.json",
+  "sha256": "5cfe0551c7aeb4c3ca244afa9407b7c47a8b27ebd627bf817d57e982edd7241b",
+  "frozen_at_utc": "2026-10-12T15:39:20Z",
+  "file_mtime_utc": "2026-10-12T15:39:27Z",
+  "evaluation_script_mtime_utc": "2026-10-12T15:48:03Z",
+  "evaluation_started_at_utc": "2026-10-12T15:48:07Z",
+  "rule_existed_before_evaluation": true,
+  "rule_file_older_than_evaluation_script": true,
+  "threshold_constant": 0.33,
+  "threshold_searched_on_the_119_samples": false
+ },
+ "evidence_sources": [
+  {
+   "path": "work/improve/gate_rule.json",
+   "role": "pre-registered rule (frozen before evaluation)",
+   "sha256": "5cfe0551c7aeb4c3ca244afa9407b7c47a8b27ebd627bf817d57e982edd7241b",
+   "frozen_at_utc": "2026-10-12T15:39:20Z"
+  },
+  {
+   "path": "work/improve/gate_eval.json",
+   "role": "raw evaluation output of the gate run",
+   "sha256": "ec556989ce0830fdec61e3474a8717032886dab18f68987cf3442ecac4804d1f",
+   "generated_at_utc": "2026-10-12T15:48:12Z"
+  },
+  {
+   "path": "repo/reports/decision_gate_validation.json",
+   "role": "archived copy of the same evaluation output; every gate_eval.json key is present with an identical value, and the archive adds archive_note + integration_note and a distinct kind",
+   "sha256": "85179783582a31c9f2a7f717784af9e44f7020172baa9daed119b40b2de2d726",
+   "generated_at_utc": "2026-10-12T15:48:12Z"
+  },
+  {
+   "path": "repo/models/deployment_metrics.json",
+   "role": "frozen out-of-fold fused scores used by every protocol (no model is refitted)",
+   "sha256": "34587c33a7bb8437763b3f0062b32b1c763e77baa864cb491f12bd794de6224a"
+  },
+  {
+   "path": "work/improve/sat_mean_119.json",
+   "role": "the sat_mean values themselves",
+   "sha256": "53453768d8afc40f2af24b457562b43a0b2ae879ec6049b30950186828b0858e"
+  }
+ ],
+ "score_provenance": "repo/models/deployment_metrics.json::_oof_fused_scores (6 rounds x 119, fused logits) + ::_oof_seqs; per-fold detector thresholds taken from ::rounds[].folds[].thr_high; deployed pooled threshold from ::thresholds.pooled_logit = 1.561879",
+ "methodology": {
+  "threshold_source": "pre-registered constant in work/improve/gate_rule.json (NOT searched)",
+  "must_not_be_fitted_on_the_evaluation_set": true,
+  "no_model_refit": true,
+  "false_positive_budget": 2,
+  "fpr_reported_as_counts": true,
+  "deployment_protocol": "per-fold threshold = order statistic (fp_budget=2) of pure-real TRAINING-fold scores (rounds[].folds[].thr_high), metrics on the held-out fold only (protocol B); protocol C is the per-round out-of-fold order statistic that reproduces the 0.9678 baseline",
+  "only_fitted_block": "optimistic_threshold_sweep (optimistic_bias=true)",
+  "script_guard": "the script aborts if gate_rule.json no longer holds the frozen 0.33"
+ },
+ "no_model_refit": true,
+ "protocol_reproduction_verified": true,
+ "protocol_reproduction": [
+  {
+   "round": 1,
+   "seed": 42,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   },
+   "recomputed_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   }
+  },
+  {
+   "round": 2,
+   "seed": 55,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 52,
+    "tn": 58,
+    "fp": 5,
+    "fn": 4
+   },
+   "recomputed_confusion": {
+    "tp": 52,
+    "tn": 58,
+    "fp": 5,
+    "fn": 4
+   }
+  },
+  {
+   "round": 3,
+   "seed": 68,
+   "reproduced": true,
+   "archived_accuracy": 0.9496,
+   "recomputed_accuracy": 0.9496,
+   "archived_confusion": {
+    "tp": 54,
+    "tn": 59,
+    "fp": 4,
+    "fn": 2
+   },
+   "recomputed_confusion": {
+    "tp": 54,
+    "tn": 59,
+    "fp": 4,
+    "fn": 2
+   }
+  },
+  {
+   "round": 4,
+   "seed": 81,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   },
+   "recomputed_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   }
+  },
+  {
+   "round": 5,
+   "seed": 94,
+   "reproduced": true,
+   "archived_accuracy": 0.916,
+   "recomputed_accuracy": 0.916,
+   "archived_confusion": {
+    "tp": 49,
+    "tn": 60,
+    "fp": 3,
+    "fn": 7
+   },
+   "recomputed_confusion": {
+    "tp": 49,
+    "tn": 60,
+    "fp": 3,
+    "fn": 7
+   }
+  },
+  {
+   "round": 6,
+   "seed": 107,
+   "reproduced": true,
+   "archived_accuracy": 0.916,
+   "recomputed_accuracy": 0.916,
+   "archived_confusion": {
+    "tp": 48,
+    "tn": 61,
+    "fp": 2,
+    "fn": 8
+   },
+   "recomputed_confusion": {
+    "tp": 48,
+    "tn": 61,
+    "fp": 2,
+    "fn": 8
+   }
+  }
+ ],
+ "protocols": {
+  "A": {
+   "protocol_label": "A",
+   "protocol": "A_deployed_pooled_threshold",
+   "definition": "single deployed threshold thr_pooled_logit=1.561879 from repo/models/fusion.json / deployment_metrics.json, applied to each archived round's out-of-fold scores (reproduces deployment_metrics.json::deployed_rule_metrics)",
+   "fp_budget": 2,
+   "n_real": 63,
+   "n_ai": 56,
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      30,
+      31,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      30,
+      31,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 3,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9412,
+     "accuracy_after": 0.9244,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9107,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "51/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 63,
+      "fp": 0,
+      "fn": 9
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      26,
+      27,
+      53
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      26,
+      27,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.8214,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "46/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 46,
+      "tn": 63,
+      "fp": 0,
+      "fn": 10
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      29,
+      30,
+      46,
+      53,
+      54,
+      55
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      29,
+      30,
+      46,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8
+     ],
+     "ai_true_positive_loss_this_round": 2,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9076,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8393,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "47/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 47,
+      "tn": 61,
+      "fp": 2,
+      "fn": 9
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8
+     ],
+     "ai_true_positive_loss_this_round": 2,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.875,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "49/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 49,
+      "tn": 61,
+      "fp": 2,
+      "fn": 7
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.9412,
+     "accuracy_after": 0.9244,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9107,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "51/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 63,
+      "fp": 0,
+      "fn": 9
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      29,
+      30,
+      31
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      29,
+      30,
+      31,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "rounds": 6,
+    "round_seeds": [
+     42,
+     55,
+     68,
+     81,
+     94,
+     107
+    ],
+    "accuracy_mean_before": 0.9244,
+    "accuracy_mean_after": 0.9146,
+    "accuracy_mean_delta": -0.0098,
+    "accuracy_min_before": 0.9076,
+    "accuracy_min_after": 0.9076,
+    "accuracy_max_before": 0.9412,
+    "accuracy_max_after": 0.9244,
+    "accuracy_rounds_worsened": 4,
+    "accuracy_rounds_improved": 0,
+    "accuracy_rounds_unchanged": 2,
+    "fpr_mean_before": 0.0317,
+    "fpr_mean_after": 0.0,
+    "fpr_mean_delta": -0.0317,
+    "fpr_rounds_improved": 0,
+    "fpr_rounds_unchanged": 0,
+    "fpr_rounds_worsened": 6,
+    "fpr_before_counts": "12/63 per round x 6 rounds",
+    "fpr_after_counts": "0/63 in all 6 rounds",
+    "tpr_mean_before": 0.875,
+    "tpr_mean_after": 0.8185,
+    "tpr_mean_delta": -0.0565,
+    "tpr_min_before": 0.8393,
+    "tpr_min_after": 0.8036,
+    "tpr_max_before": 0.9107,
+    "tpr_max_after": 0.8393,
+    "correct_real_mean_before": 61.0,
+    "correct_real_mean_after": 63.0,
+    "correct_real_rounds_improved": 6,
+    "fp_instances_before": 12,
+    "fp_instances_after": 0,
+    "fn_instances_before": 42,
+    "fn_instances_after": 61,
+    "ai_recall_cost_instances": 19
+   },
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false
+  },
+  "B": {
+   "protocol_label": "B",
+   "protocol": "B_perfold_training_order_statistic",
+   "definition": "per-fold threshold = archived order statistic (fp_budget=2, nested inner-CV training-fold pure-real fused scores) stored in rounds[].folds[].thr_high; metrics on the held-out fold only",
+   "fp_budget": 2,
+   "n_real": 63,
+   "n_ai": 56,
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.8929,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "50/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 50,
+      "tn": 60,
+      "fp": 3,
+      "fn": 6
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 62,
+      "fp": 1,
+      "fn": 9
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      68
+     ],
+     "fp_seqs_after": [
+      68
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      29,
+      30,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      29,
+      30,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 3,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0794,
+     "fpr_after": 0.0476,
+     "fpr_before_counts": "5/63",
+     "fpr_after_counts": "3/63",
+     "tpr_before": 0.9286,
+     "tpr_after": 0.8571,
+     "tpr_before_counts": "52/56",
+     "tpr_after_counts": "48/56",
+     "confusion_before": {
+      "tp": 52,
+      "tn": 58,
+      "fp": 5,
+      "fn": 4
+     },
+     "confusion_after": {
+      "tp": 48,
+      "tn": 60,
+      "fp": 3,
+      "fn": 8
+     },
+     "correct_real_before": 58,
+     "correct_real_after": 60,
+     "fp_seqs_before": [
+      57,
+      58,
+      68,
+      82,
+      83
+     ],
+     "fp_seqs_after": [
+      68,
+      82,
+      83
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      26,
+      27
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      26,
+      27,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.9496,
+     "accuracy_after": 0.9412,
+     "fpr_before": 0.0635,
+     "fpr_after": 0.0317,
+     "fpr_before_counts": "4/63",
+     "fpr_after_counts": "2/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 59,
+      "fp": 4,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "correct_real_before": 59,
+     "correct_real_after": 61,
+     "fp_seqs_before": [
+      57,
+      58,
+      83,
+      108
+     ],
+     "fp_seqs_after": [
+      83,
+      108
+     ],
+     "fn_seqs_before": [
+      3,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 3,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.8929,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "50/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 50,
+      "tn": 60,
+      "fp": 3,
+      "fn": 6
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 62,
+      "fp": 1,
+      "fn": 9
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      82
+     ],
+     "fp_seqs_after": [
+      82
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 3,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.8992,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.875,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "49/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 49,
+      "tn": 60,
+      "fp": 3,
+      "fn": 7
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 62,
+      "fp": 1,
+      "fn": 11
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      82
+     ],
+     "fp_seqs_after": [
+      82
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.8992,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.7857,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "44/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 44,
+      "tn": 63,
+      "fp": 0,
+      "fn": 12
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29,
+      30,
+      31,
+      32,
+      46,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      30,
+      31,
+      32,
+      46,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "rounds": 6,
+    "round_seeds": [
+     42,
+     55,
+     68,
+     81,
+     94,
+     107
+    ],
+    "accuracy_mean_before": 0.9258,
+    "accuracy_mean_after": 0.9132,
+    "accuracy_mean_delta": -0.0126,
+    "accuracy_min_before": 0.916,
+    "accuracy_min_after": 0.8992,
+    "accuracy_max_before": 0.9496,
+    "accuracy_max_after": 0.9412,
+    "accuracy_rounds_worsened": 6,
+    "accuracy_rounds_improved": 0,
+    "accuracy_rounds_unchanged": 0,
+    "fpr_mean_before": 0.0529,
+    "fpr_mean_after": 0.0212,
+    "fpr_mean_delta": -0.0317,
+    "fpr_rounds_improved": 0,
+    "fpr_rounds_unchanged": 0,
+    "fpr_rounds_worsened": 6,
+    "fpr_before_counts": "12/63 per round x 6 rounds",
+    "fpr_after_counts": "1+3+2+1+1+0 = 8/63 over 6 rounds",
+    "tpr_mean_before": 0.9018,
+    "tpr_mean_after": 0.8393,
+    "tpr_mean_delta": -0.0625,
+    "tpr_min_before": 0.8571,
+    "tpr_min_after": 0.7857,
+    "tpr_max_before": 0.9643,
+    "tpr_max_after": 0.9107,
+    "correct_real_mean_before": 59.6667,
+    "correct_real_mean_after": 61.6667,
+    "correct_real_rounds_improved": 6,
+    "fp_instances_before": 20,
+    "fp_instances_after": 8,
+    "fn_instances_before": 33,
+    "fn_instances_after": 54,
+    "ai_recall_cost_instances": 21
+   },
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false
+  },
+  "C": {
+   "protocol_label": "C",
+   "protocol": "C_round_order_statistic_oof",
+   "definition": "per round, threshold = order statistic (index fp_budget=2) of THAT round's out-of-fold pure-real fused logits; metrics on that round's held-out scores. This baseline reproduces deployment_metrics.json::summary.acc_at_fp_budget.per_round (mean 0.9678), the accuracy floor named in the task acceptance.",
+   "fp_budget": 2,
+   "n_real": 63,
+   "n_ai": 56,
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.9664,
+     "accuracy_after": 0.9496,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.8929,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "50/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 61,
+      "fp": 2,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 50,
+      "tn": 63,
+      "fp": 0,
+      "fn": 6
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.9496,
+     "accuracy_after": 0.9412,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9286,
+     "tpr_after": 0.875,
+     "tpr_before_counts": "52/56",
+     "tpr_after_counts": "49/56",
+     "confusion_before": {
+      "tp": 52,
+      "tn": 61,
+      "fp": 2,
+      "fn": 4
+     },
+     "confusion_after": {
+      "tp": 49,
+      "tn": 63,
+      "fp": 0,
+      "fn": 7
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29,
+      30,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      30,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 3,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.9664,
+     "accuracy_after": 0.9496,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.8929,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "50/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 61,
+      "fp": 2,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 50,
+      "tn": 63,
+      "fp": 0,
+      "fn": 6
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "genuine_ai_demoted_to_real": [
+      6,
+      8,
+      54,
+      55
+     ],
+     "ai_true_positive_loss_this_round": 4,
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "rounds": 6,
+    "round_seeds": [
+     42,
+     55,
+     68,
+     81,
+     94,
+     107
+    ],
+    "accuracy_mean_before": 0.9678,
+    "accuracy_mean_after": 0.9524,
+    "accuracy_mean_delta": -0.0154,
+    "accuracy_min_before": 0.9496,
+    "accuracy_min_after": 0.9412,
+    "accuracy_max_before": 0.9748,
+    "accuracy_max_after": 0.958,
+    "accuracy_rounds_worsened": 6,
+    "accuracy_rounds_improved": 0,
+    "accuracy_rounds_unchanged": 0,
+    "fpr_mean_before": 0.0317,
+    "fpr_mean_after": 0.0,
+    "fpr_mean_delta": -0.0317,
+    "fpr_rounds_improved": 0,
+    "fpr_rounds_unchanged": 0,
+    "fpr_rounds_worsened": 6,
+    "fpr_before_counts": "12/63 per round x 6 rounds",
+    "fpr_after_counts": "0/63 in all 6 rounds",
+    "tpr_mean_before": 0.9672,
+    "tpr_mean_after": 0.8988,
+    "tpr_mean_delta": -0.0684,
+    "tpr_min_before": 0.9286,
+    "tpr_min_after": 0.875,
+    "tpr_max_before": 0.9821,
+    "tpr_max_after": 0.9107,
+    "correct_real_mean_before": 61.0,
+    "correct_real_mean_after": 63.0,
+    "correct_real_rounds_improved": 6,
+    "fp_instances_before": 12,
+    "fp_instances_after": 0,
+    "fn_instances_before": 11,
+    "fn_instances_after": 34,
+    "ai_recall_cost_instances": 23
+   },
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false,
+   "acc_at_fp_budget_archived": {
+    "mean": 0.9678,
+    "min": 0.9496,
+    "per_round": [
+     0.9664,
+     0.9748,
+     0.9496,
+     0.9748,
+     0.9748,
+     0.9664
+    ]
+   },
+   "is_the_0_9678_floor_protocol": true
+  }
+ },
+ "protocol_roles": {
+  "A": "deployed pooled threshold thr_pooled_logit=1.561879 applied to each round's OOF scores (the operating point the service actually realises; reproduces deployment_metrics.json::deployed_rule_metrics)",
+  "B": "the honest deployment protocol required by the pre-registration: per-fold threshold = order statistic (fp_budget=2) of the training-fold pure-real scores, metrics on the held-out fold only",
+  "C": "per-round OOF order statistic (fp_budget=2); this is the protocol whose baseline mean accuracy IS the 0.9678 acceptance floor, so it is the primary evidence for the floor comparison"
+ },
+ "fpr_accounting": {
+  "denominator": 63,
+  "n_real": 63,
+  "quantum": 0.015873015873015872,
+  "rule": "every FPR is reported as k/63 counts next to the percentage (methodology.fpr_reported_as_counts)",
+  "totals_by_protocol": {
+   "A": "12->0 of 378 real-round slots",
+   "B": "20->8 of 378 real-round slots",
+   "C": "12->0 of 378 real-round slots"
+  },
+  "fp_instances_before_by_protocol": {
+   "A": 12,
+   "B": 20,
+   "C": 12
+  },
+  "fp_instances_after_by_protocol": {
+   "A": 0,
+   "B": 8,
+   "C": 0
+  },
+  "fpr_after_le_3pct_all_protocols": true,
+  "caveat": "1 false positive = 1.59% and 2 = 3.17% on n_real=63; FPR<=3% is only satisfiable at 0 or 1 false positives, so 'FPR is now 0/63' is a real but narrow statement"
+ },
+ "gate_scope": {
+  "samples_above_the_frozen_threshold": [
+   {
+    "seq": 6,
+    "label": "ai",
+    "sat_mean": 0.4072
+   },
+   {
+    "seq": 8,
+    "label": "ai",
+    "sat_mean": 0.4128
+   },
+   {
+    "seq": 54,
+    "label": "ai",
+    "sat_mean": 0.3933
+   },
+   {
+    "seq": 55,
+    "label": "ai",
+    "sat_mean": 0.4262
+   },
+   {
+    "seq": 57,
+    "label": "real",
+    "sat_mean": 0.561
+   },
+   {
+    "seq": 58,
+    "label": "real",
+    "sat_mean": 0.3501
+   },
+   {
+    "seq": 77,
+    "label": "real",
+    "sat_mean": 0.3396
+   }
+  ],
+  "n_above_threshold": 7,
+  "ai_above_threshold": [
+   6,
+   8,
+   54,
+   55
+  ],
+  "real_above_threshold": [
+   57,
+   58,
+   77
+  ],
+  "adds_no_new_false_positive": true,
+  "why_that_is_not_a_benefit": "the gate can only demote, so it cannot create a false positive - but the four AI images above 0.33 are mostly true positives, so each removed false positive is paid for with new false negatives",
+  "seq_077_note": "077 (sat_mean 0.3396) is already classified correctly today; demoting it changes nothing",
+  "sat_mean_reference_values": {
+   "ai_class_median": 0.1278,
+   "ai_class_max": 0.4262,
+   "real_class_median": 0.1165,
+   "real_class_max": 0.561,
+   "seq_057": 0.561,
+   "seq_058": 0.3501,
+   "seq_077": 0.3396
+  },
+  "sat_mean_values_all_119": {
+   "1": 0.0017,
+   "2": 0.001582,
+   "3": 0.062283,
+   "4": 0.001739,
+   "5": 0.130285,
+   "6": 0.407162,
+   "7": 0.179436,
+   "8": 0.412751,
+   "9": 0.006906,
+   "10": 0.155393,
+   "11": 0.09837,
+   "12": 0.168429,
+   "13": 0.167598,
+   "14": 0.175704,
+   "15": 0.162767,
+   "16": 0.173859,
+   "17": 0.197333,
+   "18": 0.205231,
+   "19": 0.129263,
+   "20": 0.132907,
+   "21": 0.0226,
+   "22": 0.02557,
+   "23": 0.025402,
+   "24": 0.121791,
+   "25": 0.121795,
+   "26": 0.152526,
+   "27": 0.121657,
+   "28": 0.139248,
+   "29": 0.018088,
+   "30": 0.009337,
+   "31": 0.006122,
+   "32": 0.005353,
+   "33": 0.000499,
+   "34": 0.000995,
+   "35": 0.010895,
+   "36": 0.142219,
+   "37": 0.150281,
+   "38": 0.003813,
+   "39": 0.007475,
+   "40": 0.006492,
+   "41": 0.143098,
+   "42": 0.008732,
+   "43": 0.154458,
+   "44": 0.022856,
+   "45": 0.209631,
+   "46": 0.249488,
+   "47": 0.23112,
+   "48": 0.07435,
+   "49": 0.126365,
+   "50": 0.045784,
+   "51": 0.02041,
+   "52": 0.143717,
+   "53": 0.28143,
+   "54": 0.393287,
+   "55": 0.426215,
+   "56": 0.273998,
+   "57": 0.561023,
+   "58": 0.350074,
+   "59": 0.250025,
+   "60": 0.006279,
+   "61": 0.137472,
+   "62": 0.152991,
+   "63": 0.083317,
+   "64": 0.143115,
+   "65": 0.002587,
+   "66": 0.083364,
+   "67": 0.022912,
+   "68": 0.073458,
+   "69": 0.157943,
+   "70": 0.146233,
+   "71": 0.016445,
+   "72": 0.238026,
+   "73": 0.144256,
+   "74": 0.171526,
+   "75": 0.168012,
+   "76": 0.116506,
+   "77": 0.339564,
+   "78": 0.028715,
+   "79": 0.242883,
+   "80": 0.026372,
+   "81": 0.120269,
+   "82": 0.007908,
+   "83": 0.012392,
+   "84": 0.041875,
+   "85": 0.056555,
+   "86": 0.069096,
+   "87": 0.049517,
+   "88": 0.05055,
+   "89": 0.056669,
+   "90": 0.133397,
+   "91": 0.016021,
+   "92": 0.13202,
+   "93": 0.131276,
+   "94": 0.179225,
+   "95": 0.02901,
+   "96": 0.028877,
+   "97": 0.029004,
+   "98": 0.028849,
+   "99": 0.154326,
+   "100": 0.187478,
+   "101": 0.152,
+   "102": 0.016574,
+   "103": 0.016672,
+   "104": 0.194396,
+   "105": 0.158952,
+   "106": 0.017482,
+   "107": 0.148405,
+   "108": 0.249483,
+   "109": 0.195769,
+   "110": 0.131664,
+   "111": 0.19582,
+   "112": 0.115395,
+   "113": 0.140255,
+   "114": 0.01558,
+   "115": 0.161842,
+   "116": 0.020868,
+   "117": 0.020496,
+   "118": 0.02031,
+   "119": 0.007605
+  }
+ },
+ "demotions_and_ai_true_positive_loss": {
+  "demoted_genuine_ai_images_union": [
+   6,
+   8,
+   54,
+   55
+  ],
+  "demoted_real_images_union": [
+   57,
+   58
+  ],
+  "ai_true_positive_loss_instances_by_protocol": {
+   "A": 19,
+   "B": 21,
+   "C": 23
+  },
+  "ai_true_positive_loss_instances_primary_protocol_C": 23,
+  "demoted_in_all_6_rounds_by_protocol": {
+   "A": [
+    6,
+    8
+   ],
+   "B": [
+    6,
+    8,
+    55
+   ],
+   "C": [
+    6,
+    8,
+    55
+   ]
+  },
+  "per_sample_loss_counts_protocol_C": {
+   "6": 6,
+   "8": 6,
+   "54": 5,
+   "55": 6
+  },
+  "per_round_loss_counts_protocol_C": {
+   "1": 4,
+   "2": 4,
+   "3": 3,
+   "4": 4,
+   "5": 4,
+   "6": 4
+  },
+  "independently_recomputed_out_of_fold_history": {
+   "6": {
+    "seq": 6,
+    "label": "ai",
+    "sat_mean": 0.407162,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 6,
+    "suspect_before_gate_all_6_rounds": true,
+    "suspect_after_gate_round_count": 0
+   },
+   "8": {
+    "seq": 8,
+    "label": "ai",
+    "sat_mean": 0.412751,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 6,
+    "suspect_before_gate_all_6_rounds": true,
+    "suspect_after_gate_round_count": 0
+   },
+   "54": {
+    "seq": 54,
+    "label": "ai",
+    "sat_mean": 0.393287,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 5,
+    "suspect_before_gate_all_6_rounds": false,
+    "suspect_after_gate_round_count": 0
+   },
+   "55": {
+    "seq": 55,
+    "label": "ai",
+    "sat_mean": 0.426215,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 6,
+    "suspect_before_gate_all_6_rounds": true,
+    "suspect_after_gate_round_count": 0
+   },
+   "57": {
+    "seq": 57,
+    "label": "real",
+    "sat_mean": 0.561023,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 6,
+    "suspect_before_gate_all_6_rounds": true,
+    "suspect_after_gate_round_count": 0
+   },
+   "58": {
+    "seq": 58,
+    "label": "real",
+    "sat_mean": 0.350074,
+    "suspect_before_gate_rounds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "suspect_before_gate_round_count": 6,
+    "suspect_before_gate_all_6_rounds": true,
+    "suspect_after_gate_round_count": 0
+   }
+  },
+  "proof_they_were_suspect_before_the_gate": {
+   "method": "protocol C thresholds are recomputed from repo/models/deployment_metrics.json ::_oof_fused_scores (per round: 3rd-largest real OOF logit + 1e-12) and compared against each sample's own OOF logit for that round",
+   "result": "006: suspect in 6/6 rounds; 008: 6/6; 054: 5/6 (rounds 1,2,4,5,6); 055: 6/6. All four were genuine out-of-fold true positives of the frozen detector before the gate ran, so the gate's cost is lost recall, not a pre-existing error.",
+   "archived_cross_check": "protocol C's demoted_by_gate_seqs for the 6 rounds are [6,8,54,55,57,58] x5 and [6,8,55,57,58] x1, exactly matching this recomputation; the archived all-6-rounds list [6,8,55] also matches, with 054 demoted in 5 of 6 rounds"
+  },
+  "cost_interpretation": "every demoted genuine AI image becomes a false negative; every demoted real image is a false positive removed"
+ },
+ "unsatisfiability_proof": {
+  "claim": "No single flat (univariate) threshold on sat_mean can both clear the false positive 058 and keep the AI true positives, therefore the gate's acceptance contract is unsatisfiable on this sample set - this is a property of the data, not of the implementation.",
+  "witness": {
+   "ai_sample": 54,
+   "ai_sample_sat_mean": 0.393287,
+   "real_false_positive_sample": 58,
+   "real_false_positive_sat_mean": 0.350074,
+   "inequality": "sat_mean(054) = 0.3933 > sat_mean(058) = 0.3501",
+   "holds": true
+  },
+  "max_sat_mean_of_the_four_ai_images": {
+   "seq": 55,
+   "sat_mean": 0.426215
+  },
+  "argument": [
+   "The gate flips every sample with sat_mean > t from suspect to real.",
+   "If t <= sat_mean(058) = 0.3501, then 058 is flipped - but so is 054 (0.3933), which is a genuine AI image, so AI recall is lost.",
+   "If t > sat_mean(055) = 0.4262 (the largest of the four AI images), no AI image is flipped - but 058 (0.3501) is no longer flipped either, so the false positive survives.",
+   "There is no t in between: the AI samples' saturation values straddle the real false positive's value, i.e. the class-conditional supports overlap on this one variable.",
+   "Therefore flat thresholding on sat_mean cannot satisfy 'clear 057 and 058' AND 'preserve AI recall' simultaneously - the contract is unsatisfiable, not merely unmet."
+  ],
+  "only_escape_hatches_and_why_they_are_inadmissible": [
+   {
+    "escape": "band 0.33 < sat_mean < 0.39 plus sat_mean > 0.50",
+    "why_inadmissible": "fitted to these exact 119 values; the pre-registration forbids fitting the gate on the evaluation set"
+   },
+   {
+    "escape": "optimistic threshold search",
+    "why_inadmissible": "the archived grid sweep (optimistic_bias=true) shows the accuracy-optimal threshold 0.44 clears 057 but leaves 058 flagged; no grid point clears both while keeping the floor"
+   }
+  ],
+  "archived_statement": "The AI images 006/008/054/055 have sat_mean 0.3933..0.4262, i.e. 054 is MORE saturated than the real false positive 058 (0.3501). A flat threshold low enough to flip 058 therefore also flips 054, and any threshold high enough to spare all four AI images (> 0.4262) can no longer flip 058. Only a band fitted to these exact values (e.g. 0.33 < sat_mean < 0.39, plus sat_mean > 0.50 for 057) clears both false positives without AI recall loss, and such a band is by construction fitted to the evaluation set."
+ },
+ "forced_control_without_057_058": {
+  "definition": "identical protocols replayed on the sample set with seq 057 and seq 058 REMOVED (n=117; 61 real, 56 AI). Every threshold is held fixed at its full-set value so the only thing that changes is the presence of the two images.",
+  "n_samples": 117,
+  "n_real": 61,
+  "n_ai": 56,
+  "per_protocol": {
+   "A": {
+    "accuracy_mean_before": 0.9402,
+    "accuracy_mean_after": 0.9131,
+    "accuracy_mean_delta": -0.0271,
+    "fpr_instances_before": 0,
+    "fpr_instances_after": 0,
+    "tpr_mean_delta": -0.0565
+   },
+   "B": {
+    "accuracy_mean_before": 0.9416,
+    "accuracy_mean_after": 0.9117,
+    "accuracy_mean_delta": -0.0299,
+    "fpr_instances_before": 8,
+    "fpr_instances_after": 8,
+    "tpr_mean_delta": -0.0625
+   },
+   "C": {
+    "accuracy_mean_before": 0.9844,
+    "accuracy_mean_after": 0.9516,
+    "accuracy_mean_delta": -0.0328,
+    "fpr_instances_before": 0,
+    "fpr_instances_after": 0,
+    "tpr_mean_delta": -0.0684
+   }
+  },
+  "accuracy_delta_after_gate": {
+   "A": -0.0271,
+   "B": -0.0299,
+   "C": -0.0328
+  },
+  "conclusion": "With 057/058 removed the gate has no false positive left to remove: the false-positive count is unchanged and its only effect is lost AI recall. The whole measured benefit of the gate is therefore scoped to those two images - exactly the generalisation risk the pre-registration was meant to expose.",
+  "reading": "false-positive instances are unchanged (0->0 for A and C; 8->8 for B) while accuracy falls, so after deleting the two images there is no benefit left - only cost. The gate's entire measured gain is scoped to 057/058, i.e. it is a 2-sample effect, not a generalisable detector improvement."
+ },
+ "optimistic_threshold_sweep_disclosure": {
+  "optimistic_bias": true,
+  "admissible_as_improvement": false,
+  "warning": "OPTIMISTIC UPPER BOUND ONLY. These thresholds were chosen by looking at the 119 labelled samples, so their scores are selection-biased and are NOT a deployable result. The pre-registered headline is threshold 0.33.",
+  "candidates": [
+   {
+    "threshold": 0.33,
+    "n_demoted": 7,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57,
+     58,
+     77
+    ],
+    "mean_accuracy_protocol_A": 0.9146,
+    "mean_accuracy_protocol_B": 0.9132,
+    "mean_accuracy_protocol_C": 0.9524
+   },
+   {
+    "threshold": 0.35,
+    "n_demoted": 6,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57,
+     58
+    ],
+    "mean_accuracy_protocol_A": 0.9146,
+    "mean_accuracy_protocol_B": 0.9132,
+    "mean_accuracy_protocol_C": 0.9524
+   },
+   {
+    "threshold": 0.38,
+    "n_demoted": 5,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9062,
+    "mean_accuracy_protocol_B": 0.9048,
+    "mean_accuracy_protocol_C": 0.944
+   },
+   {
+    "threshold": 0.4,
+    "n_demoted": 4,
+    "demoted_seqs": [
+     6,
+     8,
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9104,
+    "mean_accuracy_protocol_B": 0.909,
+    "mean_accuracy_protocol_C": 0.951
+   },
+   {
+    "threshold": 0.42,
+    "n_demoted": 2,
+    "demoted_seqs": [
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9272,
+    "mean_accuracy_protocol_B": 0.9258,
+    "mean_accuracy_protocol_C": 0.9678
+   },
+   {
+    "threshold": 0.44,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.46,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.48,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.5,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.52,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.55,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.6,
+    "n_demoted": 0,
+    "demoted_seqs": [],
+    "mean_accuracy_protocol_A": 0.9244,
+    "mean_accuracy_protocol_B": 0.9258,
+    "mean_accuracy_protocol_C": 0.9678
+   }
+  ],
+  "argmax_on_these_samples": {
+   "threshold": 0.44,
+   "mean_accuracy_protocol_C": 0.9762,
+   "mean_accuracy_protocol_A": 0.9328,
+   "mean_accuracy_protocol_B": 0.9342
+  },
+  "argmax_demoted_seqs": [
+   57
+  ],
+  "argmax_clears_057": true,
+  "argmax_clears_058": false,
+  "no_flat_threshold_in_the_grid_clears_both_and_keeps_the_floor": true,
+  "why_no_flat_threshold_satisfies_the_contract": "The accuracy-optimal flat threshold on this grid (0.44) clears only 057 and leaves the false positive 058 in place; every threshold low enough to clear BOTH 057 and 058 (<= 0.35) also demotes AI images and drops protocol C accuracy to 0.9524, i.e. below the 0.9678 floor. No flat threshold on this grid clears both false positives while keeping the floor.",
+  "why_no_flat_threshold_rescues_the_gate": "The AI images 006/008/054/055 have sat_mean 0.3933..0.4262, i.e. 054 is MORE saturated than the real false positive 058 (0.3501). A flat threshold low enough to flip 058 therefore also flips 054, and any threshold high enough to spare all four AI images (> 0.4262) can no longer flip 058. Only a band fitted to these exact values (e.g. 0.33 < sat_mean < 0.39, plus sat_mean > 0.50 for 057) clears both false positives without AI recall loss, and such a band is by construction fitted to the evaluation set."
+ },
+ "verdict": {
+  "false_positives_removed": true,
+  "seq_057_058_cleared": true,
+  "fpr_after_le_3pct": true,
+  "accuracy_floor_met": false,
+  "ai_recall_preserved": false,
+  "admissible_as_improvement": false,
+  "explanation": "The pre-registered gate clears both persistent false positives and drives the false-positive count to 0, but it also demotes genuine AI images 006/008/054/055 (sat_mean 0.3933..0.4262), so AI recall falls and accuracy drops below the 0.9678 floor in every protocol (C 0.9678->0.9524, A 0.9244->0.9146, B 0.9258->0.9132). The optimistic (fitted) sweep shows the same trade-off cannot be avoided by re-choosing the flat threshold: the accuracy-optimal value clears only 057 and leaves 058 flagged.",
+  "no_admissible_flat_threshold_found": true,
+  "recommendation": "Do NOT wire this gate into the production fusion layer. It is a measured negative result: removing 2 false positives costs 4 AI true positives, a worse trade than the 2/63 = 3.17% FPR it repairs, and the whole benefit rests on exactly two images. If a decision-layer override is wanted anyway, the only admissible form is an optional fusion-layer config key that is OFF by default (see the integration note in repo/reports/decision_gate_validation.json); it must carry the measured cost above."
+ },
+ "honesty_statement": "The gate's entire measured benefit on this set comes from seq 057 and seq 058. With those two images removed (control) the gate's mean accuracy delta is A=-0.0271, B=-0.0299, C=-0.0328 - i.e. no gain, and any residual movement is pure loss from demoting genuine AI images. A 2-sample effect inside a 63-sample real class cannot be shown to generalise: the gate is a pre-registered, falsifiable intervention whose evidence is two images, not a validated detector improvement.",
+ "brief_reconciliation": {
+  "brief_claims": [
+   "at the 2-false-positive budget the OOF accuracy is ~0.9678 and FPR is 2/63 = 3.17%",
+   "a gate sat_mean > 0.33 selects 4 AI images and 3 real images (057, 058, 077); 077 is already correctly classified today and 057/058 are flagged in ALL 6 rounds"
+  ],
+  "what_this_evaluation_measures": {
+   "0.9678_is_protocol_C": "0.9678 is the mean of deployment_metrics.json::rounds[].acc_at_fp_budget, reproduced here by protocol C (per-round order statistic on that round's out-of-fold real scores) - the same protocol as the accuracy floor written into the acceptance.",
+   "0.0317_is_protocol_A": "FPR 2/63 = 3.17% belongs to the deployed POOLED threshold (thr_pooled_logit=1.561879) applied to a round's scores, i.e. deployment_metrics.json::deployed_rule_metrics. That operating point costs 1.80 AI images per round on average (accuracy 0.9244).",
+   "the_honest_protocol_B": "the per-fold training-fold order statistic required by the task gives accuracy 0.9258 and FPR 5.29% - it does NOT reach the 3% rule either.",
+   "consequence": "the two figures 0.9678 and 3.17% come from two DIFFERENT protocols and are not simultaneously true of a single deployed rule. Both are reproduced here exactly (protocol_reproduction_verified = true)."
+  },
+  "gate_scope_confirmed": {
+   "above_0.33_ai": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "above_0.33_real": [
+    57,
+    58,
+    77
+   ],
+   "adds_no_new_false_positive": true,
+   "but_adds_false_negatives": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "why_the_briefs_framing_is_incomplete": "'adds no new false positive' is true because the gate can only demote, but the four AI images above 0.33 are mostly true positives, so the gate pays for the removed false positives with new false negatives."
+  }
+ },
+ "replacement_directions": [
+  {
+   "id": "R1",
+   "title": "缩小分母的不确定性 (shrink the denominator uncertainty) instead of repairing single samples",
+   "rationale": "the <=3% guardrail cannot be established with n_real=63: 1 FP = 1.59% and the Clopper-Pearson 95% upper bound at 0 FP already exceeds 3% (see repo/reports/baseline_improvement.json::statistical_guardrails). Enlarging the labelled real class is the only route that makes the guardrail claimable.",
+   "concrete_actions": [
+    "collect a held-out real set large enough that one false positive no longer moves the metric by 1.59 points (>= a few hundred images)",
+    "report FPR as k/N counts plus an exact binomial CI on that larger set",
+    "keep 057/058 in the set as documented hard negatives rather than deleting them"
+   ]
+  },
+  {
+   "id": "R2",
+   "title": "提升 AI 类在该子域的判别力 (raise AI-class discrimination in that sub-domain)",
+   "rationale": "057/058 are real near-shot high-saturation food/drink photos; the frozen detector's score on them is not a threshold artefact (pooled OOF logits 8.4730 and 3.5481 are the two largest real scores in the whole set). The defect is that this sub-domain is absent from the training distribution.",
+   "concrete_actions": [
+    "targeted negative mining: add real near-shot food/drink/life-scene photos to the negative class and retrain, so the sub-domain is represented rather than patched",
+    "build an explicit acquisition-state channel (hand-held close-up detection: dof/saturation/sharpness) as a separate routing signal with its own calibrated threshold, pre-registered",
+    "for the AI side, add an independent channel for flat white-background documents (OCR text consistency / stroke-edge residuals) - the sub-domain where 003/029/030 leak through"
+   ]
+  },
+  {
+   "id": "R3",
+   "title": "若仍需要决策层覆盖，只能用预注册的多变量信号",
+   "rationale": "a flat univariate threshold is provably unsatisfiable here (see unsatisfiability_proof).",
+   "concrete_actions": [
+    "pre-register the full feature vector and the decision rule before looking at any label",
+    "fit it only on training folds / a genuinely held-out set, never on the 119",
+    "publish the measured cost alongside the benefit in the same table",
+    "keep any production hook DISABLED by default and document the measured loss"
+   ]
+  }
+ ],
+ "do_not_repeat": [
+  "Do not re-run or re-tune the sat_mean > 0.33 gate to 'make it pass'; the failure is structural.",
+  "Do not report 'FPR is now 0/63' from this gate as an improvement - the same run loses 23 true positives over 6 rounds.",
+  "Do not present this negative result as a partial success, a proof of concept, or a robustness finding. It is a measured cost with no admissible benefit.",
+  "Do not delete 057/058 from the evaluation set to make the metrics look better; they are the documented hard negatives that define the problem."
+ ],
+ "acceptance_check": [
+  {
+   "criterion": "repo/reports/decision_gate_negative_result.json exists",
+   "status": "passed",
+   "evidence": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\reports\\decision_gate_negative_result.json"
+  },
+  {
+   "criterion": "contains the frozen threshold constant and its timestamp",
+   "status": "passed",
+   "evidence": "gate_rule.frozen_threshold_constant=0.33, preregistered_at_utc=2026-10-12T15:39:20Z, sha256=5cfe0551c7aeb4c3ca244afa9407b7c47a8b27ebd627bf817d57e982edd7241b"
+  },
+  {
+   "criterion": "three protocols A/B/C with per-round and aggregate metrics over 6 rounds at fp_budget=2, FPR always as k/63 counts",
+   "status": "passed",
+   "evidence": "protocols.A/B/C each carry 6 rounds with fpr_before_counts / fpr_after_counts as k/63 strings plus the full confusion matrices and the 0.9678-floor protocol tagged"
+  },
+  {
+   "criterion": "list of AI samples demoted by the gate with cumulative true-positive loss, including 006/008/054/055, proven to have been suspect out-of-fold",
+   "status": "passed",
+   "evidence": "demotions_and_ai_true_positive_loss: union [6,8,54,55], loss 23 instances under C, and an independently recomputed per-round suspect history (6/6, 6/6, 5/6, 6/6)"
+  },
+  {
+   "criterion": "unsatisfiability counterexample: an AI sample whose sat_mean exceeds the real false positive 058's sat_mean (054=0.3933 > 058=0.3501)",
+   "status": "passed",
+   "evidence": "unsatisfiability_proof.witness with holds=true and the two-branch argument"
+  },
+  {
+   "criterion": "forced control: recompute with 057/058 deleted, showing the gate's benefit was entirely those two images and only cost remains",
+   "status": "passed",
+   "evidence": "forced_control_without_057_058: n=117, deltas -0.0271/-0.0299/-0.0328 (A/B/C), false positives unchanged"
+  },
+  {
+   "criterion": "explicit decision not to wire into production plus admissible replacement directions",
+   "status": "passed",
+   "evidence": "decision.wire_into_production=false with 6 reasons; replacement_directions R1-R3 (shrink denominator uncertainty / raise AI-class discrimination in that sub-domain / pre-registered multi-variable signal only)"
+  }
+ ],
+ "integrity": {
+  "numbers_transcribed_by_hand": false,
+  "generator": "programmatic projection of work/improve/gate_eval.json, work/improve/gate_rule.json and repo/reports/decision_gate_validation.json",
+  "source_files_modified": false,
+  "repo_src_modified": false,
+  "independent_recomputation": {
+   "method": "protocol C thresholds recomputed from repo/models/deployment_metrics.json ::_oof_fused_scores inside the same generator run",
+   "ai_true_positive_loss_instances": 23,
+   "per_sample_loss_counts": {
+    "6": 6,
+    "8": 6,
+    "54": 5,
+    "55": 6
+   },
+   "matches_archive": true,
+   "control_deltas_match_archive": true
+  },
+  "git_tracked": false,
+  "git_tracked_note": "repo/.gitignore:70 ignores reports/*; like repo/reports/baseline_improvement.json this file needs an explicit whitelist line and `git add -f` before it is version-controlled",
+  "read_only_evidence_preserved": [
+   "work/improve/gate_rule.json",
+   "work/improve/gate_eval.json",
+   "repo/reports/decision_gate_validation.json"
+  ]
+ },
+ "recompute": {
+  "command": "see follow_up_note in work/improve/gate_negative.md",
+  "inline_python": "import json,numpy as np\nWS=r'C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01'\ndm=json.load(open(WS+r'\\repo\\models\\deployment_metrics.json',encoding='utf-8'))\nge=json.load(open(WS+r'\\work\\improve\\gate_eval.json',encoding='utf-8'))\nsc=np.asarray(dm['_oof_fused_scores'],float);sq=np.asarray(dm['_oof_seqs'],int)\ny=np.array([1 if int(s)<=56 else 0 for s in sq]);idx={int(s):i for i,s in enumerate(sq)}\nsat={int(k):v for k,v in ge['sat_mean_summary']['sat_mean_values'].items()}\ncost=0\nfor r in range(6):\n    thr=float(np.sort(sc[r][y==0])[::-1][2])+1e-12; pred=sc[r]>=thr\n    lost=[q for q in (6,8,54,55) if pred[idx[q]] and sat[q]>0.33]; cost+=len(lost)\nprint('AI TP loss instances =',cost)  # expect 23\nprint('054 > 058 :',sat[54]>sat[58],sat[54],sat[58])  # expect True 0.393287 0.350074"
+ }
+}

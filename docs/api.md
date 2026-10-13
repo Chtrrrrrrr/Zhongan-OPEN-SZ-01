@@ -622,7 +622,7 @@ Accuracy (review→real) 1.0000   FPR 0.0000   TPR 1.0000   Precision 1.0000   A
 **入库归档：`reports/batch/verify-24/`**（24 份逐样本报告，report schema **1.1.0**，
 `metrics.json.archive_qc.markers_present` 四类标记均为 24/24、`all_pass=true`，
 体量 11.7 MB / 28 文件）。生成命令、时间、环境与口径见
-[`reports/batch/README.md`](batch/README.md)：
+[`reports/batch/README.md`](../reports/batch/README.md)：
 
 ```bash
 python scripts/batch_evaluate.py --dir data/images --labels data/labels.csv \

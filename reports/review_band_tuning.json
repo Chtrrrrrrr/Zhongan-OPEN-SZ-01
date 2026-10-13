@@ -1,0 +1,1762 @@
+{
+ "kind": "review_band_tuning",
+ "generated_at_utc": "2026-10-12T15:53:47Z",
+ "preregistered": {
+  "selection_rule": "R0 finite disagreement guard only (inf rows are reported, never recommended); R1 strict binary accuracy >= the baseline of the same view; R2 pooled 6-round OOF strict accuracy >= 0.9748; R3 minimise the primary (in-sample) review count, tie-break: larger finite guard, then smaller thr_low",
+  "declared_before_scoring": true,
+  "provenance_of_the_rule": "the rule is the SELECTION_RULE constant of work/improve/review_tuning.py and is evaluated by the script only after every candidate has been scored; the candidate grid is likewise fixed in the constants DISAGREE_CANDIDATES and THR_LOW_QUANTILES. The honest claim is 'declared in code before this run and every candidate reported', not 'declared before any analysis of the task' - the grid values were chosen by the author while exploring this problem, which is why the full 16-row grid and the rejected rows are all present in this report.",
+  "candidate_grid": {
+   "disagree_review": [
+    1.25,
+    1.5,
+    2.0,
+    "inf"
+   ],
+   "thr_low": [
+    "deployed (repo/models/fusion.json)",
+    "real_q85",
+    "real_q90",
+    "real_q95"
+   ],
+   "thr_high": "fixed at the deployed value - never tuned, so no candidate can move a sample into suspect"
+  },
+  "all_candidates_reported": true,
+  "selection_samples": "the same 119 samples used for the baseline; the recommendation is therefore a candidate, not a validated improvement"
+ },
+ "sources": {
+  "in_sample_decision_layer": "work/acceptance_repo.json (frozen heads scored on all 119; the view the quoted review_count=26 comes from)",
+  "frozen_parameters": "repo/models/fusion.json",
+  "out_of_fold_6round": "repo/models/deployment_metrics.json::_oof_fused_scores (deployed two-member fusion, fused logits only)",
+  "out_of_fold_bundle": "models/oof_bundle_119.json (per-member out-of-fold calibrated scores, 5 folds, per-fold admitted members)",
+  "labels": "repo/data/labels.csv"
+ },
+ "rule_reimplemented": "repo/src/fusion.py::FusionEngine.fuse",
+ "frozen_parameters": {
+  "weights": {
+   "combined": 0.6,
+   "forensic": 0.25
+  },
+  "normalised_weights": {
+   "combined": 0.705882,
+   "forensic": 0.294118
+  },
+  "thr_low": 0.0266,
+  "thr_high": 0.826623,
+  "disagree_review": 1.25,
+  "temperatures": {
+   "combined": 1.6628906250000015,
+   "forensic": 1.1490234375000004
+  },
+  "temperature_note": "work/acceptance_repo.json member scores are DecisionResult.model_scores (already temperature-calibrated); the temperatures are carried for provenance and are not re-applied."
+ },
+ "verification": {
+  "n_samples": 119,
+  "n_real": 63,
+  "n_ai": 56,
+  "in_sample_verdict_mismatches_vs_archive": 0,
+  "max_abs_fused_dev_vs_reported": 0.002088,
+  "fused_dev_cause": "archived member scores are rounded to 4 dp, which perturbs the recomputed fused probability by up to ~2e-3; the verdict is unaffected (0 mismatches).",
+  "baseline_review_count_asserted": 26,
+  "bundle_band_only_reproduction_mismatches": 0,
+  "bundle_reproduction_note": "models/oof_bundle_119.json::deployed_oof.verdict contains NO disagreement term: the band-only decision reproduces it exactly, so the bundle grid below is the only out-of-fold view in which the disagreement knob can be evaluated.",
+  "pooled_baseline_accuracy_asserted": 0.97479
+ },
+ "baseline": {
+  "provenance": "in_sample_decision_layer (heads fitted on all 119) - structural view only, not a performance claim",
+  "review_count": 26,
+  "suspect_count": 56,
+  "normal_count": 37,
+  "review_real": 26,
+  "review_ai": 0,
+  "real_share_of_review": 0.4127,
+  "cause_decomposition": {
+   "model_disagreement_only": 14,
+   "uncertainty_band_only": 7,
+   "both": 5,
+   "disagreement_involved": 19,
+   "band_involved": 12
+  },
+  "cause_note": "mutually exclusive buckets that reproduce all 26 review verdicts: disagreement-only, band-only, both.",
+  "strict": {
+   "tp": 56,
+   "tn": 63,
+   "fp": 0,
+   "fn": 0,
+   "accuracy": 1.0,
+   "fpr": 0.0,
+   "fpr_counts": "0/63",
+   "tpr": 1.0,
+   "tpr_counts": "56/56",
+   "correct_real": 63,
+   "correct_ai": 56
+  },
+  "review_as_positive": {
+   "tp": 56,
+   "tn": 37,
+   "fp": 26,
+   "fn": 0,
+   "accuracy": 0.781513,
+   "fpr": 0.412698,
+   "fpr_counts": "26/63",
+   "tpr": 1.0,
+   "tpr_counts": "56/56",
+   "correct_real": 37,
+   "correct_ai": 56
+  }
+ },
+ "baseline_out_of_fold": {
+  "provenance": "out_of_fold_bundle_full_rule",
+  "review_count": 55,
+  "review_real": 52,
+  "review_ai": 3,
+  "review_ai_seqs": [
+   3,
+   29,
+   30
+  ],
+  "suspect_count": 55,
+  "normal_count": 9,
+  "strict": {
+   "tp": 53,
+   "tn": 61,
+   "fp": 2,
+   "fn": 3,
+   "accuracy": 0.957983,
+   "fpr": 0.031746,
+   "fpr_counts": "2/63",
+   "tpr": 0.946429,
+   "tpr_counts": "53/56",
+   "correct_real": 61,
+   "correct_ai": 53
+  },
+  "review_as_positive": {
+   "tp": 56,
+   "tn": 9,
+   "fp": 54,
+   "fn": 0,
+   "accuracy": 0.546218,
+   "fpr": 0.857143,
+   "fpr_counts": "54/63",
+   "tpr": 1.0,
+   "tpr_counts": "56/56",
+   "correct_real": 9,
+   "correct_ai": 56
+  },
+  "note": "same knobs applied out-of-fold; the member set is the bundle's per-fold admitted set, not the deployed two-member set."
+ },
+ "pooled_protocol": {
+  "provenance": "out_of_fold_6round_pooled (protocol P-A, fp_budget=2)",
+  "metrics": {
+   "tp": 55,
+   "tn": 61,
+   "fp": 2,
+   "fn": 1,
+   "accuracy": 0.97479,
+   "fpr": 0.031746,
+   "fpr_counts": "2/63",
+   "tpr": 0.982143,
+   "tpr_counts": "55/56",
+   "correct_real": 61,
+   "correct_ai": 55,
+   "threshold_logit": -0.424307
+  },
+  "per_round": [
+   {
+    "round": 1,
+    "seed": 42,
+    "tp": 54,
+    "tn": 61,
+    "fp": 2,
+    "fn": 2,
+    "accuracy": 0.966387,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.964286,
+    "tpr_counts": "54/56",
+    "correct_real": 61,
+    "correct_ai": 54
+   },
+   {
+    "round": 2,
+    "seed": 55,
+    "tp": 55,
+    "tn": 61,
+    "fp": 2,
+    "fn": 1,
+    "accuracy": 0.97479,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.982143,
+    "tpr_counts": "55/56",
+    "correct_real": 61,
+    "correct_ai": 55
+   },
+   {
+    "round": 3,
+    "seed": 68,
+    "tp": 52,
+    "tn": 61,
+    "fp": 2,
+    "fn": 4,
+    "accuracy": 0.94958,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.928571,
+    "tpr_counts": "52/56",
+    "correct_real": 61,
+    "correct_ai": 52
+   },
+   {
+    "round": 4,
+    "seed": 81,
+    "tp": 55,
+    "tn": 61,
+    "fp": 2,
+    "fn": 1,
+    "accuracy": 0.97479,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.982143,
+    "tpr_counts": "55/56",
+    "correct_real": 61,
+    "correct_ai": 55
+   },
+   {
+    "round": 5,
+    "seed": 94,
+    "tp": 55,
+    "tn": 61,
+    "fp": 2,
+    "fn": 1,
+    "accuracy": 0.97479,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.982143,
+    "tpr_counts": "55/56",
+    "correct_real": 61,
+    "correct_ai": 55
+   },
+   {
+    "round": 6,
+    "seed": 107,
+    "tp": 54,
+    "tn": 61,
+    "fp": 2,
+    "fn": 2,
+    "accuracy": 0.966387,
+    "fpr": 0.031746,
+    "fpr_counts": "2/63",
+    "tpr": 0.964286,
+    "tpr_counts": "54/56",
+    "correct_real": 61,
+    "correct_ai": 54
+   }
+  ],
+  "note": "two-class decision; the review band does not exist in this protocol, so the band knobs cannot change it. Reported as the frozen pooled baseline 0.9748."
+ },
+ "thr_low_candidates": [
+  {
+   "id": "deployed",
+   "value": 0.0266,
+   "derivation": "shipped in repo/models/fusion.json (thr_low); 51/63 real images are auto-cleared to normal at this value"
+  },
+  {
+   "id": "real_q85",
+   "value": 0.030637,
+   "derivation": "85th percentile of the real-class fused scores in this view"
+  },
+  {
+   "id": "real_q90",
+   "value": 0.036567,
+   "derivation": "90th percentile of the real-class fused scores in this view"
+  },
+  {
+   "id": "real_q95",
+   "value": 0.05392,
+   "derivation": "95th percentile of the real-class fused scores in this view"
+  }
+ ],
+ "candidate_grid": [
+  {
+   "candidate_id": "disagree=1.25|thr_low=deployed",
+   "disagree_review": 1.25,
+   "thr_low_id": "deployed",
+   "thr_low": 0.0266,
+   "thr_high": 0.826623,
+   "is_baseline": true,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 26,
+   "suspect_count": 56,
+   "normal_count": 37,
+   "review_real": 26,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 37,
+    "fp": 26,
+    "fn": 0,
+    "accuracy": 0.781513,
+    "fpr": 0.412698,
+    "fpr_counts": "26/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 37,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {}
+  },
+  {
+   "candidate_id": "disagree=1.25|thr_low=real_q85",
+   "disagree_review": 1.25,
+   "thr_low_id": "real_q85",
+   "thr_low": 0.030637,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 24,
+   "suspect_count": 56,
+   "normal_count": 39,
+   "review_real": 24,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 39,
+    "fp": 24,
+    "fn": 0,
+    "accuracy": 0.798319,
+    "fpr": 0.380952,
+    "fpr_counts": "24/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 39,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 2
+   }
+  },
+  {
+   "candidate_id": "disagree=1.25|thr_low=real_q90",
+   "disagree_review": 1.25,
+   "thr_low_id": "real_q90",
+   "thr_low": 0.036567,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 22,
+   "suspect_count": 56,
+   "normal_count": 41,
+   "review_real": 22,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 41,
+    "fp": 22,
+    "fn": 0,
+    "accuracy": 0.815126,
+    "fpr": 0.349206,
+    "fpr_counts": "22/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 41,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 4
+   }
+  },
+  {
+   "candidate_id": "disagree=1.25|thr_low=real_q95",
+   "disagree_review": 1.25,
+   "thr_low_id": "real_q95",
+   "thr_low": 0.05392,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 20,
+   "suspect_count": 56,
+   "normal_count": 43,
+   "review_real": 20,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 43,
+    "fp": 20,
+    "fn": 0,
+    "accuracy": 0.831933,
+    "fpr": 0.31746,
+    "fpr_counts": "20/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 43,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 6
+   }
+  },
+  {
+   "candidate_id": "disagree=1.5|thr_low=deployed",
+   "disagree_review": 1.5,
+   "thr_low_id": "deployed",
+   "thr_low": 0.0266,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 20,
+   "suspect_count": 56,
+   "normal_count": 43,
+   "review_real": 20,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 43,
+    "fp": 20,
+    "fn": 0,
+    "accuracy": 0.831933,
+    "fpr": 0.31746,
+    "fpr_counts": "20/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 43,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 6
+   }
+  },
+  {
+   "candidate_id": "disagree=1.5|thr_low=real_q85",
+   "disagree_review": 1.5,
+   "thr_low_id": "real_q85",
+   "thr_low": 0.030637,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 18,
+   "suspect_count": 56,
+   "normal_count": 45,
+   "review_real": 18,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 45,
+    "fp": 18,
+    "fn": 0,
+    "accuracy": 0.848739,
+    "fpr": 0.285714,
+    "fpr_counts": "18/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 45,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 8
+   }
+  },
+  {
+   "candidate_id": "disagree=1.5|thr_low=real_q90",
+   "disagree_review": 1.5,
+   "thr_low_id": "real_q90",
+   "thr_low": 0.036567,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 15,
+   "suspect_count": 56,
+   "normal_count": 48,
+   "review_real": 15,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 48,
+    "fp": 15,
+    "fn": 0,
+    "accuracy": 0.87395,
+    "fpr": 0.238095,
+    "fpr_counts": "15/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 48,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 11
+   }
+  },
+  {
+   "candidate_id": "disagree=1.5|thr_low=real_q95",
+   "disagree_review": 1.5,
+   "thr_low_id": "real_q95",
+   "thr_low": 0.05392,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 12,
+   "suspect_count": 56,
+   "normal_count": 51,
+   "review_real": 12,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 51,
+    "fp": 12,
+    "fn": 0,
+    "accuracy": 0.89916,
+    "fpr": 0.190476,
+    "fpr_counts": "12/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 51,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 14
+   }
+  },
+  {
+   "candidate_id": "disagree=2.0|thr_low=deployed",
+   "disagree_review": 2.0,
+   "thr_low_id": "deployed",
+   "thr_low": 0.0266,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 14,
+   "suspect_count": 56,
+   "normal_count": 49,
+   "review_real": 14,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 49,
+    "fp": 14,
+    "fn": 0,
+    "accuracy": 0.882353,
+    "fpr": 0.222222,
+    "fpr_counts": "14/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 49,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 12
+   }
+  },
+  {
+   "candidate_id": "disagree=2.0|thr_low=real_q85",
+   "disagree_review": 2.0,
+   "thr_low_id": "real_q85",
+   "thr_low": 0.030637,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 12,
+   "suspect_count": 56,
+   "normal_count": 51,
+   "review_real": 12,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 51,
+    "fp": 12,
+    "fn": 0,
+    "accuracy": 0.89916,
+    "fpr": 0.190476,
+    "fpr_counts": "12/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 51,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 14
+   }
+  },
+  {
+   "candidate_id": "disagree=2.0|thr_low=real_q90",
+   "disagree_review": 2.0,
+   "thr_low_id": "real_q90",
+   "thr_low": 0.036567,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 9,
+   "suspect_count": 56,
+   "normal_count": 54,
+   "review_real": 9,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 54,
+    "fp": 9,
+    "fn": 0,
+    "accuracy": 0.92437,
+    "fpr": 0.142857,
+    "fpr_counts": "9/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 54,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 17
+   }
+  },
+  {
+   "candidate_id": "disagree=2.0|thr_low=real_q95",
+   "disagree_review": 2.0,
+   "thr_low_id": "real_q95",
+   "thr_low": 0.05392,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": true,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 6,
+   "suspect_count": 56,
+   "normal_count": 57,
+   "review_real": 6,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 57,
+    "fp": 6,
+    "fn": 0,
+    "accuracy": 0.94958,
+    "fpr": 0.095238,
+    "fpr_counts": "6/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 57,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 20
+   }
+  },
+  {
+   "candidate_id": "disagree=inf|thr_low=deployed",
+   "disagree_review": "inf",
+   "thr_low_id": "deployed",
+   "thr_low": 0.0266,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 12,
+   "suspect_count": 56,
+   "normal_count": 51,
+   "review_real": 12,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 51,
+    "fp": 12,
+    "fn": 0,
+    "accuracy": 0.89916,
+    "fpr": 0.190476,
+    "fpr_counts": "12/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 51,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 14
+   }
+  },
+  {
+   "candidate_id": "disagree=inf|thr_low=real_q85",
+   "disagree_review": "inf",
+   "thr_low_id": "real_q85",
+   "thr_low": 0.030637,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 10,
+   "suspect_count": 56,
+   "normal_count": 53,
+   "review_real": 10,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 53,
+    "fp": 10,
+    "fn": 0,
+    "accuracy": 0.915966,
+    "fpr": 0.15873,
+    "fpr_counts": "10/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 53,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 16
+   }
+  },
+  {
+   "candidate_id": "disagree=inf|thr_low=real_q90",
+   "disagree_review": "inf",
+   "thr_low_id": "real_q90",
+   "thr_low": 0.036567,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 7,
+   "suspect_count": 56,
+   "normal_count": 56,
+   "review_real": 7,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 56,
+    "fp": 7,
+    "fn": 0,
+    "accuracy": 0.941176,
+    "fpr": 0.111111,
+    "fpr_counts": "7/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 56,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 19
+   }
+  },
+  {
+   "candidate_id": "disagree=inf|thr_low=real_q95",
+   "disagree_review": "inf",
+   "thr_low_id": "real_q95",
+   "thr_low": 0.05392,
+   "thr_high": 0.826623,
+   "is_baseline": false,
+   "is_recommended": false,
+   "provenance": "in_sample_decision_layer (heads fitted on all 119)",
+   "review_count": 4,
+   "suspect_count": 56,
+   "normal_count": 59,
+   "review_real": 4,
+   "review_ai": 0,
+   "review_ai_seqs": [],
+   "strict": {
+    "tp": 56,
+    "tn": 63,
+    "fp": 0,
+    "fn": 0,
+    "accuracy": 1.0,
+    "fpr": 0.0,
+    "fpr_counts": "0/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 63,
+    "correct_ai": 56
+   },
+   "review_as_positive": {
+    "tp": 56,
+    "tn": 59,
+    "fp": 4,
+    "fn": 0,
+    "accuracy": 0.966387,
+    "fpr": 0.063492,
+    "fpr_counts": "4/63",
+    "tpr": 1.0,
+    "tpr_counts": "56/56",
+    "correct_real": 59,
+    "correct_ai": 56
+   },
+   "moved_vs_baseline": {
+    "review->normal": 22
+   }
+  }
+ ],
+ "out_of_fold_6round_band_only": {
+  "provenance": "out_of_fold_6round_band_only",
+  "caveat": "the archived out-of-fold scores are FUSED logits only, so the disagreement term of the review rule cannot be recomputed in this view; these counts are band-only and therefore UNDERSTATE the full rule's review traffic.",
+  "per_round": [
+   {
+    "round": 1,
+    "seed": 42,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 46,
+      "review_real": 38,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.149167,
+      "review_count": 16,
+      "review_real": 8,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.193448,
+      "review_count": 13,
+      "review_real": 5,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.283143,
+      "review_count": 8,
+      "review_real": 2,
+      "review_ai": 6,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "seed": 55,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 46,
+      "review_real": 41,
+      "review_ai": 5,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.157029,
+      "review_count": 13,
+      "review_real": 8,
+      "review_ai": 5,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.245327,
+      "review_count": 9,
+      "review_real": 5,
+      "review_ai": 4,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.398694,
+      "review_count": 6,
+      "review_real": 2,
+      "review_ai": 4,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "seed": 68,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 42,
+      "review_real": 34,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.127943,
+      "review_count": 16,
+      "review_real": 8,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.26658,
+      "review_count": 13,
+      "review_real": 5,
+      "review_ai": 8,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.411378,
+      "review_count": 9,
+      "review_real": 2,
+      "review_ai": 7,
+      "strict_accuracy": 0.915966,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   },
+   {
+    "round": 4,
+    "seed": 81,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 49,
+      "review_real": 40,
+      "review_ai": 9,
+      "strict_accuracy": 0.907563,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.110627,
+      "review_count": 17,
+      "review_real": 8,
+      "review_ai": 9,
+      "strict_accuracy": 0.907563,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.225654,
+      "review_count": 14,
+      "review_real": 5,
+      "review_ai": 9,
+      "strict_accuracy": 0.907563,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.346556,
+      "review_count": 10,
+      "review_real": 2,
+      "review_ai": 8,
+      "strict_accuracy": 0.907563,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   },
+   {
+    "round": 5,
+    "seed": 94,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 42,
+      "review_real": 35,
+      "review_ai": 7,
+      "strict_accuracy": 0.92437,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.115584,
+      "review_count": 15,
+      "review_real": 8,
+      "review_ai": 7,
+      "strict_accuracy": 0.92437,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.186876,
+      "review_count": 11,
+      "review_real": 5,
+      "review_ai": 6,
+      "strict_accuracy": 0.92437,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.337598,
+      "review_count": 8,
+      "review_real": 2,
+      "review_ai": 6,
+      "strict_accuracy": 0.92437,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   },
+   {
+    "round": 6,
+    "seed": 107,
+    "provenance": "out_of_fold_6round_band_only",
+    "candidates": [
+     {
+      "thr_low_id": "deployed",
+      "thr_low": 0.0266,
+      "review_count": 48,
+      "review_real": 43,
+      "review_ai": 5,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q85",
+      "thr_low": 0.175986,
+      "review_count": 12,
+      "review_real": 8,
+      "review_ai": 4,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q90",
+      "thr_low": 0.250291,
+      "review_count": 9,
+      "review_real": 5,
+      "review_ai": 4,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     },
+     {
+      "thr_low_id": "real_q95",
+      "thr_low": 0.335607,
+      "review_count": 5,
+      "review_real": 2,
+      "review_ai": 3,
+      "strict_accuracy": 0.941176,
+      "strict_fpr_counts": "2/63"
+     }
+    ]
+   }
+  ],
+  "review_count_mean": {
+   "deployed": 45.5,
+   "real_q85": 14.8333,
+   "real_q90": 11.5,
+   "real_q95": 7.6667
+  }
+ },
+ "out_of_fold_bundle_full_rule": {
+  "provenance": "out_of_fold_bundle_full_rule",
+  "baseline_review_count": 55,
+  "grid": [
+   {
+    "candidate_id": "disagree=1.25|thr_low=deployed_perfold",
+    "disagree_review": 1.25,
+    "thr_low_id": "deployed_perfold",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 55,
+    "review_real": 52,
+    "review_ai": 3,
+    "review_ai_seqs": [
+     3,
+     29,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 9,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "54/63",
+    "review_as_positive_tpr_counts": "56/56"
+   },
+   {
+    "candidate_id": "disagree=1.25|thr_low=real_q85",
+    "disagree_review": 1.25,
+    "thr_low_id": "real_q85",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 42,
+    "review_real": 40,
+    "review_ai": 2,
+    "review_ai_seqs": [
+     3,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 22,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "42/63",
+    "review_as_positive_tpr_counts": "55/56"
+   },
+   {
+    "candidate_id": "disagree=1.25|thr_low=real_q90",
+    "disagree_review": 1.25,
+    "thr_low_id": "real_q90",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 39,
+    "review_real": 38,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 25,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "40/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=1.25|thr_low=real_q95",
+    "disagree_review": 1.25,
+    "thr_low_id": "real_q95",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 37,
+    "review_real": 36,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 27,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "38/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=deployed_perfold",
+    "disagree_review": 1.5,
+    "thr_low_id": "deployed_perfold",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 49,
+    "review_real": 46,
+    "review_ai": 3,
+    "review_ai_seqs": [
+     3,
+     29,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 15,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "48/63",
+    "review_as_positive_tpr_counts": "56/56"
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=real_q85",
+    "disagree_review": 1.5,
+    "thr_low_id": "real_q85",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 32,
+    "review_real": 30,
+    "review_ai": 2,
+    "review_ai_seqs": [
+     3,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 32,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "32/63",
+    "review_as_positive_tpr_counts": "55/56"
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=real_q90",
+    "disagree_review": 1.5,
+    "thr_low_id": "real_q90",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 28,
+    "review_real": 27,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 36,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "29/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=real_q95",
+    "disagree_review": 1.5,
+    "thr_low_id": "real_q95",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 25,
+    "review_real": 24,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 39,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "26/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=2.0|thr_low=deployed_perfold",
+    "disagree_review": 2.0,
+    "thr_low_id": "deployed_perfold",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 41,
+    "review_real": 38,
+    "review_ai": 3,
+    "review_ai_seqs": [
+     3,
+     29,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 23,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "40/63",
+    "review_as_positive_tpr_counts": "56/56"
+   },
+   {
+    "candidate_id": "disagree=2.0|thr_low=real_q85",
+    "disagree_review": 2.0,
+    "thr_low_id": "real_q85",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 20,
+    "review_real": 18,
+    "review_ai": 2,
+    "review_ai_seqs": [
+     3,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 44,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "20/63",
+    "review_as_positive_tpr_counts": "55/56"
+   },
+   {
+    "candidate_id": "disagree=2.0|thr_low=real_q90",
+    "disagree_review": 2.0,
+    "thr_low_id": "real_q90",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 16,
+    "review_real": 15,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 48,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "17/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=2.0|thr_low=real_q95",
+    "disagree_review": 2.0,
+    "thr_low_id": "real_q95",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 13,
+    "review_real": 12,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 51,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "14/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=deployed_perfold",
+    "disagree_review": "inf",
+    "thr_low_id": "deployed_perfold",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 32,
+    "review_real": 29,
+    "review_ai": 3,
+    "review_ai_seqs": [
+     3,
+     29,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 32,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "31/63",
+    "review_as_positive_tpr_counts": "56/56"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q85",
+    "disagree_review": "inf",
+    "thr_low_id": "real_q85",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 10,
+    "review_real": 8,
+    "review_ai": 2,
+    "review_ai_seqs": [
+     3,
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 54,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "10/63",
+    "review_as_positive_tpr_counts": "55/56"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q90",
+    "disagree_review": "inf",
+    "thr_low_id": "real_q90",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 6,
+    "review_real": 5,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 58,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "7/63",
+    "review_as_positive_tpr_counts": "54/56"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q95",
+    "disagree_review": "inf",
+    "thr_low_id": "real_q95",
+    "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+    "review_count": 3,
+    "review_real": 2,
+    "review_ai": 1,
+    "review_ai_seqs": [
+     30
+    ],
+    "suspect_count": 55,
+    "normal_count": 61,
+    "strict_accuracy": 0.957983,
+    "strict_fpr_counts": "2/63",
+    "strict_tpr_counts": "53/56",
+    "review_as_positive_fpr_counts": "4/63",
+    "review_as_positive_tpr_counts": "54/56"
+   }
+  ]
+ },
+ "recommendation": {
+  "candidate_id": "disagree=2.0|thr_low=real_q95",
+  "disagree_review": 2.0,
+  "thr_low_id": "real_q95",
+  "thr_low": 0.05392,
+  "thr_high": 0.826623,
+  "review_count_before": 26,
+  "review_count_after": 6,
+  "review_count_delta": -20,
+  "real_share_of_review_before": 0.4127,
+  "real_share_of_review_after": 0.0952,
+  "automation_rate_before": 0.7815,
+  "automation_rate_after": 0.9496,
+  "strict_accuracy_before": 1.0,
+  "strict_accuracy_after": 1.0,
+  "strict_fpr_before_counts": "0/63",
+  "strict_fpr_after_counts": "0/63",
+  "strict_tpr_before_counts": "56/56",
+  "strict_tpr_after_counts": "56/56",
+  "pooled_strict_accuracy_before": 0.97479,
+  "pooled_strict_accuracy_after": 0.97479,
+  "pooled_strict_accuracy_note": "the pooled P-A protocol is a two-class decision; narrowing the review band moves samples between review and normal, both of which count as 'not flagged' in the strict convention, so the pooled strict accuracy is provably unchanged",
+  "review_as_positive_fpr_before_counts": "26/63",
+  "review_as_positive_fpr_after_counts": "6/63",
+  "review_as_positive_tpr_before_counts": "56/56",
+  "review_as_positive_tpr_after_counts": "56/56",
+  "moved_vs_baseline": {
+   "review->normal": 20
+  },
+  "direction": "review -> normal only (thr_high is untouched, so nothing can become suspect; the disagreement guard is only ever loosened, never tightened)",
+  "out_of_fold_counterpart": {
+   "candidate_id": "disagree=2.0|thr_low=real_q95",
+   "disagree_review": 2.0,
+   "thr_low_id": "real_q95",
+   "provenance": "out_of_fold_bundle_full_rule (5-fold, per-fold members combined+forensic+clip_external in 3 of 5 folds)",
+   "review_count": 13,
+   "review_real": 12,
+   "review_ai": 1,
+   "review_ai_seqs": [
+    30
+   ],
+   "suspect_count": 55,
+   "normal_count": 51,
+   "strict_accuracy": 0.957983,
+   "strict_fpr_counts": "2/63",
+   "strict_tpr_counts": "53/56",
+   "review_as_positive_fpr_counts": "14/63",
+   "review_as_positive_tpr_counts": "54/56"
+  },
+  "selection_rule": "R0 finite disagreement guard only (inf rows are reported, never recommended); R1 strict binary accuracy >= the baseline of the same view; R2 pooled 6-round OOF strict accuracy >= 0.9748; R3 minimise the primary (in-sample) review count, tie-break: larger finite guard, then smaller thr_low",
+  "selection_rule_applied_on": "the same 119 samples (in-sample decision layer for R1, pooled P-A and the bundle OOF view for R2/R1-oof)",
+  "rejected": [
+   {
+    "candidate_id": "disagree=inf|thr_low=deployed",
+    "review_count": 12,
+    "why": "disagreement guard set to inf (removes a documented safety mechanism)"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q85",
+    "review_count": 10,
+    "why": "disagreement guard set to inf (removes a documented safety mechanism)"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q90",
+    "review_count": 7,
+    "why": "disagreement guard set to inf (removes a documented safety mechanism)"
+   },
+   {
+    "candidate_id": "disagree=inf|thr_low=real_q95",
+    "review_count": 4,
+    "why": "disagreement guard set to inf (removes a documented safety mechanism)"
+   }
+  ],
+  "infeasible": [],
+  "safety_first_alternatives": [
+   {
+    "candidate_id": "disagree=2.0|thr_low=deployed",
+    "review_count": 14,
+    "out_of_fold_review_ai": 3
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=deployed",
+    "review_count": 20,
+    "out_of_fold_review_ai": 3
+   }
+  ],
+  "safety_first_note": "The pre-registered rule R3 minimises the review count and is blind to the out-of-fold AI review coverage, because in the strict convention review and normal are both 'not flagged'. The alternatives above are the survivors whose out-of-fold counterpart keeps at least as many AI images inside the human-review band as the baseline does; choosing one of them means a larger review band in exchange for zero measured loss of AI review coverage.",
+  "caveat": "chosen after seeing this set: a candidate, not a validated improvement. No deployed artifact was modified."
+ },
+ "cost_of_narrowing": {
+  "the_convention_that_matters": "In the strict convention (review auto-cleared as real) the band can never change accuracy: review and normal are both 'not flagged'. The knob therefore only trades human-review volume against the risk that a review sample was really AI and now gets auto-cleared with no human in the loop.",
+  "fpr_direction_under_review_as_positive": "Counting review as flagged, the baseline in-sample FPR is 26/63 = 0.4127; narrowing the band LOWERS it to 6/63. The task's phrasing (FPR rises) would only hold for the opposite move - pushing review into suspect, which no candidate here does.",
+  "the_real_cost_is_lost_human_review_for_AI": "In-sample every one of the 26 review samples is a real image, so the measured cost is 0 false negatives. Out-of-fold the same rule keeps AI images 003/029/030 inside the review band (bundle view: review_ai=3 at the deployed knobs), so on that view the narrowing can auto-clear up to that many genuine AI images.",
+  "in_sample_review_as_positive_tpr": {
+   "before": "56/56",
+   "after": "56/56"
+  },
+  "out_of_fold_review_as_positive_tpr": {
+   "before": "56/56",
+   "after": "54/56"
+  },
+  "out_of_fold_ai_images_that_lose_the_human_check": {
+   "baseline_review_ai_seqs": [
+    3,
+    29,
+    30
+   ],
+   "recommended_review_ai_seqs": [
+    30
+   ],
+   "auto_cleared_ai_seqs": [
+    3,
+    29
+   ],
+   "note": "on this set the narrowing converts those AI images from 'human review' to 'auto-cleared normal' - an unmeasured-in-sample false-negative risk that the strict accuracy column cannot show."
+  },
+  "safety_first_alternatives": [
+   {
+    "candidate_id": "disagree=2.0|thr_low=deployed",
+    "review_count": 14,
+    "out_of_fold_review_ai": 3
+   },
+   {
+    "candidate_id": "disagree=1.5|thr_low=deployed",
+    "review_count": 20,
+    "out_of_fold_review_ai": 3
+   }
+  ],
+  "out_of_fold_closed_band_moves_ai_out_of_review": "raising thr_low above an AI image's fused score moves it from review to normal in the strict view too, i.e. out of the human loop entirely; the count of AI images affected is reported per candidate in the bundle grid."
+ },
+ "discrepancies_with_the_brief": {
+  "confirmed": [
+   "review_count = 26 of 119",
+   "real share of review = 26/63 = 41.27%",
+   "disagree_review = 1.25",
+   "thr_low = 0.0266",
+   "thr_high = 0.826623"
+  ],
+  "not_reproduced": [
+   "the brief's cause split '22 due to model_disagreement and 3 due to the uncertainty band': the measured mutually exclusive split is disagreement-only=14, band-only=7, both=5 (disagreement involved 19, band involved 12). Neither 22 nor 3 reproduces under fusion.py's rule; the brief's numbers are not mutually exclusive or use another convention."
+  ]
+ },
+ "limitations": [
+  "The 26-review baseline is an IN-SAMPLE decision-layer view (heads fitted on all 119). Out-of-fold the same rule keeps 32 samples in review (band only) and 55 with the disagreement guard, so 26 is a structural number, not the expected production review rate.",
+  "Every candidate is scored on the same 119 samples used to pick it. In the strict convention accuracy is identical for the whole grid on this set, so the recommendation rests on a structural argument plus the out-of-fold cross-check, not on held-out lift.",
+  "No candidate was validated on an independent real-image corpus; the false-negative risk of review -> normal is quantified out-of-fold (AI images 003/029/030 sit in the bundle review band) but not measured end to end.",
+  "No deployed artifact was modified: repo/models/fusion.json still ships thr_low=0.0266, disagree_review=1.25."
+ ],
+ "out_of_fold_reality_check": {
+  "in_sample_review_count": 26,
+  "out_of_fold_6round_band_only_review_count_mean": 45.5,
+  "out_of_fold_bundle_full_rule_review_count": 55,
+  "reading": "the quoted 26/119 is an in-sample number. Both out-of-fold views keep far more samples in review at the deployed knobs (46 in round 1, 45.5 on average over the 6 rounds in the band-only view; 55 in the 5-fold bundle view with the disagreement guard applied), so the real automation problem is larger than the brief's 26/119.",
+  "caveat": "the two out-of-fold views are not directly comparable to each other (different fold structures and member sets); they are shown to bound the operational review load, not to be averaged."
+ },
+ "conclusion": {
+  "which_numbers_are_in_sample": [
+   "baseline.review_count / suspect_count / normal_count / cause_decomposition",
+   "candidate_grid[*] (the whole review-vs-normal grid and its review_as_positive columns)",
+   "recommendation.* (review counts, strict accuracy, review-as-positive FPR/TPR)"
+  ],
+  "which_numbers_are_out_of_fold": [
+   "baseline_out_of_fold.* and out_of_fold_bundle_full_rule.* (repo/models/oof_bundle_119.json, per-member out-of-fold calibrated scores)",
+   "out_of_fold_6round_band_only.* (repo/models/deployment_metrics.json, 6 rounds, band-only because per-member logits are not archived there)",
+   "pooled_protocol.* (protocol P-A, pooled 6-round out-of-fold, fp_budget=2)",
+   "cost_of_narrowing.out_of_fold_*"
+  ],
+  "recommendation_summary": "disagree=2.0|thr_low=real_q95 (disagree_review=2.0, thr_low=0.05392, thr_high untouched at 0.826623) cuts the in-sample review band from 26 to 6 of 119 (automation 78.2% -> 95.0%) purely by moving review -> normal; strict binary accuracy (1.0000) and the pooled P-A accuracy (0.97479, FPR 2/63, TPR 55/56) are unchanged, because review and normal are both 'not flagged' in the strict convention.",
+  "cost_statement": "the in-sample review-as-positive FPR falls from 26/63 to 6/63 (the brief's expectation of a rise only applies to the opposite move, review -> suspect, which no candidate performs). The real cost is out-of-fold: the recommended configuration's out-of-fold counterpart leaves only AI image [30] in human review, so the other AI images that the baseline keeps in review lose their human check (review-as-positive TPR 56/56 -> 54/56).",
+  "admissible_claim": "a candidate configuration measured on the same 119 samples, plus its measured cost. NOT a validated improvement: no independent corpus, no deployed change."
+ }
+}

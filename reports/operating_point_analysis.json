@@ -1,0 +1,211 @@
+{
+ "report": "operating_point_analysis",
+ "purpose": "Establish which reproducible operating point the repository's own fp_budget=2 rule implies, and how far the DEPLOYED frozen threshold is from it. Written in response to audit-1 D1.",
+ "reproduce": "python scripts/make_operating_point.py",
+ "data_source": "repo/models/deployment_metrics.json::_oof_fused_scores (6 rounds x 119 out-of-fold fused LOGITS) + _oof_seqs",
+ "n_samples": 119,
+ "class_balance": {
+  "ai": 56,
+  "real": 63
+ },
+ "ratio_note": "the brief specifies ~7:3 (real:fake); the shipped set is 47:53 (56 ai / 63 real), so both are reported",
+ "threshold_space": "logits; probability = sigmoid(logit). Thresholds are stored at full float64 precision -- rounding the rule-implied threshold to 6 dp (-0.424307) makes it LARGER than the 3rd largest pooled real score (-0.4243068333333333) and admits 3 positives instead of 2.",
+ "fp_budget": 2,
+ "rule_definition": "admit at most 2 real samples -> threshold must be strictly below the 3rd largest pooled pure-real fused score, i.e. thr in (4th_largest, 3rd_largest]; implementing it as 3rd_largest + 1e-12 puts the admitted count at exactly 2.",
+ "operating_points": {
+  "deployed_fusion_json": {
+   "threshold_logit": 1.561879,
+   "threshold_logit_repr": "1.561879",
+   "threshold_probability": 0.8266228119304774,
+   "per_round": {
+    "accuracy_mean": 0.9244,
+    "accuracy_per_round": [
+     0.916,
+     0.9412,
+     0.916,
+     0.9076,
+     0.9244,
+     0.9412
+    ],
+    "fpr_mean": 0.0317,
+    "tpr_mean": 0.875,
+    "fp_per_round": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "fn_per_round": [
+     8,
+     5,
+     8,
+     9,
+     7,
+     5
+    ]
+   },
+   "pooled": {
+    "accuracy": 0.9412,
+    "fpr": 0.0317,
+    "fpr_count": "2/63",
+    "tpr": 0.9107,
+    "fp_seqs": [
+     57,
+     58
+    ],
+    "fn_seqs": [
+     3,
+     9,
+     29,
+     30,
+     53
+    ]
+   }
+  },
+  "per_fold_median_logit": {
+   "threshold_logit": 0.956386,
+   "threshold_logit_repr": "0.956386",
+   "threshold_probability": 0.72239763896284,
+   "per_round": {
+    "accuracy_mean": 0.944,
+    "accuracy_per_round": [
+     0.9328,
+     0.9664,
+     0.9328,
+     0.9412,
+     0.9412,
+     0.9496
+    ],
+    "fpr_mean": 0.0317,
+    "tpr_mean": 0.9167,
+    "fp_per_round": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "fn_per_round": [
+     6,
+     2,
+     6,
+     5,
+     5,
+     4
+    ]
+   },
+   "pooled": {
+    "accuracy": 0.9496,
+    "fpr": 0.0317,
+    "fpr_count": "2/63",
+    "tpr": 0.9286,
+    "fp_seqs": [
+     57,
+     58
+    ],
+    "fn_seqs": [
+     3,
+     9,
+     29,
+     53
+    ]
+   }
+  },
+  "rule_implied_pooled_2fp": {
+   "threshold_logit": -0.4243068333323333,
+   "threshold_logit_repr": "-0.4243068333323333",
+   "threshold_probability": 0.39548662345020114,
+   "per_round": {
+    "accuracy_mean": 0.9608,
+    "accuracy_per_round": [
+     0.9664,
+     0.958,
+     0.9496,
+     0.9664,
+     0.9664,
+     0.958
+    ],
+    "fpr_mean": 0.0503,
+    "tpr_mean": 0.9732,
+    "fp_per_round": [
+     2,
+     4,
+     5,
+     3,
+     3,
+     2
+    ],
+    "fn_per_round": [
+     2,
+     1,
+     1,
+     1,
+     1,
+     3
+    ]
+   },
+   "pooled": {
+    "accuracy": 0.9748,
+    "fpr": 0.0317,
+    "fpr_count": "2/63",
+    "tpr": 0.9821,
+    "fp_seqs": [
+     57,
+     58
+    ],
+    "fn_seqs": [
+     3
+    ]
+   }
+  }
+ },
+ "official_ratio_7_3_resampling": {
+  "draws": 2000,
+  "n_real": 70,
+  "n_fake": 30,
+  "seed": 11,
+  "results": {
+   "deployed_fusion_json": {
+    "accuracy_mean": 0.9513,
+    "accuracy_ci95": [
+     0.91,
+     0.99
+    ],
+    "fpr_mean": 0.0319,
+    "p_accuracy_ge_095": 0.632,
+    "p_fpr_le_003": 0.62
+   },
+   "per_fold_median_logit": {
+    "accuracy_mean": 0.9571,
+    "accuracy_ci95": [
+     0.91,
+     0.99
+    ],
+    "fpr_mean": 0.031,
+    "p_accuracy_ge_095": 0.751,
+    "p_fpr_le_003": 0.634
+   },
+   "rule_implied_pooled_2fp": {
+    "accuracy_mean": 0.9724,
+    "accuracy_ci95": [
+     0.94,
+     1.0
+    ],
+    "fpr_mean": 0.0317,
+    "p_accuracy_ge_095": 0.94,
+    "p_fpr_le_003": 0.621
+   }
+  }
+ },
+ "finding": {
+  "headline_claim": "README/results.md publish 95.94% accuracy / 2.12% FPR",
+  "deployed_realisation": 0.9244,
+  "rule_implied_pooled": 0.9748,
+  "conclusion": "The DEPLOYED frozen threshold (thr_high=0.826623) is NOT the point the repository's own stated rule (fp_budget=2 on pooled pure-real scores) implies. The rule implies -0.424307, which realises 97.48% pooled / 96.08% per-round accuracy at the SAME FP count (2/63) and strictly dominates the deployed threshold. The published 95.94% matches neither and is not reproducible from repo/models/.",
+  "fpr_requirement": "NOTE: 2/63 = 3.17% still EXCEEDS the required <=3%. On this set satisfying <=3% requires at most 1 FP (1.59%), and every threshold reaching 0 FP destroys recall (accuracy ~53%), so <=3% is not met by any reproducible operating point."
+ },
+ "caveat": "The pooled score is a diagnostic aggregate, not a deployable per-item rule. Per-round application of the rule-implied threshold yields FP counts of 2-5, i.e. the bound holds in aggregate, not uniformly per round."
+}

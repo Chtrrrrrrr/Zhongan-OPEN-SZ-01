@@ -24,8 +24,11 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from detector import AIGCDetector, PipelineConfig   # noqa: E402
+from models_path import (assert_expected_fusion, describe,  # noqa: E402
+                         resolve_artifact, resolve_models_dir)
 
 
 def resolve_clip(p: Path) -> Path:
@@ -40,35 +43,89 @@ def resolve_clip(p: Path) -> Path:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workspace", default=str(ROOT.parent))
+    ap.add_argument("--workspace", default=None,
+                    help="workspace root holding data/ (default: auto-detect from this "
+                         "script's location, then its parent)")
+    ap.add_argument("--models-dir", default=None,
+                    help="directory holding the frozen deployment artifacts. Default "
+                         "resolution prefers <repo>/models (the frozen copy); see "
+                         "scripts/models_path.py")
     ap.add_argument("--data-dir", default="data",
                     help="directory holding labels.csv + images/ (the labelled set)")
     ap.add_argument("--image", default="data/images/001.png")
     ap.add_argument("--image-real", default="data/images/057.png")
     ap.add_argument("--video", default="demo_assets/smoke_test.mp4")
-    ap.add_argument("--clip-probe", default="models/clip_probe_norm.pt")
+    ap.add_argument("--clip-probe", default=None,
+                    help="trained CLIP probe; default resolves against the models dir")
     ap.add_argument("--npr", default="",
                     help="NPR weights path; EMPTY by default because the NPR branch was "
                          "ablated out (see docs/results.md section 9)")
     ap.add_argument("--device", default="cuda")
-    ap.add_argument("--out", default="reports/smoke_test.json")
+    ap.add_argument("--out", default=None,
+                    help="output JSON path (default: <repo>/reports/smoke_test.json)")
     ap.add_argument("--budget-ms", type=int, default=5000)
     ap.add_argument("--target-ms", type=int, default=4500,
                     help="engineering target the iteration steers to (manual 表 16-2 "
                          "stage allocations sum to 4500 ms); P95 is compared against both")
     args = ap.parse_args()
 
-    ws = Path(args.workspace)
-    md = ws / "models"
+    # ---- locate the labelled data -------------------------------------------
+    # Auto-detect instead of assuming the caller's cwd is the workspace root.
+    if args.workspace:
+        ws = Path(args.workspace)
+    else:
+        # A candidate works only if it holds BOTH the labels and the images: `repo/`
+        # ships data/labels.csv but not the PNGs (they are git-ignored), so a
+        # labels-only test would pick the repo and then fail on the first image.
+        cands = [ROOT, ROOT.parent]
+
+        def usable(c: Path) -> bool:
+            return ((c / args.data_dir / "labels.csv").is_file()
+                    and (c / args.data_dir / "images").is_dir())
+
+        ws = next((c for c in cands if usable(c)), None)
+        if ws is None:
+            ws = next((c for c in cands
+                       if (c / args.data_dir / "labels.csv").is_file()), ROOT.parent)
+    ws = ws.resolve()
+
+    # ---- locate the FROZEN deployment artifacts -----------------------------
+    # Prefer <repo>/models; the workspace copy is stale (different thresholds and
+    # different joblib bytes) and would make these numbers disagree with the docs.
+    md, md_source = resolve_models_dir(args.models_dir, workspace=ws)
+    print(describe(md, md_source))
+    print(assert_expected_fusion(md))
+
+    def artifact(name: str, explicit: str | None = None) -> Path:
+        """Frozen copy first; fall back to <workspace>/models only if not shipped.
+
+        The frozen repository copy does not carry the large working artefacts
+        (clip_probe_norm.pt, clip_domain_lr.joblib, hf_cache/), so a single
+        directory choice is not enough - every fallback is printed.
+        """
+        if explicit:
+            return Path(explicit)
+        p, src = resolve_artifact(md, name, workspace=ws)
+        if src != "frozen":
+            print(f"[models] {name}: {p}  (source={src})")
+        return p
+
+    clip_probe = artifact("clip_probe_norm.pt", args.clip_probe)
+    forensic_lr = artifact("forensic_lr.joblib")
+    clip_domain_lr = artifact("clip_domain_lr.joblib")
+    combined_lr = artifact("combined_lr.joblib")
+    feature_spec = artifact("feature_spec.json")
+    fusion_json = artifact("fusion.json")
+    hf_cache = artifact("hf_cache/models--openai--clip-vit-large-patch14/snapshots")
 
     cfg = PipelineConfig(
-        clip_dir=str(resolve_clip(md / "hf_cache" / "models--openai--clip-vit-large-patch14" / "snapshots")),
-        clip_probe=str(md / "clip_probe_norm.pt"),
-        forensic_lr=str(md / "forensic_lr.joblib"),
-        clip_domain_lr=str(md / "clip_domain_lr.joblib"),
-        combined_lr=str(md / "combined_lr.joblib"),
-        feature_spec=str(md / "feature_spec.json"),
-        fusion_json=str(md / "fusion.json"),
+        clip_dir=str(resolve_clip(hf_cache)),
+        clip_probe=str(clip_probe),
+        forensic_lr=str(forensic_lr),
+        clip_domain_lr=str(clip_domain_lr),
+        combined_lr=str(combined_lr),
+        feature_spec=str(feature_spec),
+        fusion_json=str(fusion_json),
         npr_weights=(str(md / "npr.pt") if args.npr else None),
         device=args.device,
     )
@@ -193,7 +250,7 @@ def main():
     print("note: cold start is reported separately; the service warms up at startup "
           "so live requests see the warm path (manual ch.16.2).")
 
-    out = ws / args.out
+    out = Path(args.out) if args.out else (ROOT / "reports" / "smoke_test.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[save] {out}")

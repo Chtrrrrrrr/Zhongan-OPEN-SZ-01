@@ -35,6 +35,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from l0_input import (ParsedInput, _png_chunk_list, parse_image,  # noqa: E402
                       perceptual_hash)
+import models_path as mp                                          # noqa: E402
 from l1_forensics import extract_l1_features, feature_vector      # noqa: E402
 from l1b_domain import extract_l1b_features, feature_vector_b     # noqa: E402
 from l2_clip import CLIPFeatureExtractor                          # noqa: E402
@@ -311,11 +312,30 @@ def main():
                     help="long side used for the patch-token pass (0 disables it)")
     ap.add_argument("--per-folder-limit", type=int, default=0,
                     help="deterministic prefix of each testset folder (0 = all)")
-    ap.add_argument("--forensic-head", default="models/forensic_lr.joblib")
-    ap.add_argument("--combined-head", default="models/combined_lr.joblib")
-    ap.add_argument("--fusion-json", default="models/fusion.json")
+    ap.add_argument("--models-dir", default=None,
+                    help="directory holding the deployment artifacts; default resolution "
+                         "prefers repo/models (the frozen copy) and falls back per file to "
+                         "<workspace>/models - see scripts/models_path.py")
+    ap.add_argument("--forensic-head", default=None)
+    ap.add_argument("--combined-head", default=None)
+    ap.add_argument("--fusion-json", default=None)
     ap.add_argument("--out", default="reports/external_holdout.json")
     args = ap.parse_args()
+
+    # ---- one place decides which artifact copy is loaded ---------------------
+    md, md_source = mp.resolve_models_dir(args.models_dir, workspace=ROOT.parent)
+    print(mp.describe(md, md_source))
+    print(mp.assert_expected_fusion(md))
+    for attr, name in (("forensic_head", "forensic_lr.joblib"),
+                       ("combined_head", "combined_lr.joblib"),
+                       ("fusion_json", "fusion.json")):
+        if getattr(args, attr):
+            continue
+        p, src = mp.resolve_artifact(md, name, workspace=ROOT.parent)
+        if src != "frozen":
+            print(f"[models] {name}: {p}  (source={src})")
+        setattr(args, attr, str(p))
+
     return stage_extract(args) if args.stage == "extract" else stage_evaluate(args)
 
 

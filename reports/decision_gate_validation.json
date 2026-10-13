@@ -1,0 +1,2531 @@
+{
+ "kind": "decision_gate_validation_archive",
+ "generated_at_utc": "2026-10-12T15:48:12Z",
+ "gate_rule_path": "work/improve/gate_rule.json",
+ "gate_rule_sha256": "5cfe0551c7aeb4c3ca244afa9407b7c47a8b27ebd627bf817d57e982edd7241b",
+ "gate_rule": {
+  "kind": "pre_registered_gate_rule",
+  "gate_id": "sat_mean_gt_0.33_v1",
+  "preregistered_at_utc": "2026-10-12T15:39:20Z",
+  "preregistered_before": "any saturation value was computed and before any evaluation metric of this gate was produced",
+  "threshold_is_frozen": true,
+  "threshold_changed_after_the_fact": false,
+  "variable": {
+   "name": "sat_mean",
+   "exact_formula": "mean over all pixels of channel 1 (S) of cv2.cvtColor(cv2.imread(path, cv2.IMREAD_COLOR), cv2.COLOR_BGR2HSV), divided by 255.0 to yield a value in [0,1]",
+   "decoder": "opencv-python (cv2.imread, IMREAD_COLOR -> BGR 8-bit 3-channel)",
+   "colour_space": "HSV as produced by cv2.COLOR_BGR2HSV (H in [0,179], S in [0,255], V in [0,255])",
+   "resolution": "full original resolution, no resize, no crop, no normalisation of the image before the conversion",
+   "masking": "none (every pixel of the decoded image contributes equally)",
+   "input_path_template": "data/images/{seq:03d}.png (workspace root, relative to C:/Files/Deepseek Harness/Zhongan-OPEN-SZ-01)",
+   "units": "dimensionless fraction in [0,1]"
+  },
+  "threshold": {
+   "value": 0.33,
+   "role": "fixed constant, NOT searched on the 119 labelled samples",
+   "comparison": "sat_mean > 0.33 (strict greater-than)",
+   "provenance_of_the_constant": "supplied as a pre-registered constant by the delegating audit (reported AI-class median sat_mean = 0.128, AI-class max = 0.426; real outliers 057 = 0.561, 058 = 0.350)"
+  },
+  "application": {
+   "side": "candidate-negative side only, i.e. samples the frozen detector already flags as AI/suspect",
+   "rule": "if (base_prediction == 1 / suspect) and (sat_mean > 0.33) then override the prediction to real/normal; samples already predicted real are never touched",
+   "effective_effect": "the gate can only convert AI->real; it can never create a new AI flag",
+   "cost_model": "every AI image whose sat_mean exceeds 0.33 and that the base detector currently scores as suspect is converted into a false negative; this cost is measured, not assumed"
+  },
+  "intended_effect": "remove the two persistent false positives seq 057 and seq 058 from the flagged set, which are the sole reason the measured FPR (3.17%) exceeds the required <=3% under the deployed pooled threshold",
+  "evaluation_commitments": [
+   "the threshold 0.33 above is used as-is for the headline result; it is never re-fitted on the 119 samples",
+   "any threshold sweep is reported only in a separate, explicitly-labelled 'optimistic upper bound' section and never as the headline",
+   "the evaluation reuses the archived out-of-fold fused scores repo/models/deployment_metrics.json::_oof_fused_scores, so no model is re-fitted",
+   "the honest deployment protocol is used: per-fold threshold = order statistic (fp_budget = 2) of the TRAINING-fold pure-real fused scores, archived per fold, metrics computed on the held-out fold only",
+   "a control without seq 057 and 058 is reported alongside the headline"
+  ]
+ },
+ "preregistration": {
+  "path": "work/improve/gate_rule.json",
+  "sha256": "5cfe0551c7aeb4c3ca244afa9407b7c47a8b27ebd627bf817d57e982edd7241b",
+  "frozen_at_utc": "2026-10-12T15:39:20Z",
+  "file_mtime_utc": "2026-10-12T15:39:27Z",
+  "evaluation_script_mtime_utc": "2026-10-12T15:48:03Z",
+  "evaluation_started_at_utc": "2026-10-12T15:48:07Z",
+  "rule_existed_before_evaluation": true,
+  "rule_file_older_than_evaluation_script": true,
+  "threshold_constant": 0.33,
+  "threshold_searched_on_the_119_samples": false
+ },
+ "methodology": {
+  "threshold_source": "pre-registered constant in work/improve/gate_rule.json (NOT searched)",
+  "must_not_be_fitted_on_the_evaluation_set": true,
+  "no_model_refit": true,
+  "false_positive_budget": 2,
+  "fpr_reported_as_counts": true,
+  "deployment_protocol": "per-fold threshold = order statistic (fp_budget=2) of pure-real TRAINING-fold scores (rounds[].folds[].thr_high), metrics on the held-out fold only (protocol B); protocol C is the per-round out-of-fold order statistic that reproduces the 0.9678 baseline",
+  "only_fitted_block": "optimistic_threshold_sweep (optimistic_bias=true)",
+  "script_guard": "the script aborts if gate_rule.json no longer holds the frozen 0.33"
+ },
+ "no_model_refit": true,
+ "score_provenance": "repo/models/deployment_metrics.json::_oof_fused_scores (6 rounds x 119, fused logits) + ::_oof_seqs; per-fold detector thresholds taken from ::rounds[].folds[].thr_high; deployed pooled threshold from ::thresholds.pooled_logit = 1.561879",
+ "round_seeds": [
+  42,
+  55,
+  68,
+  81,
+  94,
+  107
+ ],
+ "n_samples": 119,
+ "n_real": 63,
+ "n_ai": 56,
+ "protocol_reproduction_verified": true,
+ "protocol_reproduction": [
+  {
+   "round": 1,
+   "seed": 42,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   },
+   "recomputed_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   }
+  },
+  {
+   "round": 2,
+   "seed": 55,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 52,
+    "tn": 58,
+    "fp": 5,
+    "fn": 4
+   },
+   "recomputed_confusion": {
+    "tp": 52,
+    "tn": 58,
+    "fp": 5,
+    "fn": 4
+   }
+  },
+  {
+   "round": 3,
+   "seed": 68,
+   "reproduced": true,
+   "archived_accuracy": 0.9496,
+   "recomputed_accuracy": 0.9496,
+   "archived_confusion": {
+    "tp": 54,
+    "tn": 59,
+    "fp": 4,
+    "fn": 2
+   },
+   "recomputed_confusion": {
+    "tp": 54,
+    "tn": 59,
+    "fp": 4,
+    "fn": 2
+   }
+  },
+  {
+   "round": 4,
+   "seed": 81,
+   "reproduced": true,
+   "archived_accuracy": 0.9244,
+   "recomputed_accuracy": 0.9244,
+   "archived_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   },
+   "recomputed_confusion": {
+    "tp": 50,
+    "tn": 60,
+    "fp": 3,
+    "fn": 6
+   }
+  },
+  {
+   "round": 5,
+   "seed": 94,
+   "reproduced": true,
+   "archived_accuracy": 0.916,
+   "recomputed_accuracy": 0.916,
+   "archived_confusion": {
+    "tp": 49,
+    "tn": 60,
+    "fp": 3,
+    "fn": 7
+   },
+   "recomputed_confusion": {
+    "tp": 49,
+    "tn": 60,
+    "fp": 3,
+    "fn": 7
+   }
+  },
+  {
+   "round": 6,
+   "seed": 107,
+   "reproduced": true,
+   "archived_accuracy": 0.916,
+   "recomputed_accuracy": 0.916,
+   "archived_confusion": {
+    "tp": 48,
+    "tn": 61,
+    "fp": 2,
+    "fn": 8
+   },
+   "recomputed_confusion": {
+    "tp": 48,
+    "tn": 61,
+    "fp": 2,
+    "fn": 8
+   }
+  }
+ ],
+ "sat_mean_summary": {
+  "formula": "mean over all pixels of channel 1 (S) of cv2.cvtColor(cv2.imread(path, cv2.IMREAD_COLOR), cv2.COLOR_BGR2HSV), divided by 255.0 to yield a value in [0,1]",
+  "threshold": 0.33,
+  "n_above_threshold": 7,
+  "above_threshold": [
+   {
+    "seq": 6,
+    "label": "ai",
+    "sat_mean": 0.4072
+   },
+   {
+    "seq": 8,
+    "label": "ai",
+    "sat_mean": 0.4128
+   },
+   {
+    "seq": 54,
+    "label": "ai",
+    "sat_mean": 0.3933
+   },
+   {
+    "seq": 55,
+    "label": "ai",
+    "sat_mean": 0.4262
+   },
+   {
+    "seq": 57,
+    "label": "real",
+    "sat_mean": 0.561
+   },
+   {
+    "seq": 58,
+    "label": "real",
+    "sat_mean": 0.3501
+   },
+   {
+    "seq": 77,
+    "label": "real",
+    "sat_mean": 0.3396
+   }
+  ],
+  "sat_mean_values": {
+   "1": 0.0017,
+   "2": 0.001582,
+   "3": 0.062283,
+   "4": 0.001739,
+   "5": 0.130285,
+   "6": 0.407162,
+   "7": 0.179436,
+   "8": 0.412751,
+   "9": 0.006906,
+   "10": 0.155393,
+   "11": 0.09837,
+   "12": 0.168429,
+   "13": 0.167598,
+   "14": 0.175704,
+   "15": 0.162767,
+   "16": 0.173859,
+   "17": 0.197333,
+   "18": 0.205231,
+   "19": 0.129263,
+   "20": 0.132907,
+   "21": 0.0226,
+   "22": 0.02557,
+   "23": 0.025402,
+   "24": 0.121791,
+   "25": 0.121795,
+   "26": 0.152526,
+   "27": 0.121657,
+   "28": 0.139248,
+   "29": 0.018088,
+   "30": 0.009337,
+   "31": 0.006122,
+   "32": 0.005353,
+   "33": 0.000499,
+   "34": 0.000995,
+   "35": 0.010895,
+   "36": 0.142219,
+   "37": 0.150281,
+   "38": 0.003813,
+   "39": 0.007475,
+   "40": 0.006492,
+   "41": 0.143098,
+   "42": 0.008732,
+   "43": 0.154458,
+   "44": 0.022856,
+   "45": 0.209631,
+   "46": 0.249488,
+   "47": 0.23112,
+   "48": 0.07435,
+   "49": 0.126365,
+   "50": 0.045784,
+   "51": 0.02041,
+   "52": 0.143717,
+   "53": 0.28143,
+   "54": 0.393287,
+   "55": 0.426215,
+   "56": 0.273998,
+   "57": 0.561023,
+   "58": 0.350074,
+   "59": 0.250025,
+   "60": 0.006279,
+   "61": 0.137472,
+   "62": 0.152991,
+   "63": 0.083317,
+   "64": 0.143115,
+   "65": 0.002587,
+   "66": 0.083364,
+   "67": 0.022912,
+   "68": 0.073458,
+   "69": 0.157943,
+   "70": 0.146233,
+   "71": 0.016445,
+   "72": 0.238026,
+   "73": 0.144256,
+   "74": 0.171526,
+   "75": 0.168012,
+   "76": 0.116506,
+   "77": 0.339564,
+   "78": 0.028715,
+   "79": 0.242883,
+   "80": 0.026372,
+   "81": 0.120269,
+   "82": 0.007908,
+   "83": 0.012392,
+   "84": 0.041875,
+   "85": 0.056555,
+   "86": 0.069096,
+   "87": 0.049517,
+   "88": 0.05055,
+   "89": 0.056669,
+   "90": 0.133397,
+   "91": 0.016021,
+   "92": 0.13202,
+   "93": 0.131276,
+   "94": 0.179225,
+   "95": 0.02901,
+   "96": 0.028877,
+   "97": 0.029004,
+   "98": 0.028849,
+   "99": 0.154326,
+   "100": 0.187478,
+   "101": 0.152,
+   "102": 0.016574,
+   "103": 0.016672,
+   "104": 0.194396,
+   "105": 0.158952,
+   "106": 0.017482,
+   "107": 0.148405,
+   "108": 0.249483,
+   "109": 0.195769,
+   "110": 0.131664,
+   "111": 0.19582,
+   "112": 0.115395,
+   "113": 0.140255,
+   "114": 0.01558,
+   "115": 0.161842,
+   "116": 0.020868,
+   "117": 0.020496,
+   "118": 0.02031,
+   "119": 0.007605
+  },
+  "ai_class_median": 0.1278,
+  "ai_class_max": 0.4262,
+  "real_class_median": 0.1165,
+  "real_class_max": 0.561,
+  "seq_057_sat_mean": 0.561,
+  "seq_058_sat_mean": 0.3501,
+  "seq_077_sat_mean": 0.3396
+ },
+ "protocols": {
+  "A_deployed_pooled_threshold": {
+   "protocol": "A_deployed_pooled_threshold",
+   "definition": "single deployed threshold thr_pooled_logit=1.561879 from repo/models/fusion.json / deployment_metrics.json, applied to each archived round's out-of-fold scores (reproduces deployment_metrics.json::deployed_rule_metrics)",
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      30,
+      31,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      30,
+      31,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9412,
+     "accuracy_after": 0.9244,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9107,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "51/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 63,
+      "fp": 0,
+      "fn": 9
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      26,
+      27,
+      53
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      26,
+      27,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.8214,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "46/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 46,
+      "tn": 63,
+      "fp": 0,
+      "fn": 10
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      29,
+      30,
+      46,
+      53,
+      54,
+      55
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      29,
+      30,
+      46,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9076,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8393,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "47/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 47,
+      "tn": 61,
+      "fp": 2,
+      "fn": 9
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.875,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "49/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 49,
+      "tn": 61,
+      "fp": 2,
+      "fn": 7
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 63,
+      "fp": 0,
+      "fn": 11
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.9412,
+     "accuracy_after": 0.9244,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9107,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "51/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 63,
+      "fp": 0,
+      "fn": 9
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      9,
+      29,
+      30,
+      31
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      9,
+      29,
+      30,
+      31,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "accuracy": {
+     "rounds": 6,
+     "mean_before": 0.9244,
+     "mean_after": 0.9146,
+     "mean_delta": -0.0098,
+     "min_before": 0.9076,
+     "min_after": 0.9076,
+     "max_before": 0.9412,
+     "max_after": 0.9244,
+     "rounds_improved": 0,
+     "rounds_unchanged": 2,
+     "rounds_worsened": 4
+    },
+    "fpr": {
+     "rounds": 6,
+     "mean_before": 0.0317,
+     "mean_after": 0.0,
+     "mean_delta": -0.0317,
+     "min_before": 0.0317,
+     "min_after": 0.0,
+     "max_before": 0.0317,
+     "max_after": 0.0,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "tpr": {
+     "rounds": 6,
+     "mean_before": 0.875,
+     "mean_after": 0.8185,
+     "mean_delta": -0.0565,
+     "min_before": 0.8393,
+     "min_after": 0.8036,
+     "max_before": 0.9107,
+     "max_after": 0.8393,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "correct_real": {
+     "rounds": 6,
+     "mean_before": 61.0,
+     "mean_after": 63.0,
+     "mean_delta": 2.0,
+     "min_before": 61.0,
+     "min_after": 63.0,
+     "max_before": 61.0,
+     "max_after": 63.0,
+     "rounds_improved": 6,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 0
+    },
+    "fp_instances_before": 12,
+    "fp_instances_after": 0,
+    "fn_instances_before": 42,
+    "fn_instances_after": 61,
+    "ai_recall_cost_instances": 19
+   },
+   "seq_057_suspect_before_any_round": true,
+   "seq_057_suspect_after_any_round": false,
+   "seq_058_suspect_before_any_round": true,
+   "seq_058_suspect_after_any_round": false,
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false
+  },
+  "B_perfold_training_order_statistic": {
+   "protocol": "B_perfold_training_order_statistic",
+   "definition": "per-fold threshold = archived order statistic (fp_budget=2, nested inner-CV training-fold pure-real fused scores) stored in rounds[].folds[].thr_high; metrics on the held-out fold only",
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.8929,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "50/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 50,
+      "tn": 60,
+      "fp": 3,
+      "fn": 6
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 62,
+      "fp": 1,
+      "fn": 9
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      68
+     ],
+     "fp_seqs_after": [
+      68
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      29,
+      30,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      29,
+      30,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.9076,
+     "fpr_before": 0.0794,
+     "fpr_after": 0.0476,
+     "fpr_before_counts": "5/63",
+     "fpr_after_counts": "3/63",
+     "tpr_before": 0.9286,
+     "tpr_after": 0.8571,
+     "tpr_before_counts": "52/56",
+     "tpr_after_counts": "48/56",
+     "confusion_before": {
+      "tp": 52,
+      "tn": 58,
+      "fp": 5,
+      "fn": 4
+     },
+     "confusion_after": {
+      "tp": 48,
+      "tn": 60,
+      "fp": 3,
+      "fn": 8
+     },
+     "correct_real_before": 58,
+     "correct_real_after": 60,
+     "fp_seqs_before": [
+      57,
+      58,
+      68,
+      82,
+      83
+     ],
+     "fp_seqs_after": [
+      68,
+      82,
+      83
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      26,
+      27
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      26,
+      27,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.9496,
+     "accuracy_after": 0.9412,
+     "fpr_before": 0.0635,
+     "fpr_after": 0.0317,
+     "fpr_before_counts": "4/63",
+     "fpr_after_counts": "2/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 59,
+      "fp": 4,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 61,
+      "fp": 2,
+      "fn": 5
+     },
+     "correct_real_before": 59,
+     "correct_real_after": 61,
+     "fp_seqs_before": [
+      57,
+      58,
+      83,
+      108
+     ],
+     "fp_seqs_after": [
+      83,
+      108
+     ],
+     "fn_seqs_before": [
+      3,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9244,
+     "accuracy_after": 0.916,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.8929,
+     "tpr_after": 0.8393,
+     "tpr_before_counts": "50/56",
+     "tpr_after_counts": "47/56",
+     "confusion_before": {
+      "tp": 50,
+      "tn": 60,
+      "fp": 3,
+      "fn": 6
+     },
+     "confusion_after": {
+      "tp": 47,
+      "tn": 62,
+      "fp": 1,
+      "fn": 9
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      82
+     ],
+     "fp_seqs_after": [
+      82
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      53,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      53,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.8992,
+     "fpr_before": 0.0476,
+     "fpr_after": 0.0159,
+     "fpr_before_counts": "3/63",
+     "fpr_after_counts": "1/63",
+     "tpr_before": 0.875,
+     "tpr_after": 0.8036,
+     "tpr_before_counts": "49/56",
+     "tpr_after_counts": "45/56",
+     "confusion_before": {
+      "tp": 49,
+      "tn": 60,
+      "fp": 3,
+      "fn": 7
+     },
+     "confusion_after": {
+      "tp": 45,
+      "tn": 62,
+      "fp": 1,
+      "fn": 11
+     },
+     "correct_real_before": 60,
+     "correct_real_after": 62,
+     "fp_seqs_before": [
+      57,
+      58,
+      82
+     ],
+     "fp_seqs_after": [
+      82
+     ],
+     "fn_seqs_before": [
+      3,
+      5,
+      9,
+      29,
+      31,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      5,
+      6,
+      8,
+      9,
+      29,
+      31,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.916,
+     "accuracy_after": 0.8992,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.8571,
+     "tpr_after": 0.7857,
+     "tpr_before_counts": "48/56",
+     "tpr_after_counts": "44/56",
+     "confusion_before": {
+      "tp": 48,
+      "tn": 61,
+      "fp": 2,
+      "fn": 8
+     },
+     "confusion_after": {
+      "tp": 44,
+      "tn": 63,
+      "fp": 0,
+      "fn": 12
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29,
+      30,
+      31,
+      32,
+      46,
+      53,
+      56
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      30,
+      31,
+      32,
+      46,
+      53,
+      54,
+      55,
+      56
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "accuracy": {
+     "rounds": 6,
+     "mean_before": 0.9258,
+     "mean_after": 0.9132,
+     "mean_delta": -0.0126,
+     "min_before": 0.916,
+     "min_after": 0.8992,
+     "max_before": 0.9496,
+     "max_after": 0.9412,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "fpr": {
+     "rounds": 6,
+     "mean_before": 0.0529,
+     "mean_after": 0.0212,
+     "mean_delta": -0.0317,
+     "min_before": 0.0317,
+     "min_after": 0.0,
+     "max_before": 0.0794,
+     "max_after": 0.0476,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "tpr": {
+     "rounds": 6,
+     "mean_before": 0.9018,
+     "mean_after": 0.8393,
+     "mean_delta": -0.0625,
+     "min_before": 0.8571,
+     "min_after": 0.7857,
+     "max_before": 0.9643,
+     "max_after": 0.9107,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "correct_real": {
+     "rounds": 6,
+     "mean_before": 59.6667,
+     "mean_after": 61.6667,
+     "mean_delta": 2.0,
+     "min_before": 58.0,
+     "min_after": 60.0,
+     "max_before": 61.0,
+     "max_after": 63.0,
+     "rounds_improved": 6,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 0
+    },
+    "fp_instances_before": 20,
+    "fp_instances_after": 8,
+    "fn_instances_before": 33,
+    "fn_instances_after": 54,
+    "ai_recall_cost_instances": 21
+   },
+   "seq_057_suspect_before_any_round": true,
+   "seq_057_suspect_after_any_round": false,
+   "seq_058_suspect_before_any_round": true,
+   "seq_058_suspect_after_any_round": false,
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false
+  },
+  "C_round_order_statistic_oof": {
+   "protocol": "C_round_order_statistic_oof",
+   "definition": "per round, threshold = order statistic (index fp_budget=2) of THAT round's out-of-fold pure-real fused logits; metrics on that round's held-out scores. This baseline reproduces deployment_metrics.json::summary.acc_at_fp_budget.per_round (mean 0.9678), the accuracy floor named in the task acceptance.",
+   "rounds": [
+    {
+     "round": 1,
+     "seed": 42,
+     "accuracy_before": 0.9664,
+     "accuracy_after": 0.9496,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.8929,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "50/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 61,
+      "fp": 2,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 50,
+      "tn": 63,
+      "fp": 0,
+      "fn": 6
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 2,
+     "seed": 55,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 3,
+     "seed": 68,
+     "accuracy_before": 0.9496,
+     "accuracy_after": 0.9412,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9286,
+     "tpr_after": 0.875,
+     "tpr_before_counts": "52/56",
+     "tpr_after_counts": "49/56",
+     "confusion_before": {
+      "tp": 52,
+      "tn": 61,
+      "fp": 2,
+      "fn": 4
+     },
+     "confusion_after": {
+      "tp": 49,
+      "tn": 63,
+      "fp": 0,
+      "fn": 7
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29,
+      30,
+      54
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      30,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 4,
+     "seed": 81,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 5,
+     "seed": 94,
+     "accuracy_before": 0.9748,
+     "accuracy_after": 0.958,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9821,
+     "tpr_after": 0.9107,
+     "tpr_before_counts": "55/56",
+     "tpr_after_counts": "51/56",
+     "confusion_before": {
+      "tp": 55,
+      "tn": 61,
+      "fp": 2,
+      "fn": 1
+     },
+     "confusion_after": {
+      "tp": 51,
+      "tn": 63,
+      "fp": 0,
+      "fn": 5
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    },
+    {
+     "round": 6,
+     "seed": 107,
+     "accuracy_before": 0.9664,
+     "accuracy_after": 0.9496,
+     "fpr_before": 0.0317,
+     "fpr_after": 0.0,
+     "fpr_before_counts": "2/63",
+     "fpr_after_counts": "0/63",
+     "tpr_before": 0.9643,
+     "tpr_after": 0.8929,
+     "tpr_before_counts": "54/56",
+     "tpr_after_counts": "50/56",
+     "confusion_before": {
+      "tp": 54,
+      "tn": 61,
+      "fp": 2,
+      "fn": 2
+     },
+     "confusion_after": {
+      "tp": 50,
+      "tn": 63,
+      "fp": 0,
+      "fn": 6
+     },
+     "correct_real_before": 61,
+     "correct_real_after": 63,
+     "fp_seqs_before": [
+      57,
+      58
+     ],
+     "fp_seqs_after": [],
+     "fn_seqs_before": [
+      3,
+      29
+     ],
+     "fn_seqs_after": [
+      3,
+      6,
+      8,
+      29,
+      54,
+      55
+     ],
+     "demoted_by_gate_seqs": [
+      6,
+      8,
+      54,
+      55,
+      57,
+      58
+     ],
+     "seq_057_suspect_before": true,
+     "seq_057_suspect_after": false,
+     "seq_058_suspect_before": true,
+     "seq_058_suspect_after": false
+    }
+   ],
+   "summary": {
+    "accuracy": {
+     "rounds": 6,
+     "mean_before": 0.9678,
+     "mean_after": 0.9524,
+     "mean_delta": -0.0154,
+     "min_before": 0.9496,
+     "min_after": 0.9412,
+     "max_before": 0.9748,
+     "max_after": 0.958,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "fpr": {
+     "rounds": 6,
+     "mean_before": 0.0317,
+     "mean_after": 0.0,
+     "mean_delta": -0.0317,
+     "min_before": 0.0317,
+     "min_after": 0.0,
+     "max_before": 0.0317,
+     "max_after": 0.0,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "tpr": {
+     "rounds": 6,
+     "mean_before": 0.9672,
+     "mean_after": 0.8988,
+     "mean_delta": -0.0684,
+     "min_before": 0.9286,
+     "min_after": 0.875,
+     "max_before": 0.9821,
+     "max_after": 0.9107,
+     "rounds_improved": 0,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 6
+    },
+    "correct_real": {
+     "rounds": 6,
+     "mean_before": 61.0,
+     "mean_after": 63.0,
+     "mean_delta": 2.0,
+     "min_before": 61.0,
+     "min_after": 63.0,
+     "max_before": 61.0,
+     "max_after": 63.0,
+     "rounds_improved": 6,
+     "rounds_unchanged": 0,
+     "rounds_worsened": 0
+    },
+    "fp_instances_before": 12,
+    "fp_instances_after": 0,
+    "fn_instances_before": 11,
+    "fn_instances_after": 34,
+    "ai_recall_cost_instances": 23
+   },
+   "seq_057_suspect_before_any_round": true,
+   "seq_057_suspect_after_any_round": false,
+   "seq_058_suspect_before_any_round": true,
+   "seq_058_suspect_after_any_round": false,
+   "seq_057_suspect_before_all_rounds": true,
+   "seq_057_suspect_after_all_rounds": false,
+   "seq_058_suspect_before_all_rounds": true,
+   "seq_058_suspect_after_all_rounds": false,
+   "reproduces_acc_at_fp_budget": true,
+   "acc_at_fp_budget_archived": {
+    "mean": 0.9678,
+    "min": 0.9496,
+    "per_round": [
+     0.9664,
+     0.9748,
+     0.9496,
+     0.9748,
+     0.9748,
+     0.9664
+    ]
+   }
+  }
+ },
+ "summary": {
+  "primary_protocol": "C_round_order_statistic_oof (per-round order statistic, fp_budget=2); protocols A and B are reported alongside",
+  "accuracy_before": 0.9678,
+  "accuracy_after": 0.9524,
+  "accuracy_delta": -0.0154,
+  "accuracy_floor_required": 0.9678,
+  "accuracy_floor_met": false,
+  "accuracy_floor_met_by_protocol": {
+   "A": false,
+   "B": false,
+   "C": false
+  },
+  "fp_before": 12,
+  "fp_after": 0,
+  "fp_before_by_protocol": {
+   "A": 12,
+   "B": 20,
+   "C": 12
+  },
+  "fp_after_by_protocol": {
+   "A": 0,
+   "B": 8,
+   "C": 0
+  },
+  "fpr_totals_by_protocol": {
+   "A": "12->0 of 378 real-round slots",
+   "B": "20->8 of 378 real-round slots",
+   "C": "12->0 of 378 real-round slots"
+  },
+  "fpr_after_le_3pct_all_protocols": true,
+  "tpr_before": 0.9672,
+  "tpr_after": 0.8988,
+  "tpr_delta": -0.0684,
+  "correct_real_before": 61.0,
+  "correct_real_after": 63.0,
+  "correct_real_not_reduced": true,
+  "seq_057_not_suspect_after": true,
+  "seq_058_not_suspect_after": true,
+  "seq_057_058_not_suspect_after_all_protocols": true,
+  "ai_recall_cost_instances": 23,
+  "ai_recall_preserved": false,
+  "admissible_as_improvement": false
+ },
+ "control_without_057_058": {
+  "definition": "identical protocols replayed on the sample set with seq 057 and seq 058 REMOVED (n=117; 61 real, 56 AI). Every threshold is held fixed at its full-set value so the only thing that changes is the presence of the two images.",
+  "n_samples": 117,
+  "n_real": 61,
+  "n_ai": 56,
+  "protocols": {
+   "A_deployed_pooled_threshold": {
+    "rounds": [
+     {
+      "round": 1,
+      "accuracy_before": 0.9316,
+      "accuracy_after": 0.906,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.8571,
+      "tpr_after": 0.8036,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       55
+      ]
+     },
+     {
+      "round": 2,
+      "accuracy_before": 0.9573,
+      "accuracy_after": 0.9231,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9107,
+      "tpr_after": 0.8393,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 3,
+      "accuracy_before": 0.9316,
+      "accuracy_after": 0.9145,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.8571,
+      "tpr_after": 0.8214,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8
+      ]
+     },
+     {
+      "round": 4,
+      "accuracy_before": 0.9231,
+      "accuracy_after": 0.906,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.8393,
+      "tpr_after": 0.8036,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8
+      ]
+     },
+     {
+      "round": 5,
+      "accuracy_before": 0.9402,
+      "accuracy_after": 0.906,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.875,
+      "tpr_after": 0.8036,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 6,
+      "accuracy_before": 0.9573,
+      "accuracy_after": 0.9231,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9107,
+      "tpr_after": 0.8393,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     }
+    ],
+    "summary": {
+     "accuracy": {
+      "rounds": 6,
+      "mean_before": 0.9402,
+      "mean_after": 0.9131,
+      "mean_delta": -0.0271,
+      "min_before": 0.9231,
+      "min_after": 0.906,
+      "max_before": 0.9573,
+      "max_after": 0.9231,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fpr": {
+      "rounds": 6,
+      "mean_before": 0.0,
+      "mean_after": 0.0,
+      "mean_delta": 0.0,
+      "min_before": 0.0,
+      "min_after": 0.0,
+      "max_before": 0.0,
+      "max_after": 0.0,
+      "rounds_improved": 0,
+      "rounds_unchanged": 6,
+      "rounds_worsened": 0
+     },
+     "tpr": {
+      "rounds": 6,
+      "mean_before": 0.875,
+      "mean_after": 0.8185,
+      "mean_delta": -0.0565,
+      "min_before": 0.8393,
+      "min_after": 0.8036,
+      "max_before": 0.9107,
+      "max_after": 0.8393,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fp_instances_before": 0,
+     "fp_instances_after": 0
+    }
+   },
+   "B_perfold_training_order_statistic": {
+    "rounds": [
+     {
+      "round": 1,
+      "accuracy_before": 0.9402,
+      "accuracy_after": 0.9145,
+      "fpr_before": 0.0164,
+      "fpr_after": 0.0164,
+      "tpr_before": 0.8929,
+      "tpr_after": 0.8393,
+      "fp_seqs_before": [
+       68
+      ],
+      "fp_seqs_after": [
+       68
+      ],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       55
+      ]
+     },
+     {
+      "round": 2,
+      "accuracy_before": 0.9402,
+      "accuracy_after": 0.906,
+      "fpr_before": 0.0492,
+      "fpr_after": 0.0492,
+      "tpr_before": 0.9286,
+      "tpr_after": 0.8571,
+      "fp_seqs_before": [
+       68,
+       82,
+       83
+      ],
+      "fp_seqs_after": [
+       68,
+       82,
+       83
+      ],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 3,
+      "accuracy_before": 0.9658,
+      "accuracy_after": 0.9402,
+      "fpr_before": 0.0328,
+      "fpr_after": 0.0328,
+      "tpr_before": 0.9643,
+      "tpr_after": 0.9107,
+      "fp_seqs_before": [
+       83,
+       108
+      ],
+      "fp_seqs_after": [
+       83,
+       108
+      ],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       55
+      ]
+     },
+     {
+      "round": 4,
+      "accuracy_before": 0.9402,
+      "accuracy_after": 0.9145,
+      "fpr_before": 0.0164,
+      "fpr_after": 0.0164,
+      "tpr_before": 0.8929,
+      "tpr_after": 0.8393,
+      "fp_seqs_before": [
+       82
+      ],
+      "fp_seqs_after": [
+       82
+      ],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       55
+      ]
+     },
+     {
+      "round": 5,
+      "accuracy_before": 0.9316,
+      "accuracy_after": 0.8974,
+      "fpr_before": 0.0164,
+      "fpr_after": 0.0164,
+      "tpr_before": 0.875,
+      "tpr_after": 0.8036,
+      "fp_seqs_before": [
+       82
+      ],
+      "fp_seqs_after": [
+       82
+      ],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 6,
+      "accuracy_before": 0.9316,
+      "accuracy_after": 0.8974,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.8571,
+      "tpr_after": 0.7857,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     }
+    ],
+    "summary": {
+     "accuracy": {
+      "rounds": 6,
+      "mean_before": 0.9416,
+      "mean_after": 0.9117,
+      "mean_delta": -0.0299,
+      "min_before": 0.9316,
+      "min_after": 0.8974,
+      "max_before": 0.9658,
+      "max_after": 0.9402,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fpr": {
+      "rounds": 6,
+      "mean_before": 0.0219,
+      "mean_after": 0.0219,
+      "mean_delta": 0.0,
+      "min_before": 0.0,
+      "min_after": 0.0,
+      "max_before": 0.0492,
+      "max_after": 0.0492,
+      "rounds_improved": 0,
+      "rounds_unchanged": 6,
+      "rounds_worsened": 0
+     },
+     "tpr": {
+      "rounds": 6,
+      "mean_before": 0.9018,
+      "mean_after": 0.8393,
+      "mean_delta": -0.0625,
+      "min_before": 0.8571,
+      "min_after": 0.7857,
+      "max_before": 0.9643,
+      "max_after": 0.9107,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fp_instances_before": 8,
+     "fp_instances_after": 8
+    }
+   },
+   "C_round_order_statistic_oof": {
+    "rounds": [
+     {
+      "round": 1,
+      "accuracy_before": 0.9829,
+      "accuracy_after": 0.9487,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9643,
+      "tpr_after": 0.8929,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 2,
+      "accuracy_before": 0.9915,
+      "accuracy_after": 0.9573,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9821,
+      "tpr_after": 0.9107,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 3,
+      "accuracy_before": 0.9658,
+      "accuracy_after": 0.9402,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9286,
+      "tpr_after": 0.875,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       55
+      ]
+     },
+     {
+      "round": 4,
+      "accuracy_before": 0.9915,
+      "accuracy_after": 0.9573,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9821,
+      "tpr_after": 0.9107,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 5,
+      "accuracy_before": 0.9915,
+      "accuracy_after": 0.9573,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9821,
+      "tpr_after": 0.9107,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     },
+     {
+      "round": 6,
+      "accuracy_before": 0.9829,
+      "accuracy_after": 0.9487,
+      "fpr_before": 0.0,
+      "fpr_after": 0.0,
+      "tpr_before": 0.9643,
+      "tpr_after": 0.8929,
+      "fp_seqs_before": [],
+      "fp_seqs_after": [],
+      "demoted_by_gate_seqs": [
+       6,
+       8,
+       54,
+       55
+      ]
+     }
+    ],
+    "summary": {
+     "accuracy": {
+      "rounds": 6,
+      "mean_before": 0.9844,
+      "mean_after": 0.9516,
+      "mean_delta": -0.0328,
+      "min_before": 0.9658,
+      "min_after": 0.9402,
+      "max_before": 0.9915,
+      "max_after": 0.9573,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fpr": {
+      "rounds": 6,
+      "mean_before": 0.0,
+      "mean_after": 0.0,
+      "mean_delta": 0.0,
+      "min_before": 0.0,
+      "min_after": 0.0,
+      "max_before": 0.0,
+      "max_after": 0.0,
+      "rounds_improved": 0,
+      "rounds_unchanged": 6,
+      "rounds_worsened": 0
+     },
+     "tpr": {
+      "rounds": 6,
+      "mean_before": 0.9672,
+      "mean_after": 0.8988,
+      "mean_delta": -0.0684,
+      "min_before": 0.9286,
+      "min_after": 0.875,
+      "max_before": 0.9821,
+      "max_after": 0.9107,
+      "rounds_improved": 0,
+      "rounds_unchanged": 0,
+      "rounds_worsened": 6
+     },
+     "fp_instances_before": 0,
+     "fp_instances_after": 0
+    }
+   }
+  },
+  "accuracy_delta_after_gate_A": -0.0271,
+  "accuracy_delta_after_gate_B": -0.0299,
+  "accuracy_delta_after_gate_C": -0.0328,
+  "conclusion": "With 057/058 removed the gate has no false positive left to remove: the false-positive count is unchanged and its only effect is lost AI recall. The whole measured benefit of the gate is therefore scoped to those two images - exactly the generalisation risk the pre-registration was meant to expose."
+ },
+ "gate_demotions": {
+  "A_deployed_pooled_threshold": {
+   "genuine_ai_images_demoted_union": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "real_images_demoted_union": [
+    57,
+    58
+   ],
+   "genuine_ai_images_demoted_in_all_6_rounds": [
+    6,
+    8
+   ],
+   "cost_interpretation": "every demoted genuine AI image becomes a false negative; every demoted real image is a false positive removed"
+  },
+  "B_perfold_training_order_statistic": {
+   "genuine_ai_images_demoted_union": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "real_images_demoted_union": [
+    57,
+    58
+   ],
+   "genuine_ai_images_demoted_in_all_6_rounds": [
+    6,
+    8,
+    55
+   ],
+   "cost_interpretation": "every demoted genuine AI image becomes a false negative; every demoted real image is a false positive removed"
+  },
+  "C_round_order_statistic_oof": {
+   "genuine_ai_images_demoted_union": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "real_images_demoted_union": [
+    57,
+    58
+   ],
+   "genuine_ai_images_demoted_in_all_6_rounds": [
+    6,
+    8,
+    55
+   ],
+   "cost_interpretation": "every demoted genuine AI image becomes a false negative; every demoted real image is a false positive removed"
+  }
+ },
+ "brief_reconciliation": {
+  "brief_claims": [
+   "at the 2-false-positive budget the OOF accuracy is ~0.9678 and FPR is 2/63 = 3.17%",
+   "a gate sat_mean > 0.33 selects 4 AI images and 3 real images (057, 058, 077); 077 is already correctly classified today and 057/058 are flagged in ALL 6 rounds"
+  ],
+  "what_this_evaluation_measures": {
+   "0.9678_is_protocol_C": "0.9678 is the mean of deployment_metrics.json::rounds[].acc_at_fp_budget, reproduced here by protocol C (per-round order statistic on that round's out-of-fold real scores) - the same protocol as the accuracy floor written into the acceptance.",
+   "0.0317_is_protocol_A": "FPR 2/63 = 3.17% belongs to the deployed POOLED threshold (thr_pooled_logit=1.561879) applied to a round's scores, i.e. deployment_metrics.json::deployed_rule_metrics. That operating point costs 1.80 AI images per round on average (accuracy 0.9244).",
+   "the_honest_protocol_B": "the per-fold training-fold order statistic required by the task gives accuracy 0.9258 and FPR 5.29% - it does NOT reach the 3% rule either.",
+   "consequence": "the two figures 0.9678 and 3.17% come from two DIFFERENT protocols and are not simultaneously true of a single deployed rule. Both are reproduced here exactly (protocol_reproduction_verified = true)."
+  },
+  "gate_scope_confirmed": {
+   "above_0.33_ai": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "above_0.33_real": [
+    57,
+    58,
+    77
+   ],
+   "adds_no_new_false_positive": true,
+   "but_adds_false_negatives": [
+    6,
+    8,
+    54,
+    55
+   ],
+   "why_the_briefs_framing_is_incomplete": "'adds no new false positive' is true because the gate can only demote, but the four AI images above 0.33 are mostly true positives, so the gate pays for the removed false positives with new false negatives."
+  }
+ },
+ "optimistic_threshold_sweep": {
+  "optimistic_bias": true,
+  "admissible_as_improvement": false,
+  "warning": "OPTIMISTIC UPPER BOUND ONLY. These thresholds were chosen by looking at the 119 labelled samples, so their scores are selection-biased and are NOT a deployable result. The pre-registered headline is threshold 0.33.",
+  "candidates": [
+   {
+    "threshold": 0.33,
+    "n_demoted": 7,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57,
+     58,
+     77
+    ],
+    "mean_accuracy_protocol_A": 0.9146,
+    "mean_accuracy_protocol_B": 0.9132,
+    "mean_accuracy_protocol_C": 0.9524
+   },
+   {
+    "threshold": 0.35,
+    "n_demoted": 6,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57,
+     58
+    ],
+    "mean_accuracy_protocol_A": 0.9146,
+    "mean_accuracy_protocol_B": 0.9132,
+    "mean_accuracy_protocol_C": 0.9524
+   },
+   {
+    "threshold": 0.38,
+    "n_demoted": 5,
+    "demoted_seqs": [
+     6,
+     8,
+     54,
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9062,
+    "mean_accuracy_protocol_B": 0.9048,
+    "mean_accuracy_protocol_C": 0.944
+   },
+   {
+    "threshold": 0.4,
+    "n_demoted": 4,
+    "demoted_seqs": [
+     6,
+     8,
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9104,
+    "mean_accuracy_protocol_B": 0.909,
+    "mean_accuracy_protocol_C": 0.951
+   },
+   {
+    "threshold": 0.42,
+    "n_demoted": 2,
+    "demoted_seqs": [
+     55,
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9272,
+    "mean_accuracy_protocol_B": 0.9258,
+    "mean_accuracy_protocol_C": 0.9678
+   },
+   {
+    "threshold": 0.44,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.46,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.48,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.5,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.52,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.55,
+    "n_demoted": 1,
+    "demoted_seqs": [
+     57
+    ],
+    "mean_accuracy_protocol_A": 0.9328,
+    "mean_accuracy_protocol_B": 0.9342,
+    "mean_accuracy_protocol_C": 0.9762
+   },
+   {
+    "threshold": 0.6,
+    "n_demoted": 0,
+    "demoted_seqs": [],
+    "mean_accuracy_protocol_A": 0.9244,
+    "mean_accuracy_protocol_B": 0.9258,
+    "mean_accuracy_protocol_C": 0.9678
+   }
+  ],
+  "argmax_on_these_samples": {
+   "threshold": 0.44,
+   "mean_accuracy_protocol_C": 0.9762,
+   "mean_accuracy_protocol_A": 0.9328,
+   "mean_accuracy_protocol_B": 0.9342
+  },
+  "argmax_demoted_seqs": [
+   57
+  ],
+  "argmax_clears_057": true,
+  "argmax_clears_058": false,
+  "no_flat_threshold_in_the_grid_clears_both_and_keeps_the_floor": true,
+  "why_no_flat_threshold_satisfies_the_contract": "The accuracy-optimal flat threshold on this grid (0.44) clears only 057 and leaves the false positive 058 in place; every threshold low enough to clear BOTH 057 and 058 (<= 0.35) also demotes AI images and drops protocol C accuracy to 0.9524, i.e. below the 0.9678 floor. No flat threshold on this grid clears both false positives while keeping the floor.",
+  "why_no_flat_threshold_rescues_the_gate": "The AI images 006/008/054/055 have sat_mean 0.3933..0.4262, i.e. 054 is MORE saturated than the real false positive 058 (0.3501). A flat threshold low enough to flip 058 therefore also flips 054, and any threshold high enough to spare all four AI images (> 0.4262) can no longer flip 058. Only a band fitted to these exact values (e.g. 0.33 < sat_mean < 0.39, plus sat_mean > 0.50 for 057) clears both false positives without AI recall loss, and such a band is by construction fitted to the evaluation set."
+ },
+ "acceptance_check": [
+  {
+   "criterion": "work/improve/gate_rule.json exists before the evaluation and states the gate variable, the threshold constant, the applicability conditions and a freeze timestamp",
+   "status": "passed",
+   "evidence": "sha256=5cfe0551c7aeb4c3..., frozen_at_utc=2026-10-12T15:39:20Z, file_mtime_utc=2026-10-12T15:39:27Z <= evaluation_started_at_utc=2026-10-12T15:48:07Z, evaluation script mtime 2026-10-12T15:48:03Z"
+  },
+  {
+   "criterion": "work/improve/gate_eval.json reports 6 rounds (seeds 42,55,68,81,94,107) with per-round and aggregate metrics and shows 057/058 no longer suspect after the gate",
+   "status": "passed",
+   "evidence": "protocols A/B/C each carry 6 per-round rows; seq_057_suspect_after_any_round=False, seq_058_suspect_after_any_round=False (False = cleared in all 6 rounds)"
+  },
+  {
+   "criterion": "the gate keeps the out-of-fold accuracy at or above the 0.9678 baseline and does not reduce the number of correctly classified real samples",
+   "status": "failed",
+   "evidence": "accuracy 0.9678 -> 0.9524 under protocol C (the protocol whose baseline IS 0.9678); correct-real 61.0 -> 63.0 per round (not reduced) but AI recall costs 23 true positives over 6 rounds; protocols A and B also fall (0.9244->0.9146, 0.9258->0.9132)"
+  },
+  {
+   "criterion": "the evaluation script states explicitly that the gate must not be fitted on the evaluation set and that the threshold comes from the pre-registered constant, not from a search",
+   "status": "passed",
+   "evidence": "module docstring ('METHODOLOGY RED LINES'), JSON block 'methodology', the hard guard that aborts when gate_rule.json no longer holds 0.33, and the separately labelled 'optimistic_threshold_sweep' section (optimistic_bias=true, admissible_as_improvement=false)"
+  }
+ ],
+ "verdict": {
+  "false_positives_removed": true,
+  "seq_057_058_cleared": true,
+  "fpr_after_le_3pct": true,
+  "accuracy_floor_met": false,
+  "ai_recall_preserved": false,
+  "admissible_as_improvement": false,
+  "explanation": "The pre-registered gate clears both persistent false positives and drives the false-positive count to 0, but it also demotes genuine AI images 006/008/054/055 (sat_mean 0.3933..0.4262), so AI recall falls and accuracy drops below the 0.9678 floor in every protocol (C 0.9678->0.9524, A 0.9244->0.9146, B 0.9258->0.9132). The optimistic (fitted) sweep shows the same trade-off cannot be avoided by re-choosing the flat threshold: the accuracy-optimal value clears only 057 and leaves 058 flagged.",
+  "no_admissible_flat_threshold_found": true,
+  "recommendation": "Do NOT wire this gate into the production fusion layer. It is a measured negative result: removing 2 false positives costs 4 AI true positives, a worse trade than the 2/63 = 3.17% FPR it repairs, and the whole benefit rests on exactly two images. If a decision-layer override is wanted anyway, the only admissible form is an optional fusion-layer config key that is OFF by default (see the integration note in repo/reports/decision_gate_validation.json); it must carry the measured cost above."
+ },
+ "headline_result": "NEGATIVE. The pre-registered gate (sat_mean > 0.33, demote suspect -> real) removes both persistent false positives seq 057 and seq 058 in all 6 rounds and drives the false-positive count to 0, but it also demotes genuine AI images 6 and 8 in all 6 rounds (54 and 55 in 3 of 6), so accuracy FALLS in every protocol: C 0.9678->0.9524, A 0.9244->0.9146, B 0.9258->0.9132. Reported as measured; no threshold was re-selected to rescue it.",
+ "honesty_statement": "The gate's entire measured benefit on this set comes from seq 057 and seq 058. With those two images removed (control) the gate's mean accuracy delta is A=-0.0271, B=-0.0299, C=-0.0328 - i.e. no gain, and any residual movement is pure loss from demoting genuine AI images. A 2-sample effect inside a 63-sample real class cannot be shown to generalise: the gate is a pre-registered, falsifiable intervention whose evidence is two images, not a validated detector improvement.",
+ "archive_note": "Archived verification of the pre-registered saturation gate (task t3). The gate clears the two persistent false positives but is NOT admissible as an improvement: see 'verdict' and 'acceptance_check'. Do not wire it into production without the measured AI-recall cost.",
+ "integration_note": "Should a fusion-layer hook ever be wanted, the admissible form is an optional config key in repo/src/fusion.py, e.g. content_gate={'enabled': false, 'type': 'sat_mean_gt', 'threshold': 0.33}, defaulting to disabled, and it must carry the measured cost above. No such change is made here."
+}

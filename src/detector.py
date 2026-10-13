@@ -470,22 +470,35 @@ class AIGCDetector:
                          "substitute": ATTRIBUTION_METHOD})
         latency["explain"] = (time.perf_counter() - t) * 1000
 
-        # L3 localization (only if needed: suspect/review path or always for demo)
+        # L3 localization (only if needed: suspect/review path or always for demo).
+        # ZERO-WEIGHT heuristic: nothing in this block enters `scores`/fusion, so it
+        # cannot move the verdict. The section must also never say "available" while
+        # handing back an empty box list with no explanation, so the extraction result
+        # is carried through verbatim: `status` (regions|no_region|failed) plus a
+        # machine-readable `reason_code` that separates "no localizable region"
+        # (whole-image generation / nothing to point at) from "localization failed".
         t = time.perf_counter()
         loc_kind = "zero-weight forensic map (ELA+noise inconsistency)"
         try:
-            from l3_localization import combined_anomaly_map, top_anomaly_boxes
+            from l3_localization import combined_anomaly_map, localize_heatmap
             amap = combined_anomaly_map(parsed.bgr)
-            boxes = top_anomaly_boxes(amap)
+            res = localize_heatmap(amap)
             rep.localization = {
                 "available": True,
                 "kind": loc_kind,
+                "status": res["status"],
+                "reason_code": res["reason_code"],
+                "reason": res["reason"],
                 "heatmap_png_b64": heatmap_to_b64_png(amap, parsed.bgr),
-                "boxes": boxes,
-                "reason": None,
+                "boxes": res["boxes"],
+                "boxes_heuristic": res.get("boxes_heuristic"),
+                "extraction": res.get("rules"),
+                "declaration": res.get("declaration"),
             }
         except Exception as e:
             rep.localization = {"available": False, "kind": loc_kind,
+                                "status": "failed",
+                                "reason_code": "localization_failed",
                                 "heatmap_png_b64": None, "boxes": [],
                                 "reason": f"L3定位分支不可用：{e}"}
             rep.uncertainty.append(f"L3定位分支不可用：{e}")

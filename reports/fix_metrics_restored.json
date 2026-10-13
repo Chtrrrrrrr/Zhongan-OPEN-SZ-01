@@ -1,0 +1,141 @@
+{
+ "report": "fix_metrics_restored",
+ "generated_at": "2026-10-12T15:39:11Z",
+ "generated_by": "work/improve/evidence/make_fix_metrics_restored.py",
+ "status": "HISTORICAL_READING_SUPERSEDED",
+ "restoration_note": "models/fix_metrics.json 本身在仓库与工作区中都不存在（`models/*` 被 .gitignore 排除，该文件由 scripts/freeze_external_fix.py 生成后未归档）。本文件是其**可入库替代物**：所有头号指标字段都从仓库内已归档的两份报告 JSON 重新推导并逐项断言，因此 95.94% / 2.12% / 0/41 这一组结论不再依赖任何缺失文件。本文件不是原始 fix_metrics.json 的副本，也没有任何字段是手抄或估计值。",
+ "missing_original": {
+  "path": "models/fix_metrics.json",
+  "present_in_repo": false,
+  "present_in_workspace": false,
+  "searched": [
+   "repo/models/fix_metrics.json",
+   "models/fix_metrics.json",
+   "reports/fix_metrics.json"
+  ],
+  "producer": "scripts/freeze_external_fix.py (--out default <models-dir>/fix_metrics.json)",
+  "gitignore_reason": "repo/.gitignore: `models/*` + `!models/.gitkeep`",
+  "recovery_command": "python scripts/train_with_external_reals.py --corpus models/external_corpus --rounds 6 --variants baseline_official_only --weight-grid 300 --extra-seeds 6 && python scripts/tune_fusion_for_reals.py --corpus models/external_corpus --official-weights 100,300,1000 --out repo/reports/fusion_tuning_reals.json && python scripts/freeze_external_fix.py --corpus models/external_corpus --corpus-mode both --official-weight 300 --rounds 6 --threshold official",
+  "blocked_by": "models/external_corpus/ (1561 images' feature blocks) is also absent; see repo/reports/external_corpus_manifest.json"
+ },
+ "source_file": "repo/reports/fusion_tuning_reals.json → best_by_official_accuracy (threshold_official, claim_n, claim_fpr_at_official_threshold, official_weight) + repo/reports/external_reals_fix.json → variants.external_both_w300.official_oof (accuracy/fpr/tpr mean,min,max and per_round)",
+ "sources": {
+  "repo/reports/fusion_tuning_reals.json": {
+   "sha256": "b77be59726ea3f2d30f4e6e5f795f0ca2b359800ef9a86a97997bd9e1ac9de2b",
+   "generated_at": "2026-10-11T14:54:20Z",
+   "json_pointer": "best_by_official_accuracy",
+   "sha256_policy": "self-referential when regenerated; recorded for the current file"
+  },
+  "repo/reports/external_reals_fix.json": {
+   "sha256": "f9aa8375d0545760fc0203f103b646509c0a5b8ec71f8c1c33ca4aa309877b45",
+   "generated_at": "2026-10-11T14:48:44Z",
+   "json_pointer": "variants.external_both_w300"
+  }
+ },
+ "accuracy_mean": 0.9594,
+ "accuracy_min": 0.9496,
+ "accuracy_max": 0.9664,
+ "fpr_mean": 0.0212,
+ "tpr_mean": 0.9375,
+ "claim_n": 41,
+ "claim_fpr": 0.0,
+ "claim_flagged": 0,
+ "threshold_official": 0.868855,
+ "official_weight": 300.0,
+ "seeds": [
+  42,
+  55,
+  68,
+  81,
+  94,
+  107
+ ],
+ "source_file_missing": "models/fix_metrics.json 在仓库与工作区中都不存在（models/* 被 .gitignore 排除，由 scripts/freeze_external_fix.py 生成后未归档）。docs 中 18 处对该文件的引用因此无法追踪；本文件是仓库内替代物，全部头号指标由 reports/fusion_tuning_reals.json 与 reports/external_reals_fix.json 逐项重推，未手抄、未估计。",
+ "rounds": 6,
+ "n_folds": 5,
+ "fp_budget": 2,
+ "protocol": {
+  "evaluation_set": "the 119 competition samples (out-of-fold only)",
+  "training": "official training fold + all external labelled material",
+  "inner_cv": "official training samples only (keeps the threshold in competition-material units)",
+  "rounds": 6,
+  "n_folds": 5,
+  "fp_budget": 2,
+  "corpus_mode": "both",
+  "seed_rule": "seed_r = base_seed + r*13, base_seed=42 (scripts/train_with_external_reals.py L123)"
+ },
+ "weights": {
+  "combined": 0.6,
+  "forensic": 0.25
+ },
+ "weight_set": "w60_25",
+ "threshold_pooled": 0.729477,
+ "threshold_space": "probability (see models/fusion.json → thr_low/thr_high = 0.0266 / 0.826623)",
+ "external_real_n": 1040,
+ "external_real_fpr": 0.0,
+ "external_auc": 0.9999,
+ "accuracy_ceiling_at_budget": 0.9636,
+ "per_round": [
+  {
+   "accuracy": 0.9664,
+   "fpr": 0.0,
+   "tpr": 0.9286
+  },
+  {
+   "accuracy": 0.9664,
+   "fpr": 0.0317,
+   "tpr": 0.9643
+  },
+  {
+   "accuracy": 0.9664,
+   "fpr": 0.0159,
+   "tpr": 0.9464
+  },
+  {
+   "accuracy": 0.9496,
+   "fpr": 0.0317,
+   "tpr": 0.9286
+  },
+  {
+   "accuracy": 0.9496,
+   "fpr": 0.0317,
+   "tpr": 0.9286
+  },
+  {
+   "accuracy": 0.958,
+   "fpr": 0.0159,
+   "tpr": 0.9286
+  }
+ ],
+ "corpus": {
+  "real": 1040,
+  "fake": 521,
+  "folders": [
+   "fake_ai",
+   "fake_dataset",
+   "fake_tamper",
+   "real",
+   "real_synthbuster"
+  ]
+ },
+ "cross_checks": {
+  "note": "以下交叉校验已于 2026-10-13 作废：被校验的文档段落已被更正，原 docs_reference 指向的主张已不存在。",
+  "recomputed_from_per_round": {
+   "accuracy_mean": 0.9594,
+   "accuracy_min": 0.9496,
+   "accuracy_max": 0.9664,
+   "fpr_mean": 0.0212,
+   "tpr_mean": 0.9375
+  },
+  "matches_archived_report": true,
+  "matches_docs_results_md": false,
+  "docs_reference_superseded": true,
+  "current_docs_say": {
+   "README.md 实测结果（现役冻结阈值口径）": "92.44% 逐轮 / FPR 3.17%（2/63）",
+   "README.md 实测结果（规则蕴含点口径）": "96.08% 逐轮 / 97.48% 池化 / 同一 3.17%",
+   "README.md 真实理赔场景照误报": "92.68%（38/41）"
+  }
+ },
+ "superseded_by": "reports/operating_point_analysis.json",
+ "superseded_note": "本文件记录的是**已被独立审计否证的旧头条**（95.94% / FPR 2.12% / 场景照 0-of-41）及其训练侧来源。2026-10-13 的 audit-1/audit-2/audit-3 判定该组数字：(a) 无法由现役产物 repo/models/ 复现（依赖缺失的外部语料 + best-of-9 权重选择）；(b) 与现役冻结阈值的实测不符；(c) '场景照 0-of-41' 是训练集内读数。**可复算的现役口径见 reports/operating_point_analysis.json**：现役阈值逐轮 92.44% / FPR 3.17%（2/63）；仓库自身 fp_budget=2 规则蕴含点 96.08% 逐轮 / 97.48% 池化，同一误报数。本文件保留仅为记录'旧头条是如何被重建的'，不得作为达标依据引用。"
+}

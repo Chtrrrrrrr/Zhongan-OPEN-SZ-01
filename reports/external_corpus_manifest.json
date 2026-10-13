@@ -1,0 +1,527 @@
+{
+ "report": "external_corpus_manifest",
+ "generated_at": "2026-10-12T15:41:34Z",
+ "generated_by": "work/improve/evidence/make_external_corpus_manifest.py",
+ "purpose": "记录 95.94% / FPR 2.12% / 场景照 0-of-41 这一【已被 2026-10-13 独立审计否证】的旧头条的训练侧语料来源。可复算的现役口径见 reports/operating_point_analysis.json。原文：登记把命题 119 张之外的外部语料（1561 张）的来源，使头号指标 95.94% / FPR 2.12% / 场景照误报 0-41 的训练侧来源可追溯。",
+ "declared": {
+  "n_total": 1561,
+  "real": 1040,
+  "fake": 521,
+  "folders": [
+   "fake_ai",
+   "fake_dataset",
+   "fake_tamper",
+   "real",
+   "real_synthbuster"
+  ],
+  "source_file": "repo/reports/external_reals_fix.json → corpus",
+  "extraction_command": "python scripts/extract_external_corpus.py --out models/external_corpus --labels ../testset/dsh_testset/real=0,../testset/dsh_testset/real_synthbuster=0,../testset/dsh_testset/fake_ai=1,../testset/dsh_testset/fake_dataset=1,../testset/dsh_testset/fake_tamper=1",
+  "folder_detail": [
+   {
+    "folder": "real",
+    "label": 0,
+    "role": "网络采集的真实事故/理赔照片（车祸/水浸/火灾/财产损坏/食品变质/空白单据）",
+    "provenance": "docs/known-issue-scene-photo-fpr.md §1：41 张，逐张来源见 repo/testset/real/_real_claim_index.json（image_url / source_page）"
+   },
+   {
+    "folder": "real_synthbuster",
+    "label": 0,
+    "role": "Synthbuster 基准的真实侧配对影像",
+    "provenance": "Synthbuster (Bstyvul)，论文级真假配对基准；docs/known-issue-scene-photo-fpr.md §1：真实侧共 999 张 Synthbuster + 41 张理赔照 = 1040"
+   },
+   {
+    "folder": "fake_ai",
+    "label": 1,
+    "role": "公开 AI 生成电商损坏商品图（生成器覆盖见 docs/results.md §6）",
+    "provenance": "docs/results.md §6：electronics / product / screen 各 55 张"
+   },
+   {
+    "folder": "fake_dataset",
+    "label": 1,
+    "role": "文生图票据（生成单据）",
+    "provenance": "docs/results.md §6：文生图票据 50 张"
+   },
+   {
+    "folder": "fake_tamper",
+    "label": 1,
+    "role": "传统篡改样本（拼接/复制粘贴类）",
+    "provenance": "docs/results.md §6：传统篡改 12 张"
+   }
+  ],
+  "documented_dataset_provenance": {
+   "docs/results.md §6": "Synthbuster 真实/生成配对（dalle2、dalle3、firefly、glide、midjourney-v5、stable-diffusion-1-3/1-4/2/xl，各 30 张） + 公开 AI 生成电商损坏商品（electronics / product / screen 各 55 张） + 文生图票据 50 张 + 传统篡改 12 张 + 网络采集真实事故/理赔照片 41 张",
+   "docs/known-issue-scene-photo-fpr.md §6.2": "外部语料由 Synthbuster（论文级真假配对基准）与公开 AI 生成电商/票据数据集组成，不等价于真实理赔分布",
+   "generators_covered": "docs/results.md §6：13 种生成器 + 传统篡改"
+  }
+ },
+ "local_availability": {
+  "expected_dir": "models/external_corpus/",
+  "present_in_repo": false,
+  "present_in_workspace": false,
+  "expected_files": [
+   "l1.npy",
+   "l1b.npy",
+   "clip.npy",
+   "patch.npy",
+   "tiles.npy",
+   "meta.json"
+  ],
+  "searched": [
+   "repo/models/external_corpus/",
+   "models/external_corpus/",
+   "work/**/external_corpus/"
+  ],
+  "source_tree": "testset/dsh_testset/{real,real_synthbuster,fake_ai,fake_dataset,fake_tamper}",
+  "source_tree_present": false,
+  "consequence": "1561 张语料的特征块与源图都不在本地，95.94% 无法从零重建，也无法对 1520 张非本地文件计算 sha256。本清单只登记可核实的事实，不对缺失文件编造哈希。"
+ },
+ "sha256": {
+  "algorithm": "sha256 of the file bytes (not of decoded pixels)",
+  "hashed_locally": {
+   "count": 41,
+   "scope": "repo/testset/real/*.jpg —— 属于 1040 张真实侧中的 41 张理赔场景照",
+   "coverage_of_total": 0.026265,
+   "entries": [
+    {
+     "file": "real_fire_damage_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 210821,
+     "sha256": "dba1018c7eb574c573b1ba41403a280d55bfa00f718f63992df87415aaba3fcd",
+     "path_in_corpus": "testset/dsh_testset/real/real_fire_damage_01.jpg",
+     "index_sha256_pixels": "625769806d98ba5546f2da52fede63e12df8bba4fceb1d2f622010b959fe1964",
+     "claim_category": "fire_damage"
+    },
+    {
+     "file": "real_fire_damage_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 157424,
+     "sha256": "41b21611e5d2d7f8ea14acee5647724ddee5a1ffcccc3d5b68a805a5c6994ed7",
+     "path_in_corpus": "testset/dsh_testset/real/real_fire_damage_02.jpg",
+     "index_sha256_pixels": "97754e149fc848882b2dd7ed5e35ccd0c3e70c73f0cf0bdaf8a6b88c38b84c9a",
+     "claim_category": "fire_damage"
+    },
+    {
+     "file": "real_flood_damage_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 162820,
+     "sha256": "dd18e14ac5c1559cfc6d49af74ac992b3dcc18e295316dc1d2fa05a7b6eff2b4",
+     "path_in_corpus": "testset/dsh_testset/real/real_flood_damage_01.jpg",
+     "index_sha256_pixels": "5adb93563bc9e47bce31f240b7b9580b7d8ec877ab9662e854e70fdb7828ba8c",
+     "claim_category": "flood_damage"
+    },
+    {
+     "file": "real_flood_damage_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 240795,
+     "sha256": "d59f20800af88893eabec36a8f4e6cff184390816560f85f37e30b2064de133a",
+     "path_in_corpus": "testset/dsh_testset/real/real_flood_damage_02.jpg",
+     "index_sha256_pixels": "369fb6a67f09236b82691d6b65475302e6f0adc5cec3f2fda2c4088fdc9622da",
+     "claim_category": "flood_damage"
+    },
+    {
+     "file": "real_flood_damage_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 228454,
+     "sha256": "fee1f88de29643e473f1dfc7d4802cc6439b3bf0c91d1870161ef43e5f90e88e",
+     "path_in_corpus": "testset/dsh_testset/real/real_flood_damage_03.jpg",
+     "index_sha256_pixels": "0286463d53616771f14ef8d5347069ef575253fe2d85bc8abfa7d564fbfc6c0b",
+     "claim_category": "flood_damage"
+    },
+    {
+     "file": "real_flood_damage_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 280676,
+     "sha256": "fdd3afd176b0afac2c03ac627734e0f2a7e660ab4d3a9784973eabd554dd2971",
+     "path_in_corpus": "testset/dsh_testset/real/real_flood_damage_04.jpg",
+     "index_sha256_pixels": "33d45de7d2a6feb2ce9a0630eda1609b856125cc990af0552a6e126dce0acc38",
+     "claim_category": "flood_damage"
+    },
+    {
+     "file": "real_flood_damage_05.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 160427,
+     "sha256": "37acb914ecd1bfd353b801b0f21a6a71f26df37c112cb6b81b7062bb71607285",
+     "path_in_corpus": "testset/dsh_testset/real/real_flood_damage_05.jpg",
+     "index_sha256_pixels": "9abfeb15a94ad8645ef4cca86a5ae54960769d2800215aead57ff96d16f05265",
+     "claim_category": "flood_damage"
+    },
+    {
+     "file": "real_food_issue_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 181330,
+     "sha256": "89d43875b2e0af4b7f01fee799f1f56fb9782b47515da3046d3d6bda075b52d6",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_01.jpg",
+     "index_sha256_pixels": "101855aaae87b91abaf13c85bfdd92a9b22fffa8ae63191ad4454008a663c97d",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 303088,
+     "sha256": "94b39d940a7ee5508c4c672fc8769557c96bb18c5bfc53a2a1c2d8c7955eb40f",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_02.jpg",
+     "index_sha256_pixels": "dde8cd0b736c1433bd667568c266d442a5263e851d583604f38e19d63bc21f3b",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 220752,
+     "sha256": "23f4670883b94ec9a9a97cd16bcedf74b911b8d672b6eb2977deb1daaac0eaaa",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_03.jpg",
+     "index_sha256_pixels": "7ee791eb5851b45dde330b3dbda40b6af063096a7212b8efe1a9bb781e026d6c",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 312793,
+     "sha256": "298021b90ec6545fe3c750c0bf14d2f66ccfbc998ccd838386b6137bb01f0fb6",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_04.jpg",
+     "index_sha256_pixels": "d26dd2647818a24e0674020e5cff6a8be9034feafdda151f5237d00b0efd6865",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_05.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 204479,
+     "sha256": "29e84f6ac60ee8af729ab78e746f8ada5ee2006e39021d54c31e758112699bc3",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_05.jpg",
+     "index_sha256_pixels": "9aa1b3e55700b53d6f1954280a4cdb99f4e42c574b9b5e5921e69069757a8f20",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_06.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 180114,
+     "sha256": "d6db1fe4b5523550d0ff53430944ae2b4b13ef5418194b2fd26398b0841d0342",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_06.jpg",
+     "index_sha256_pixels": "0fe2deec83afedb6f5cb582245add7a22b2e5a6ec6b21072d92d4aa5ebc33b96",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_07.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 144828,
+     "sha256": "d141ff436557cf12b0c94386634636265da02c3c3b923fff3765433d2e7638a7",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_07.jpg",
+     "index_sha256_pixels": "e3ba0d2651ee95f442371200a34e1eb94b332103f982fda863b0e93f9249abaa",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_food_issue_08.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 126297,
+     "sha256": "e78657dd21a758cf7d85925f212a0c971e8a73f791341541c5fb26c6e5b47373",
+     "path_in_corpus": "testset/dsh_testset/real/real_food_issue_08.jpg",
+     "index_sha256_pixels": "a72b73e7c410dfa178c1f7832de2266ce039e6ae82ce9d9fbf391934c934df3f",
+     "claim_category": "food_issue"
+    },
+    {
+     "file": "real_injury_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 139730,
+     "sha256": "cc314bd99e1f900e7239c499890e6fa5a071e80b61782f866ddb5f9c89c9f7ff",
+     "path_in_corpus": "testset/dsh_testset/real/real_injury_01.jpg",
+     "index_sha256_pixels": "4717244e4b7ceeeaa99363fdfce07cef2671be7fc4ac7510262f6bbdf4295dd5",
+     "claim_category": "injury"
+    },
+    {
+     "file": "real_medical_bill_blank_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 173849,
+     "sha256": "fa04595551038a302008b2c99022252916cb9fca6569875bb7f3458a8b66cb87",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_01.jpg",
+     "index_sha256_pixels": "2ef433e8bca5b5c9399de9e69cde63ae2e0553f324dce93abd120333dd497879",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 136525,
+     "sha256": "5dfc290b69309a3d7f5ebdf2313790085f51ed2304ab7fbf63d22f9ed882ef2b",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_02.jpg",
+     "index_sha256_pixels": "9e3b224a0db7d8ebebc9af979efd36b9364ede697485be080b3b9946be26cc25",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 150848,
+     "sha256": "c08e448341a5ab20e59c0a37fed38600d20417c3a491e038fe0d60dd888f0ce9",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_03.jpg",
+     "index_sha256_pixels": "3c078d748e90cda22be5228acfc7348f19bffc40a104a8be3a03b81786f18b64",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 126439,
+     "sha256": "3e8b3020e3a1fb53f5721f4f882055626d466c2d9e4ce4997d9bca52f660e98b",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_04.jpg",
+     "index_sha256_pixels": "fd4aa988d4e3c8cfbd845a465840b8c1087d839bc9103c36b0aaf25de4644de9",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_05.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 202533,
+     "sha256": "95f38f91bae772e06b96b92bbf3ee1f13823f92c9b67b0999faba92a00a25305",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_05.jpg",
+     "index_sha256_pixels": "34c92d2ac330d8fcdb6e1f950d76d455b926efb3762cce96c0d90c75d9a1af1a",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_06.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 202032,
+     "sha256": "a62b49fac52629bb8b0fd9c766d12018e30c2676bf857f229255bfca15bc7a0e",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_06.jpg",
+     "index_sha256_pixels": "160269c89a57df96e15398ffe35c5ca88cfa8d5c9a9eac5b8e87720c91b543c7",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_07.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 228883,
+     "sha256": "14abc27b3838188990fb75be5b3b2a2ddccdd5eebe3fc2feff74ae4f81a15ea7",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_07.jpg",
+     "index_sha256_pixels": "194fca2565e6aa789e1f7c0ae209d7f08bfd8d8fe0ee9553c95136b263206ab2",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_08.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 186675,
+     "sha256": "368334fff97bed6397d4d86268138b7f3008413800f43ad391db9986b05adcf3",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_08.jpg",
+     "index_sha256_pixels": "d4ebba455fc7ca95267e82d7e0850fead4746b5c4b27a50236454e7145bdc377",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_medical_bill_blank_09.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 139063,
+     "sha256": "d16650fc785f1b7fa73f4fabc5616f62f98e477394763c416410de09e64235d2",
+     "path_in_corpus": "testset/dsh_testset/real/real_medical_bill_blank_09.jpg",
+     "index_sha256_pixels": "02499d2a7ea05976865d53af6ee99cbdac33ebd3486e855b63591be8c12afb4a",
+     "claim_category": "medical_bill_blank"
+    },
+    {
+     "file": "real_property_damage_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 380940,
+     "sha256": "d70b28629a161b5e382da8dd1e5fca4d751cc67df59d5183b293cf786038f28b",
+     "path_in_corpus": "testset/dsh_testset/real/real_property_damage_01.jpg",
+     "index_sha256_pixels": "bd60c34f99244e019b52a635264f1371a84fbb0c9b006c01f091253227ed2be7",
+     "claim_category": "property_damage"
+    },
+    {
+     "file": "real_property_damage_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 445489,
+     "sha256": "721a0d4ce4d0aadc5d96024f3e21ff27c8a944ad1dcf1b7de0bf66d6437ef186",
+     "path_in_corpus": "testset/dsh_testset/real/real_property_damage_02.jpg",
+     "index_sha256_pixels": "7d912d1bfc9d9379e7ddb571b7f4c6b2edecc714cc95b1d6a6d7dd4e02b90c91",
+     "claim_category": "property_damage"
+    },
+    {
+     "file": "real_property_damage_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 381078,
+     "sha256": "268be96f33c677ba2293d67c7c7af4cc1abb08d150134f3a0f411a9054ca1bab",
+     "path_in_corpus": "testset/dsh_testset/real/real_property_damage_03.jpg",
+     "index_sha256_pixels": "a4862f621a948f4d438a2278d41c34c9bdffe93bc6ca9b6bc902793ac52a0d0c",
+     "claim_category": "property_damage"
+    },
+    {
+     "file": "real_property_damage_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 119838,
+     "sha256": "53bad1c3de8b8bb6354137cc683c210e4da95e0d062d387a31119fe91afbcf2a",
+     "path_in_corpus": "testset/dsh_testset/real/real_property_damage_04.jpg",
+     "index_sha256_pixels": "d3b4b0a1718046fe63e8c88bea64de670c0256d0bc357015b525825be87bb555",
+     "claim_category": "property_damage"
+    },
+    {
+     "file": "real_vehicle_collision_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 316667,
+     "sha256": "1e4055907c19cfb79206d9999ffa7da14d386aa12cd5245d31ca9305051fdee4",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_01.jpg",
+     "index_sha256_pixels": "2b2d80398590a568d458094bf148cf40f625ce49f84b34519b14e6047fcc8a82",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 245187,
+     "sha256": "328350657e58dfa47977467a5e13ba7d033f51f29fabc521aef97069fddc2e22",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_02.jpg",
+     "index_sha256_pixels": "20953cc73a45ca5b942efb3c945ea4afa66b95566b7323fa9806fc16118613c5",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 227341,
+     "sha256": "464cb6432dbfcede7174479b7e0ad3125e8fb427b32337aed742532fb544f9b8",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_03.jpg",
+     "index_sha256_pixels": "b6190c132bcb88210a4e00835b5d5c0325c2a5ca8c7e715af68adfb041090b45",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 324891,
+     "sha256": "d0e4ad66bdee5153136742c7f0defdb7f31d68ee45365efff64f2c91a622efe6",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_04.jpg",
+     "index_sha256_pixels": "55f674e85c44ed37bb78ba15241bef7886f96cc51ad377c30dd01d2133c9ca49",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_05.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 216195,
+     "sha256": "8524d062d8dabfffb14e4a68c4aab66363b479b2a73bb13c7d15ca9d70df553b",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_05.jpg",
+     "index_sha256_pixels": "43e3c2f664ef51e37edcf425885ec67f4b21524bf189b58d78031756e0b3da33",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_06.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 207181,
+     "sha256": "97a3f653d7745bda0fd90007062bf48f7147224ed0b6117c32968c890336513d",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_06.jpg",
+     "index_sha256_pixels": "0c2c79e48cefe9a660280480ff899983fe88dfab3d80c1fe47a9e638653423e4",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_07.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 210944,
+     "sha256": "b896e55e77ab499bfd7c83bfc153e9da4f6a2788f144fb8d72520fbd02f81312",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_07.jpg",
+     "index_sha256_pixels": "d7c22557f66b6f12688ceaf011e8d1f11ea28aca0dc328e873926e2580387f56",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_collision_08.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 349018,
+     "sha256": "5b1789ed3f57d4100f1e532ccc98cccb35a1d8f693165363d68f688dd37e45c1",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_collision_08.jpg",
+     "index_sha256_pixels": "837184286bc61bf17f6bcb29f99f4fde168e08cc773b682b4672aad40e5c4418",
+     "claim_category": "vehicle_collision"
+    },
+    {
+     "file": "real_vehicle_damage_01.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 168426,
+     "sha256": "b087f531b26b55f8b11704b10a2099f693f43ba867c8657b1c55372f9bde6ffd",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_damage_01.jpg",
+     "index_sha256_pixels": "8a919ab8f47559dca3ad2f87acb23ee601cbdd4cf823e5d7210fdbdd754117f2",
+     "claim_category": "vehicle_damage"
+    },
+    {
+     "file": "real_vehicle_damage_02.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 152562,
+     "sha256": "2fdb386bd3bc4def4189e7cd1252aa2713a4cc5ea27b5c9bdb88d95068adf46c",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_damage_02.jpg",
+     "index_sha256_pixels": "aa35e771b025cc8a311d0591b6938a1bf33b0cb7fb5b1c9d2482e41bfa204445",
+     "claim_category": "vehicle_damage"
+    },
+    {
+     "file": "real_vehicle_damage_03.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 160748,
+     "sha256": "cdbc28fc7361fdd3e76f0761c81cccaacf25cc3b4d5d77f9c220502eb22243bf",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_damage_03.jpg",
+     "index_sha256_pixels": "b63a0d1ae32a640b2a7922374f02b4fbc5e5daed038acfea8ba05ed83526c7fc",
+     "claim_category": "vehicle_damage"
+    },
+    {
+     "file": "real_vehicle_damage_04.jpg",
+     "folder": "real",
+     "label": 0,
+     "bytes": 181033,
+     "sha256": "855ab9704f5a07c575763fd69052cff844f4f8aa20b9915851511cbe57f43d3b",
+     "path_in_corpus": "testset/dsh_testset/real/real_vehicle_damage_04.jpg",
+     "index_sha256_pixels": "d2a5ea8eb4dc1b05bc6d2c23da2408074b5c23e90e6efe86a757075e374e6b2e",
+     "claim_category": "vehicle_damage"
+    }
+   ]
+  },
+  "missing_sha256": {
+   "count": 1520,
+   "reason": "这些文件（999 张 Synthbuster 真实侧 + 521 张生成/篡改侧）在仓库与工作区都不存在，无法计算逐文件 sha256；不提供估计值或占位哈希。",
+   "per_folder_counts_available": false,
+   "per_folder_counts_note": "归档文件只给出 real 1040 / fake 521 与 5 个文件夹名，未给逐文件夹计数；docs/results.md §6 的构成描述是文字性的，未与本清单交叉核对，故不折算成逐文件夹数字。"
+  },
+  "documentation_inconsistencies": [
+   {
+    "file": "repo/docs/iteration-2026-10-11.md",
+    "line": 148,
+    "text_quoted": "外部集的分层统计（1040 真实 / 497 假、13 种生成器）",
+    "conflict": "归档证据 repo/reports/external_reals_fix.json → corpus 记的是 real=1040 / fake=521；497 与 521 相差 24 张。",
+    "resolution": "本清单以归档 JSON（可机读、由评测脚本落盘）为准，记为 fake=521；文档中的 497 作为待核对的文字差异原样登记，不擅自改动该文档的其它数字。"
+   }
+  ],
+  "index_cross_check": {
+   "file": "repo/testset/real/_real_claim_index.json",
+   "entries": 49,
+   "duplicate_file_keys": 8,
+   "files_on_disk": 41,
+   "field": "sha256_pixels",
+   "note": "该字段是**解码像素**的哈希，与文件字节 sha256 不同（已逐张并列在 entries 中）；它是本地唯一的先存哈希记录，可作为 41 张照片的二次核对依据。"
+  }
+ },
+ "remediation": [
+  "1. 重新取得源语料：Synthbuster（真实/生成配对）+ 公开 AI 生成电商损坏商品 + 文生图票据 + 传统篡改样本，按上表 5 个文件夹放回 testset/dsh_testset/。",
+  "2. 用 declared.extraction_command 重跑 scripts/extract_external_corpus.py，生成 models/external_corpus/{l1,l1b,clip,patch,tiles}.npy + meta.json。",
+  "3. 在语料落地后，把这份清单从\"声明 + 41 张哈希\"升级为\"1561 张逐文件哈希\"：对源树逐文件 sha256 并与 meta.json 的 paths 对齐即可（scripts/extract_external_corpus.py 在解码时已计算每张图的 sha256，但当前未写入 meta.json —— 建议在该脚本落盘 meta.json 时补上 `sha256` 数组，本次任务不改该脚本）。",
+  "4. 语料不到齐之前，对外表述应沿用 docs/results.md §10 的纪律：0.9594 的来源是**训练侧外部语料**，其构成可追溯、逐文件完整性无法在仓库内验证。"
+ ]
+}

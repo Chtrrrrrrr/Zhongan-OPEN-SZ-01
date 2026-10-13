@@ -23,6 +23,37 @@ localization output (``combined_anomaly_map`` + ``top_anomaly_boxes``) and the
 attention explanation are separate return values, are stored in separate report
 fields (``localization`` vs ``explanation``) and carry different disclaimers.
 An attention map must never be read as a tamper region.
+
+Region extraction (2026-10 improvement, pre-registered):
+  * the legacy extraction thresholded the anomaly map at the *fixed* value
+    ``0.55`` and returned whatever connected components survived. On the frozen
+    119-sample holdout that produced **69 empty box lists** (35 of them on
+    samples the fusion layer labelled ``suspect``) while the report still said
+    ``available=True`` with ``reason=None`` - a self-contradictory section.
+  * region extraction is now *adaptive*: Otsu on the anomaly map first, then a
+    fixed percentile ladder, then a peak-anchored tier. All constants are frozen
+    in :data:`ADAPTIVE_*` below and were written down *before* the 119-sample
+    evaluation ran; nothing here selects a threshold from the holdout labels.
+    The legacy fixed path is preserved for side-by-side comparison via
+    :data:`LEGACY_FIXED_THRESH` / ``thresh=``.
+  * an empty result is no longer ambiguous: :func:`localize_heatmap` always
+    returns an explicit ``reason_code``/``reason`` that distinguishes
+    "computed fine, but the whole image is generated / no region stands out"
+    from "localization itself failed".
+  * consistency between the anomaly-map hotspots and the classifier attention
+    explanation is *quantified* (block-level Spearman) and can only ever be a
+    "suggest moving to review" hint; it is OFF by default
+    (:data:`ENABLE_CONSISTENCY_REVIEW_HINT`), contributes nothing to
+    ``verdict``/``confidence``, and never promotes an attention map to a
+    tamper region.
+  * changes to this section are listed in :data:`LOCALIZATION_REVISION_LOG`,
+    including the post-observation revision 2 (strict mask comparison); no
+    entry uses holdout labels.
+
+Declaration, unchanged and enforced by construction: this whole module is a
+**zero-weight forensic heuristic** - ELA + local noise inconsistency, no learned
+parameters - it does **not** take part in the decision. The next step for real
+localization is a trained tamper localizer (TruFor, :data:`LOCALIZATION_NEXT_STEP`).
 """
 from __future__ import annotations
 
@@ -81,20 +112,507 @@ def combined_anomaly_map(bgr: np.ndarray) -> np.ndarray:
     return np.clip(m - thr, 0, 1) / (1 - thr + 1e-6)
 
 
-def top_anomaly_boxes(heatmap: np.ndarray, max_boxes: int = 3, thresh: float = 0.55):
-    """Connected components over the hot area -> [(x,y,w,h,score)]."""
+# ---------------------------------------------------------------------------
+# Region extraction: pre-registered adaptive thresholding (see module docstring)
+# ---------------------------------------------------------------------------
+# FROZEN BEFORE THE 119-SAMPLE EVALUATION.  These are not fitted values: they are
+# a fixed, label-independent rule.  The holdout was used to *measure* the rule,
+# never to choose it.
+ADAPTIVE_MIN_AREA_FRAC = 0.0005      # component must cover >= 0.05% of the image
+ADAPTIVE_MIN_AREA_ABS = 32           # legacy absolute floor, kept for parity
+ADAPTIVE_QUANTILE_LADDER = (99.0, 95.0, 90.0)   # tried after Otsu, in this order
+ADAPTIVE_PEAK_FRAC = 0.5             # last resort anchor: half of the map maximum
+ADAPTIVE_NO_CONTENT_MAX = 1e-3       # map dynamic range below this = no content
+ADAPTIVE_TOP_K = 3
+LEGACY_FIXED_THRESH = 0.55           # comparison path only (the old default)
+#: Reporting flag only (never a decision threshold): a region covering this much
+#: of the anomaly map is "broad" and carries little localisation information.
+BROAD_REGION_AREA_FRAC = 0.5
+
+#: Disclosed change log for this section (no entry uses holdout labels).
+LOCALIZATION_REVISION_LOG = [
+    {"rev": 1, "when": "before the first 119-sample run",
+     "change": "region extraction switched from the fixed 0.55 threshold to the "
+               "adaptive Otsu + percentile-ladder + peak-fallback rule",
+     "label_used": False},
+    {"rev": 2, "when": "after the first 119-sample run",
+     "change": "adaptive mask comparison changed to the strict 'heatmap > "
+               "threshold' (an Otsu threshold of 0 otherwise selects the whole "
+               "image). Post-observation correction, motivated by whole-image "
+               "boxes in run 1; no label, no new tunable parameter.",
+     "run1_observation": "119/119 non-empty regions but the largest box covered "
+                         "100% of the anomaly map",
+     "label_used": False},
+    {"rev": 3, "when": "constant / never tuned",
+     "change": "explicit empty-result contract (status + reason_code + reason, "
+               "distinguishing 'no localizable region' from 'localization "
+               "failed') and the block-level consistency statistic with a "
+               "default-off review hint",
+     "label_used": False},
+]
+
+# Explicit, mutually exclusive outcome codes for the localization section.
+LOC_REASON_REGIONS = "regions_found"
+LOC_REASON_NO_REGION = "no_localizable_region"
+LOC_REASON_FAILED = "localization_failed"
+
+LOC_REASON_TEXT = {
+    LOC_REASON_REGIONS: None,
+    LOC_REASON_NO_REGION: (
+        "整图范围生成/全图统计一致：异常图本身几乎无动态范围，"
+        "不存在显著高于其余区域的伪造指认区域，因此不输出区域框。"
+        "这是“无可指认区域”，不是定位失败。"),
+    LOC_REASON_FAILED: "定位计算失败",
+}
+
+LOCALIZATION_KIND = "zero-weight forensic map (ELA+noise inconsistency)"
+
+#: Everything below is display-only. ``in_decision=False`` is the contract.
+LOCALIZATION_DECLARATION = {
+    "kind": LOCALIZATION_KIND,
+    "weight": "zero-weight",
+    "in_decision": False,
+    "method": "ELA (error level analysis) + local noise-variance inconsistency",
+    "disclaimer": (
+        "该定位为零权重启发式（ELA+局部噪声不一致），无训练参数、不参与判定："
+        "不改变 verdict / confidence / fused_score，也不是篡改的充分证据；"
+        "区域框仅用于人工复核时缩小观察范围。"),
+    "terminology": (
+        "定位区域（localization）= 启发式异常热点；分类器关注区域解释"
+        "（explanation）= 分类器更依赖哪些图像块。两者不得互相替代。"),
+    "next_step": "接入训练型篡改定位模型 TruFor（当前权重缺失，回退到本启发式）",
+}
+LOCALIZATION_NEXT_STEP = LOCALIZATION_DECLARATION["next_step"]
+
+#: Consistency may only ever *suggest* a manual review, and is off by default.
+ENABLE_CONSISTENCY_REVIEW_HINT = False
+CONSISTENCY_RHO_INCONSISTENT = 0.30
+CONSISTENCY_MIN_TILES = 3
+
+
+def _min_area_for(h: int, w: int, min_area: int | None = None) -> int:
+    if min_area is not None:
+        return max(1, int(min_area))
+    return max(ADAPTIVE_MIN_AREA_ABS, int(round(ADAPTIVE_MIN_AREA_FRAC * h * w)))
+
+
+def otsu_threshold(heatmap: np.ndarray) -> float:
+    """Otsu split of the anomaly map, returned in the map's own [0,1] units."""
     import cv2
-    mask = (heatmap >= thresh).astype(np.uint8)
-    n, lab, stats, cent = cv2.connectedComponentsWithStats(mask, 8)
-    boxes = []
+    u8 = np.clip(np.round(np.asarray(heatmap, dtype=np.float64) * 255.0), 0, 255)\
+        .astype(np.uint8)
+    t, _ = cv2.threshold(u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return float(t) / 255.0
+
+
+def _components(mask: np.ndarray, heatmap: np.ndarray, min_area: int) -> list:
+    import cv2
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
+    out = []
     for i in range(1, n):
-        x, y, w, h, area = stats[i]
-        if area < 32:
+        x, y, w, h, area = (int(v) for v in stats[i])
+        if area < min_area:
             continue
         score = float(heatmap[lab == i].mean())
-        boxes.append((int(x), int(y), int(w), int(h), round(score, 3)))
-    boxes.sort(key=lambda b: -b[4])
-    return boxes[:max_boxes]
+        out.append((x, y, w, h, round(score, 3), area))
+    out.sort(key=lambda b: (-b[4], -b[5]))
+    return out
+
+
+def adaptive_region_extract(heatmap: np.ndarray, max_boxes: int = ADAPTIVE_TOP_K,
+                            min_area: int | None = None) -> tuple[list, dict]:
+    """Adaptive connected-component region extraction.
+
+    Returns ``(boxes, info)`` with ``boxes`` shaped like the legacy output
+    ``[(x, y, w, h, score)]``. ``info`` always carries ``threshold``,
+    ``threshold_tier``, ``reliability``, ``status`` and ``reason_code`` so an
+    empty list is never published without an explicit cause.
+
+    Tiers, in the frozen order: ``otsu`` -> ``quantile_99`` -> ``quantile_95``
+    -> ``quantile_90`` -> ``peak_half_max`` -> ``peak_pixel_relaxed``. The first
+    tier that yields at least one component of ``min_area`` pixels wins; the
+    last tier guarantees a region whenever the map has any content at all, and
+    is flagged ``weak``.
+
+    Mask rule (revision 2, disclosed): the adaptive path thresholds with the
+    *strict* comparison ``heatmap > threshold``. On a strongly bimodal map cv2's
+    Otsu returns exactly ``0`` (the boundary of the empty background class), and
+    a non-strict test would then select the whole image - a "region" equal to the
+    entire picture carries no localisation information. With ``>`` an Otsu
+    threshold of 0 correctly means "the non-zero part of the map". The legacy
+    fixed path keeps its original ``>=`` so the historical 69-empty baseline
+    still reproduces bit for bit. This correction was made after observing
+    whole-image boxes in the first holdout run; it uses no label and adds no
+    tunable parameter.
+    """
+    hm = np.asarray(heatmap, dtype=np.float64)
+    info = {
+        "mode": "adaptive",
+        "threshold": None,
+        "threshold_tier": None,
+        "reliability": None,
+        "n_components": 0,
+        "min_area": None,
+        "max_heat": None,
+        "top_box_area_frac": None,
+        "n_broad_boxes": 0,
+        "region_scope": None,
+        "status": None,
+        "reason_code": None,
+        "reason": None,
+        "boxes_considered": [],
+    }
+    if hm.ndim != 2 or hm.size == 0 or not np.isfinite(hm).all():
+        info.update(status="failed", reason_code=LOC_REASON_FAILED,
+                    reason=f"{LOC_REASON_TEXT[LOC_REASON_FAILED]}：异常图非有限二维数组"
+                           f"（ndim={hm.ndim}, finite={bool(np.isfinite(hm).all()) if hm.size else False}）")
+        return [], info
+
+    h, w = int(hm.shape[0]), int(hm.shape[1])
+    ma = float(hm.max())
+    ma_area = _min_area_for(h, w, min_area)
+    info.update(min_area=ma_area, max_heat=round(ma, 6))
+
+    if ma < ADAPTIVE_NO_CONTENT_MAX:
+        info.update(status="no_region", reason_code=LOC_REASON_NO_REGION,
+                    reason=f"{LOC_REASON_TEXT[LOC_REASON_NO_REGION]}"
+                           f"（异常图 max={ma:.2e} < {ADAPTIVE_NO_CONTENT_MAX:g}）")
+        return [], info
+
+    tiers = [("otsu", otsu_threshold(hm))]
+    tiers += [(f"quantile_{q:g}", float(np.percentile(hm, q)))
+              for q in ADAPTIVE_QUANTILE_LADDER]
+    tiers.append(("peak_half_max", ma * ADAPTIVE_PEAK_FRAC))
+
+    tried = []
+    for tier, thr in tiers:
+        thr = float(min(max(thr, 0.0), ma))
+        comps = _components(hm > thr, hm, ma_area)
+        tried.append({"tier": tier, "threshold": round(thr, 6),
+                      "n_components": len(comps)})
+        if comps:
+            sel = comps[:max_boxes]
+            areas = [c[5] / float(h * w) for c in sel]
+            info.update(threshold=round(thr, 6), threshold_tier=tier,
+                        reliability={"otsu": "distinct", "quantile_99": "distinct",
+                                     "quantile_95": "diffuse",
+                                     "quantile_90": "diffuse"}.get(tier, "weak"),
+                        n_components=len(comps), status="regions",
+                        reason_code=LOC_REASON_REGIONS, reason=None,
+                        mask_rule="heatmap > threshold",
+                        top_box_area_frac=round(areas[0], 4),
+                        n_broad_boxes=sum(1 for a in areas if a >= BROAD_REGION_AREA_FRAC),
+                        region_scope=("broad" if areas[0] >= BROAD_REGION_AREA_FRAC
+                                      else "local"),
+                        boxes_considered=tried)
+            return [c[:5] for c in sel], info
+
+    # Last resort: keep the hottest component even below the area floor, so that
+    # "the map has content" can never silently collapse into an empty list.
+    peak_thr = ma * ADAPTIVE_PEAK_FRAC
+    comps = _components(hm > peak_thr, hm, 1)
+    tried.append({"tier": "peak_pixel_relaxed", "threshold": round(peak_thr, 6),
+                  "n_components": len(comps), "min_area_relaxed": True})
+    if comps:
+        sel = comps[:max_boxes]
+        areas = [c[5] / float(h * w) for c in sel]
+        info.update(threshold=round(peak_thr, 6), threshold_tier="peak_pixel_relaxed",
+                    reliability="weak", n_components=len(comps), status="regions",
+                    reason_code=LOC_REASON_REGIONS, reason=None,
+                    mask_rule="heatmap > threshold", min_area_relaxed=True,
+                    top_box_area_frac=round(areas[0], 4),
+                    n_broad_boxes=sum(1 for a in areas if a >= BROAD_REGION_AREA_FRAC),
+                    region_scope=("broad" if areas[0] >= BROAD_REGION_AREA_FRAC
+                                  else "local"),
+                    boxes_considered=tried)
+        return [c[:5] for c in sel], info
+
+    info.update(status="no_region", reason_code=LOC_REASON_NO_REGION,
+                reason=f"{LOC_REASON_TEXT[LOC_REASON_NO_REGION]}"
+                       f"（所有自适应阈值档位均无满足面积的连通域，max={ma:.3f}）",
+                boxes_considered=tried)
+    return [], info
+
+
+def _legacy_fixed_extract(heatmap: np.ndarray, max_boxes: int,
+                          thresh: float) -> tuple[list, dict]:
+    """The original fixed-threshold path, preserved for A/B comparison only."""
+    hm = np.asarray(heatmap, dtype=np.float64)
+    info = {"mode": "fixed", "threshold": float(thresh), "threshold_tier": "legacy_fixed",
+            "reliability": "legacy", "n_components": 0, "min_area": ADAPTIVE_MIN_AREA_ABS,
+            "max_heat": round(float(hm.max()), 6) if hm.size else None,
+            "status": None, "reason_code": None, "reason": None, "boxes_considered": []}
+    if hm.ndim != 2 or hm.size == 0 or not np.isfinite(hm).all():
+        info.update(status="failed", reason_code=LOC_REASON_FAILED,
+                    reason=f"{LOC_REASON_TEXT[LOC_REASON_FAILED]}：异常图非有限二维数组")
+        return [], info
+    comps = _components(hm >= float(thresh), hm, ADAPTIVE_MIN_AREA_ABS)
+    if comps:
+        info.update(status="regions", reason_code=LOC_REASON_REGIONS,
+                    n_components=len(comps))
+        return [c[:5] for c in comps[:max_boxes]], info
+    info.update(status="no_region", reason_code=LOC_REASON_NO_REGION,
+                reason=f"{LOC_REASON_TEXT[LOC_REASON_NO_REGION]}"
+                       f"（固定阈值 {thresh:g} 下无满足面积的连通域，max={hm.max():.3f}）")
+    return [], info
+
+
+def top_anomaly_boxes(heatmap: np.ndarray, max_boxes: int = ADAPTIVE_TOP_K,
+                      thresh: float | None = None, *, mode: str | None = None,
+                      min_area: int | None = None, return_info: bool = False):
+    """Hot-area connected components -> ``[(x,y,w,h,score)]``.
+
+    ``thresh=None`` (the default) uses the **adaptive** extractor; passing an
+    explicit ``thresh`` (or ``mode="fixed"``) reproduces the legacy fixed
+    threshold, which is retained only so reports can show the two side by side.
+    ``return_info=True`` additionally returns the diagnostics dict, which always
+    explains an empty list.
+    """
+    if mode is None:
+        mode = "fixed" if thresh is not None else "adaptive"
+    if mode == "fixed":
+        boxes, info = _legacy_fixed_extract(
+            heatmap, max_boxes, LEGACY_FIXED_THRESH if thresh is None else float(thresh))
+    elif mode == "adaptive":
+        boxes, info = adaptive_region_extract(heatmap, max_boxes=max_boxes,
+                                             min_area=min_area)
+    else:
+        raise ValueError(f"unknown localization mode: {mode!r}")
+    return (boxes, info) if return_info else boxes
+
+
+def top_anomaly_boxes_adaptive(heatmap: np.ndarray, max_boxes: int = ADAPTIVE_TOP_K,
+                               min_area: int | None = None) -> tuple[list, dict]:
+    """Adaptive extractor returning ``(boxes, info)`` (explicit alias)."""
+    return adaptive_region_extract(heatmap, max_boxes=max_boxes, min_area=min_area)
+
+
+def localize_heatmap(heatmap: np.ndarray, max_boxes: int = ADAPTIVE_TOP_K,
+                     min_area: int | None = None,
+                     with_legacy_comparison: bool = True) -> dict:
+    """The localization section, with a non-ambiguous empty-result contract.
+
+    Keys: ``available`` (the branch ran to completion - it does *not* mean boxes
+    are non-empty), ``status`` (``regions`` | ``no_region`` | ``failed``),
+    ``reason_code``/``reason`` (always set when ``boxes == []``), ``boxes``,
+    ``rules``, plus ``boxes_heuristic``/``extraction_heuristic`` for the legacy
+    fixed-threshold comparison. ``declaration`` restates that this is a
+    zero-weight heuristic and not part of the decision.
+    """
+    def _block():
+        return {
+            "available": True,
+            "kind": LOCALIZATION_KIND,
+            "status": "regions",
+            "reason_code": LOC_REASON_REGIONS,
+            "reason": None,
+            "boxes": [],
+            "rules": {},
+            "declaration": dict(LOCALIZATION_DECLARATION),
+        }
+    try:
+        boxes, info = adaptive_region_extract(heatmap, max_boxes=max_boxes,
+                                             min_area=min_area)
+    except Exception as e:                                    # pragma: no cover
+        blk = _block()
+        blk.update(available=False, status="failed", reason_code=LOC_REASON_FAILED,
+                   reason=f"{LOC_REASON_TEXT[LOC_REASON_FAILED]}：{type(e).__name__}: {e}")
+        return blk
+
+    blk = _block()
+    blk["boxes"] = boxes
+    blk["status"] = info["status"]
+    blk["reason_code"] = info["reason_code"]
+    blk["reason"] = info["reason"]
+    blk["rules"] = {k: v for k, v in info.items() if k not in ("reason", "boxes_considered")}
+    if with_legacy_comparison:
+        try:
+            h_boxes, h_info = _legacy_fixed_extract(np.asarray(heatmap, dtype=np.float64),
+                                                    max_boxes, LEGACY_FIXED_THRESH)
+            blk["boxes_heuristic"] = h_boxes
+            blk["extraction_heuristic"] = {
+                "mode": "fixed", "threshold": h_info["threshold"],
+                "n_boxes": len(h_boxes), "status": h_info["status"],
+                "reason_code": h_info["reason_code"]}
+        except Exception:                                     # pragma: no cover
+            blk["boxes_heuristic"] = None
+            blk["extraction_heuristic"] = {"mode": "fixed", "error": "heuristic comparison failed"}
+    return blk
+
+
+def localize_image(bgr: np.ndarray, max_boxes: int = ADAPTIVE_TOP_K,
+                   with_legacy_comparison: bool = True) -> dict:
+    """Convenience wrapper: image -> anomaly map -> localization section.
+
+    This is the entry point the runtime report should adopt instead of
+    ``{"available": True, ..., "reason": None}`` with a possibly empty ``boxes``
+    list (see ``repo/src/detector.py::detect_image`` L3 block): the returned dict
+    keeps ``available``/``kind``/``boxes``/``reason`` and adds the explicit
+    ``status``/``reason_code`` pair. The caller still owns the heatmap PNG.
+    """
+    try:
+        amap = combined_anomaly_map(bgr)
+    except Exception as e:                                    # pragma: no cover
+        blk = localize_heatmap(np.zeros((1, 1), dtype=np.float32))
+        blk.update(available=False, status="failed", boxes=[],
+                   reason_code=LOC_REASON_FAILED,
+                   reason=f"{LOC_REASON_TEXT[LOC_REASON_FAILED]}：异常图计算失败 "
+                          f"{type(e).__name__}: {e}")
+        return blk
+    blk = localize_heatmap(amap, max_boxes=max_boxes,
+                          with_legacy_comparison=with_legacy_comparison)
+    blk["anomaly_map_stats"] = {
+        "max": round(float(amap.max()), 6), "mean": round(float(amap.mean()), 6),
+        "std": round(float(amap.std()), 6), "shape": [int(amap.shape[0]), int(amap.shape[1])]}
+    return blk
+
+
+# ---------------------------------------------------------------------------
+# Consistency between localization hotspots and the classifier attention map
+# ---------------------------------------------------------------------------
+def _rankdata(x: np.ndarray) -> np.ndarray:
+    """Average ranks (ties share the mean rank) - Spearman without scipy."""
+    x = np.asarray(x, dtype=np.float64)
+    order = np.argsort(x, kind="mergesort")
+    ranks = np.empty(x.size, dtype=np.float64)
+    ranks[order] = np.arange(1, x.size + 1, dtype=np.float64)
+    sx = x[order]
+    i = 0
+    while i < sx.size:
+        j = i
+        while j + 1 < sx.size and sx[j + 1] == sx[i]:
+            j += 1
+        if j > i:
+            ranks[order[i:j + 1]] = ranks[order[i:j + 1]].mean()
+        i = j + 1
+    return ranks
+
+
+def spearman_rank_correlation(a, b) -> float | None:
+    """Spearman rho; ``None`` when it is undefined (too few / constant input)."""
+    a = np.asarray(a, dtype=np.float64).ravel()
+    b = np.asarray(b, dtype=np.float64).ravel()
+    if a.size != b.size or a.size < CONSISTENCY_MIN_TILES:
+        return None
+    if float(a.std()) <= 0.0 or float(b.std()) <= 0.0:
+        return None
+    ra, rb = _rankdata(a), _rankdata(b)
+    ra = ra - ra.mean()
+    rb = rb - rb.mean()
+    denom = float(np.sqrt((ra * ra).sum() * (rb * rb).sum()))
+    if denom <= 0.0:
+        return None
+    return float((ra * rb).sum() / denom)
+
+
+def _bbox_iou(a, b) -> float:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    x0, y0 = max(ax, bx), max(ay, by)
+    x1, y1 = min(ax + aw, bx + bw), min(ay + ah, by + bh)
+    if x1 <= x0 or y1 <= y0:
+        return 0.0
+    inter = float((x1 - x0) * (y1 - y0))
+    union = float(aw * ah + bw * bh) - inter
+    return inter / union if union > 0 else 0.0
+
+
+def region_consistency(heatmap: np.ndarray, tiles: list, boxes: list,
+                       xy_scale: tuple[float, float] = (1.0, 1.0),
+                       rho_inconsistent: float = CONSISTENCY_RHO_INCONSISTENT,
+                       hint_enabled: bool | None = None) -> dict:
+    """Block-level agreement between the anomaly map and the attention explanation.
+
+    ``tiles`` are the ``explanation`` tiles (``bbox_xywh`` + ``weight`` /
+    ``delta_logit``); ``xy_scale`` maps their coordinates onto the heatmap grid.
+    The statistic is the Spearman rank correlation over blocks of
+    *anomaly-map mean* vs *classifier block weight*, computed per scale, with the
+    largest scale reported as ``rho_primary``. Also reported: whether the single
+    most-attributed block overlaps any localization box, and its best IoU.
+
+    The result is advisory only: ``review_suggestion`` can never be ``suggested``
+    unless :data:`ENABLE_CONSISTENCY_REVIEW_HINT` is on, and even then it carries
+    ``decision_impact="none"``. This function never touches verdict/confidence.
+    """
+    hm = np.asarray(heatmap, dtype=np.float64)
+    enabled = ENABLE_CONSISTENCY_REVIEW_HINT if hint_enabled is None else bool(hint_enabled)
+    out = {
+        "available": False,
+        "method": "block-level Spearman(anomaly_map_mean, tile_attribution_weight)",
+        "n_tiles": 0, "rho_primary": None, "rho_by_scale": {},
+        "top_weight_tile_bbox": None, "top_weight_tile_in_box": None,
+        "top_weight_tile_iou": None,
+        "inconsistent": None,
+        "rho_inconsistent_threshold": float(rho_inconsistent),
+        "review_suggestion": {"suggested": False, "enabled": enabled,
+                              "decision_impact": "none", "basis": None},
+        "reason": None,
+    }
+    if hm.ndim != 2 or hm.size == 0 or not np.isfinite(hm).all():
+        out["reason"] = "一致性未计算：异常图不可用"
+        return out
+    if not tiles:
+        out["reason"] = ("一致性未计算：分类器关注区域解释不可用（无块级归因）"
+                         "，无法比较两者")
+        return out
+
+    sx, sy = float(xy_scale[0]), float(xy_scale[1])
+    h, w = hm.shape
+    by_scale: dict[int, list] = {}
+    for t in tiles:
+        by_scale.setdefault(int(t.get("scale", 0)), []).append(t)
+
+    for s, ts in by_scale.items():
+        a_vals, w_vals = [], []
+        for t in ts:
+            x, y, bw, bh = (float(v) for v in t["bbox_xywh"])
+            x0 = int(max(0, min(w - 1, round(x * sx))))
+            y0 = int(max(0, min(h - 1, round(y * sy))))
+            x1 = int(max(x0 + 1, min(w, round((x + bw) * sx))))
+            y1 = int(max(y0 + 1, min(h, round((y + bh) * sy))))
+            a_vals.append(float(hm[y0:y1, x0:x1].mean()))
+            w_vals.append(float(t.get("weight", max(0.0, float(t.get("delta_logit", 0.0))))))
+        out["rho_by_scale"][str(s)] = spearman_rank_correlation(a_vals, w_vals)
+
+    primary = max(by_scale, key=lambda s: len(by_scale[s]))
+    prim_tiles = by_scale[primary]
+    out["n_tiles"] = len(prim_tiles)
+    out["primary_scale"] = primary
+    rho = out["rho_by_scale"].get(str(primary))
+    out["rho_primary"] = None if rho is None else round(float(rho), 4)
+
+    if prim_tiles:
+        top = max(prim_tiles, key=lambda t: float(t.get("weight", 0.0)))
+        tb = [int(v) for v in top["bbox_xywh"]]
+        out["top_weight_tile_bbox"] = tb
+        ious = [_bbox_iou(tb, [int(v) for v in b[:4]]) for b in (boxes or [])]
+        out["top_weight_tile_iou"] = round(max(ious), 4) if ious else 0.0
+        out["top_weight_tile_in_box"] = bool(ious and max(ious) > 0.0)
+
+    if rho is None:
+        out["reason"] = ("一致性不可判定：块级归因权重或异常图块均值恒定"
+                         f"（n_tiles={out['n_tiles']}），秩相关无定义")
+        return out
+
+    out["available"] = True
+    inconsistent = bool(float(rho) < float(rho_inconsistent))
+    out["inconsistent"] = inconsistent
+    basis = (f"块级 Spearman(异常图块均值, 分类器块权重) rho={float(rho):.3f} "
+             f"< {float(rho_inconsistent):.2f}：定位热点排序与分类器关注块排序不一致"
+             if inconsistent else
+             f"块级 Spearman rho={float(rho):.3f} >= {float(rho_inconsistent):.2f}："
+             f"两者块级排序基本一致")
+    out["review_suggestion"] = {
+        "suggested": bool(inconsistent and enabled),
+        "enabled": enabled,
+        "would_suggest": inconsistent,
+        "decision_impact": "none",
+        "basis": basis,
+        "note": ("一致性仅可作为“建议转人工复核”的依据，默认关闭"
+                 "（ENABLE_CONSISTENCY_REVIEW_HINT=False），且不进入判定链路"
+                 "（verdict/confidence 不变）"),
+    }
+    return out
 
 
 def gradcam_overlay(model, bgr: np.ndarray, target_layer, device: str) -> np.ndarray:

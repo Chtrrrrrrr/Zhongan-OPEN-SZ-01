@@ -79,7 +79,11 @@ reports/*
 
 # 鏉╂劘顢戦弮鏈甸獓閻椻晪绱癆PI 閽€鐣屾磸閹躲儱鎲℃稉搴ゎ嚞濮瑰倹妫╄箛妞剧瑝閸忋儱绨?reports/api/
 
-# batch 瑜版帗銆傞崣顏勫弳鎼?verify-24閿涘牐顫?reports/batch/README.md閿涙硣erify-119 閺堫剚婧€娣囨繄鏆€娴ｅ棔绗夐崗銉ョ氨閿?!reports/batch/
+# batch archive: only README.md and the small verify-24/ archive are committed.
+# verify-119/ is deliberately NOT committed (58 MB of runtime output); regenerate it with
+#   python scripts/batch_evaluate.py --dir data/images --labels data/labels.csv \
+#          --out reports/batch/verify-119
+!reports/batch/
 reports/batch/*
 !reports/batch/README.md
 !reports/batch/verify-24/
@@ -111,6 +115,38 @@ reports/batch/*
 # for the real-scene-photo false-positive fix and the fusion-weight selection table
 !reports/external_reals_fix.json
 !reports/fusion_tuning_reals.json
+# task t2 (reproducibility): the headline-metric evidence file used to live OUTSIDE
+# version control (models/fix_metrics.json was generated, git-ignored and never
+# archived). Its in-repo stand-in, and the external-corpus provenance manifest that
+# makes the 1561-image training corpus traceable, are archived here instead.
+!reports/fix_metrics_restored.json
+!reports/external_corpus_manifest.json
+# task t2 (evidence-worker): a FRESH end-to-end run of the default entry point
+# (`python scripts/smoke_test.py`) on 2026-10-12. The archived reports/smoke_test.json
+# is deliberately left as the file docs/results.md §5 was written from; this is the
+# re-measurement (P50 1679 / P95 2406 ms, same frozen decision TP56/TN63/FP0/FN0).
+!reports/smoke_test_fresh_run.json
+# improvement round (work/improvement-plan.md): the pre-improvement baseline, the
+# pre-registered gate evaluation and its NEGATIVE-result write-up, the review-band
+# tuning grid, the adaptive-localisation output, and the source-controlled video
+# validation. These ARE the evidence for the improvement claims, so they must be in
+# version control -- leaving them ignored would reproduce exactly the defect that
+# lost models/fix_metrics.json.
+!reports/baseline_improvement.json
+!reports/decision_gate_validation.json
+!reports/decision_gate_negative_result.json
+!reports/review_band_tuning.json
+!reports/localization_regions.json
+!reports/video_temporal_validation.json
+!reports/operating_point_analysis.json
+# These four files REFUTE the published "real claim photos: FPR 0% (0/41)" claim:
+# they measure the frozen deployment heads on those same 41 web-sourced real photos and
+# get FPR 92.68% (38/41). They must be in version control -- a refutation that is
+# gitignored is not a refutation. See work/audit/audit-1.md D2.
+!reports/testset_real_41_eval.md
+!reports/testset_real_41_diagnosis.json
+!reports/testset_real_41_integrity.json
+!reports/testset_real_41_reprocessing.json
 
 # F7閿涙obustness_smoke.json閿涘牊妫張?6 閺嶉攱婀伴幒銏ゆ嫛閿涘矂娼張澶嬫櫏鐠囦焦宓侀敍澶夌瑢 video_smoke.json 瀹歌弓绗夌€涙ê婀敍?# 鐎电懓绨查惃鍕閸氬秴宕熺悰灞肩楠炲墎些闂勩倧绱濋柆鍨帳鐠囶垱鏂佺悰灞炬￥閺佸牐鐦夐幑顔衡偓?
 *.log
@@ -120,3 +156,26 @@ wandb/
 
 # local experiment workspace: alternative specs, per-sample report dumps, run logs
 _local_experiments/
+!reports/real41_domain_gap.json
+
+# ---------------------------------------------------------------------------
+# 2026-10-13: track the deployed model artifacts so published numbers are verifiable.
+# The whole models/ directory is ~1.6 MB. Without these, a `git clone` cannot recompute
+# reports/operating_point_analysis.json or reports/decision_gate_validation.json and the
+# headline figures are unverifiable (audit-1 D1/D3). This is the same mechanism that lost
+# models/fix_metrics.json.
+#
+# Placed LAST on purpose: later patterns win in git, and the earlier `*.joblib` / `*.pt`
+# rules would otherwise still exclude these files.
+# The large CLIP backbone, hf_cache/ and models/external_corpus/ remain untracked --
+# see docs/reproduce.md 4.5.1 for how to obtain them.
+# ---------------------------------------------------------------------------
+!models/deployment_metrics.json
+!models/fusion.json
+!models/feature_spec.json
+!models/combined_lr.joblib
+!models/forensic_lr.joblib
+!models/l1b_feats.npy
+!models/clip_patch.npy
+!models/clip_tiles_spec.npy
+!models/clip_feats.npy

@@ -28,7 +28,8 @@ Runs the whole pipeline with the exact ordering used for the reported numbers:
   step 12 real-scene-photo fix (optional)   -> models/external_corpus/,
                                                reports/external_reals_fix.json,
                                                reports/fusion_tuning_reals.json,
-                                               models/fix_metrics.json
+                                               models/fix_metrics.json (NOT archived; the in-repo
+                                               stand-in is reports/fix_metrics_restored.json)
   step 13 external holdout (optional)       -> reports/external_holdout.json
 
 Usage:
@@ -45,6 +46,15 @@ Usage:
                                                  # the external corpus (~55 min on GPU)
 
 Everything is written under the workspace so the package is self-contained.
+
+Which artifact copy is loaded
+-----------------------------
+This script REGENERATES artifacts into the workspace `models/` (including a fresh
+`models/fusion.json`), which is why the workspace copy is not the frozen deployment
+copy. The read-only verification steps (7 smoke test, 13 external holdout) resolve
+their artifacts through `scripts/models_path.py`, which prefers the frozen
+`<repo>/models` copy and logs `source=repo` / `source=workspace-fallback` per file.
+Pass `--models-dir <dir>` to point those steps at an explicit copy.
 """
 from __future__ import annotations
 
@@ -56,6 +66,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent      # repo/
 WS = ROOT.parent                                    # workspace root
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import models_path as mp                            # noqa: E402
 
 
 def run(cmd: list[str], desc: str) -> None:
@@ -91,9 +104,19 @@ def main():
     ap.add_argument("--official-weight", type=float, default=300.0,
                     help="sample_weight for competition rows when external material is "
                          "added to training (step 12)")
+    ap.add_argument("--models-dir", default=None,
+                    help="artifact directory for the READ-ONLY verification steps (7 smoke test, "
+                         "13 external holdout); default resolution prefers the frozen "
+                         "<repo>/models copy - see scripts/models_path.py")
     args = ap.parse_args()
     steps = {s.strip() for s in args.steps.split(",")}
     py = sys.executable
+
+    # State up front which fusion.json the verification steps will honour.
+    _md, _src = mp.resolve_models_dir(args.models_dir, workspace=WS)
+    print(mp.describe(_md, _src))
+    print(mp.assert_expected_fusion(_md))
+    _fwd = ["--models-dir", args.models_dir] if args.models_dir else []
 
     if "1" in steps:
         run([py, "repo/scripts/extract_l1b_features.py", "--data-dir", "data",
@@ -148,7 +171,7 @@ def main():
         run([py, "repo/scripts/make_test_video.py",
              "--images", "data/images/001.png", "data/images/057.png",
              "--out", "demo_assets/smoke_test.mp4"], "step 7a/12  video smoke clip")
-        run([py, "repo/scripts/smoke_test.py", "--device", args.device],
+        run([py, "repo/scripts/smoke_test.py", "--device", args.device, *_fwd],
             "step 7b/12  cold/warm image + video budget check")
 
     if "8" in steps:
@@ -230,11 +253,11 @@ def main():
     if args.testset:
         run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
              "--cache", "models/external_cache", "--stage", "extract",
-             "--device", args.device],
+             "--device", args.device, *_fwd],
             "step 13a  external testset feature extraction")
         run([py, "repo/scripts/external_holdout.py", "--testset", args.testset,
              "--cache", "models/external_cache", "--stage", "evaluate",
-             "--out", "repo/reports/external_holdout.json"],
+             "--out", "repo/reports/external_holdout.json", *_fwd],
             "step 13b  external holdout evaluation (frozen thresholds)")
 
     if args.with_robustness:

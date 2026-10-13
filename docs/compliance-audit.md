@@ -1,5 +1,23 @@
 # OPEN-SZ-01 合规审计报告：逐条对照《解题思路》与《附1 验证手册》
 
+> ⚠️ **2026-10-13 阅读须知（audit-3 结论，务必先读）**
+> 本报告是对 **`repo/` @ `ba1db77`（2026-10-11）** 那一版的审计，其中多处"符合"判定
+> **已被后续的独立对抗式审计推翻**。已知失效项至少包括：
+>
+> 1. 本报告引用的以下证据文件**当前不存在**（被 `.gitignore` 排除或未入库）：
+>    `reports/robustness_smoke.json`、`reports/external_holdout.json`、
+>    `reports/0xx.json`、`reports/batch/verify-119/`、`reports/batch/verify-24/`（后者已入库 28 文件，但路径写作相对形式）。
+> 2. 本报告把 `docs/results.md §3` 的"未在任何折外样本上做模型选择或阈值搜索"当作依据
+>    （见本报告 B3.7 判为"符合"）——**该声明不成立**：特征规格在 119 张上搜索 24 组
+>    （`reports/tile_clip_sweep.json`），融合权重为 best-of-9 选择（`reports/fusion_tuning_reals.json`）。
+>    见 `docs/results.md` §3 第 5 条更正。
+> 3. 头条指标 95.94% / FPR 2.12% / 场景照 0-of-41 **已被否证**，可复算的现役数字见
+>    `reports/operating_point_analysis.json`（现役阈值逐轮 92.44% / FPR 3.17%；规则蕴含点 96.08%/97.48%）。
+> 4. 本报告提到的 `scripts/run_detect.py` 不存在；CLI 入口是 `scripts/predict.py`。
+>
+> **阅读本文时不要把其中的"符合"当作当前结论**，请以 `work/audit/audit-1.md`、`audit-2.md`、
+> `audit-3.md` 与 `reports/operating_point_analysis.json` 为准。
+
 > 审计对象：工作区 `C:\Files\Deepseek Harness\Zhongan-OPEN-SZ-01`（代码仓库 `repo/`，GitHub `Chtrrrrrrr/Zhongan-OPEN-SZ-01`）
 > 被审代码版本：`repo/` @ git `ba1db77`（"chore: refresh evaluation evidence after the fusion reporting fix"，提交时间 2026-10-11 03:36 +0800）**+ 未提交的工作区改动**。审计时 `git status --short` 实测：已修改 `src/{detector,report,l3_localization,l1b_domain}.py`、`scripts/run_all.py`、`.gitignore`；未跟踪 `api/`、`demo/webui.html`、`demo/webui_assets/`、`docs/api.md`、`scripts/{batch_evaluate,calibration_analysis,member_analysis,metrics_common,resource_profile,stratified_analysis,threshold_stability}.py`、`reports/{calibration,member_analysis,resource_profile,stratified_analysis,threshold_stability}.json`、`reports/api/`、`reports/batch/`。**即：本报告审计的是工作区最终状态，而非 GitHub 上 `ba1db77` 的内容**（见 F14）。
 > 审计依据文档：工作区根 `OPEN-SZ-01解题思路.docx`（提取文本 `_思路_extracted.txt`，467 行）、`附1 OPEN-SZ-01项目规划与技术验证手册.docx`（提取文本 `_手册_extracted.txt`，1439 行）

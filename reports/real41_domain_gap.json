@@ -1,0 +1,471 @@
+{
+ "models_dir": "C:\\Files\\Deepseek Harness\\Zhongan-OPEN-SZ-01\\repo\\models",
+ "source": "repo",
+ "thr_low": 0.0266,
+ "thr_high": 0.826623,
+ "weights": {
+  "combined": 0.6,
+  "forensic": 0.25
+ },
+ "n": 41,
+ "suspect": 38,
+ "fpr": 0.926829268292683,
+ "verdicts": {
+  "suspect": 38,
+  "review": 3,
+  "normal": 0
+ },
+ "rows": [
+  {
+   "file": "real_fire_damage_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9868,
+   "fused_score": 0.9868,
+   "model_scores": {
+    "forensic": 0.325,
+    "combined": 0.9984
+   },
+   "ms": 1200.5
+  },
+  {
+   "file": "real_fire_damage_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9575,
+   "fused_score": 0.9575,
+   "model_scores": {
+    "forensic": 0.6765,
+    "combined": 0.9838
+   },
+   "ms": 1148.3
+  },
+  {
+   "file": "real_flood_damage_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9906,
+   "fused_score": 0.9906,
+   "model_scores": {
+    "forensic": 0.6862,
+    "combined": 0.9981
+   },
+   "ms": 1107.4
+  },
+  {
+   "file": "real_flood_damage_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9889,
+   "fused_score": 0.9889,
+   "model_scores": {
+    "forensic": 0.7037,
+    "combined": 0.9975
+   },
+   "ms": 1144.5
+  },
+  {
+   "file": "real_flood_damage_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9779,
+   "fused_score": 0.9779,
+   "model_scores": {
+    "forensic": 0.0525,
+    "combined": 0.9986
+   },
+   "ms": 1107.4
+  },
+  {
+   "file": "real_flood_damage_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.982,
+   "fused_score": 0.982,
+   "model_scores": {
+    "forensic": 0.2841,
+    "combined": 0.9977
+   },
+   "ms": 1187.0
+  },
+  {
+   "file": "real_flood_damage_05.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9474,
+   "fused_score": 0.9474,
+   "model_scores": {
+    "forensic": 0.1978,
+    "combined": 0.9908
+   },
+   "ms": 1161.4
+  },
+  {
+   "file": "real_food_issue_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9475,
+   "fused_score": 0.9475,
+   "model_scores": {
+    "forensic": 0.111,
+    "combined": 0.9931
+   },
+   "ms": 1195.9
+  },
+  {
+   "file": "real_food_issue_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9538,
+   "fused_score": 0.9538,
+   "model_scores": {
+    "forensic": 0.1783,
+    "combined": 0.9928
+   },
+   "ms": 1212.5
+  },
+  {
+   "file": "real_food_issue_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9849,
+   "fused_score": 0.9849,
+   "model_scores": {
+    "forensic": 0.9036,
+    "combined": 0.9932
+   },
+   "ms": 1110.9
+  },
+  {
+   "file": "real_food_issue_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9407,
+   "fused_score": 0.9407,
+   "model_scores": {
+    "forensic": 0.1192,
+    "combined": 0.9914
+   },
+   "ms": 1160.5
+  },
+  {
+   "file": "real_food_issue_05.jpg",
+   "verdict": "suspect",
+   "confidence": 0.975,
+   "fused_score": 0.975,
+   "model_scores": {
+    "forensic": 0.2728,
+    "combined": 0.9963
+   },
+   "ms": 1134.0
+  },
+  {
+   "file": "real_food_issue_06.jpg",
+   "verdict": "suspect",
+   "confidence": 0.948,
+   "fused_score": 0.948,
+   "model_scores": {
+    "forensic": 0.4449,
+    "combined": 0.9853
+   },
+   "ms": 1174.7
+  },
+  {
+   "file": "real_food_issue_07.jpg",
+   "verdict": "suspect",
+   "confidence": 0.96,
+   "fused_score": 0.96,
+   "model_scores": {
+    "forensic": 0.9949,
+    "combined": 0.9094
+   },
+   "ms": 1186.0
+  },
+  {
+   "file": "real_food_issue_08.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9284,
+   "fused_score": 0.9284,
+   "model_scores": {
+    "forensic": 0.9785,
+    "combined": 0.8848
+   },
+   "ms": 1203.6
+  },
+  {
+   "file": "real_injury_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9489,
+   "fused_score": 0.9489,
+   "model_scores": {
+    "forensic": 0.4347,
+    "combined": 0.9859
+   },
+   "ms": 1233.5
+  },
+  {
+   "file": "real_medical_bill_blank_01.jpg",
+   "verdict": "review",
+   "confidence": 0.7701,
+   "fused_score": 0.7701,
+   "model_scores": {
+    "forensic": 0.0572,
+    "combined": 0.9469
+   },
+   "ms": 1163.5
+  },
+  {
+   "file": "real_medical_bill_blank_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9716,
+   "fused_score": 0.9716,
+   "model_scores": {
+    "forensic": 0.6713,
+    "combined": 0.991
+   },
+   "ms": 1211.6
+  },
+  {
+   "file": "real_medical_bill_blank_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.8492,
+   "fused_score": 0.8492,
+   "model_scores": {
+    "forensic": 0.3014,
+    "combined": 0.9426
+   },
+   "ms": 1221.5
+  },
+  {
+   "file": "real_medical_bill_blank_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.904,
+   "fused_score": 0.904,
+   "model_scores": {
+    "forensic": 0.1231,
+    "combined": 0.9819
+   },
+   "ms": 1195.3
+  },
+  {
+   "file": "real_medical_bill_blank_05.jpg",
+   "verdict": "review",
+   "confidence": 0.5768,
+   "fused_score": 0.5768,
+   "model_scores": {
+    "forensic": 0.0114,
+    "combined": 0.9088
+   },
+   "ms": 1175.3
+  },
+  {
+   "file": "real_medical_bill_blank_06.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9227,
+   "fused_score": 0.9227,
+   "model_scores": {
+    "forensic": 0.2351,
+    "combined": 0.9821
+   },
+   "ms": 1222.4
+  },
+  {
+   "file": "real_medical_bill_blank_07.jpg",
+   "verdict": "suspect",
+   "confidence": 0.8816,
+   "fused_score": 0.8816,
+   "model_scores": {
+    "forensic": 0.1185,
+    "combined": 0.9754
+   },
+   "ms": 1231.5
+  },
+  {
+   "file": "real_medical_bill_blank_08.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9528,
+   "fused_score": 0.9528,
+   "model_scores": {
+    "forensic": 0.5713,
+    "combined": 0.9843
+   },
+   "ms": 1239.9
+  },
+  {
+   "file": "real_medical_bill_blank_09.jpg",
+   "verdict": "review",
+   "confidence": 0.6682,
+   "fused_score": 0.6682,
+   "model_scores": {
+    "forensic": 0.1316,
+    "combined": 0.8554
+   },
+   "ms": 1213.7
+  },
+  {
+   "file": "real_property_damage_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9874,
+   "fused_score": 0.9874,
+   "model_scores": {
+    "forensic": 0.1474,
+    "combined": 0.999
+   },
+   "ms": 1231.9
+  },
+  {
+   "file": "real_property_damage_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.979,
+   "fused_score": 0.979,
+   "model_scores": {
+    "forensic": 0.0604,
+    "combined": 0.9986
+   },
+   "ms": 1208.6
+  },
+  {
+   "file": "real_property_damage_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9915,
+   "fused_score": 0.9915,
+   "model_scores": {
+    "forensic": 0.3186,
+    "combined": 0.9991
+   },
+   "ms": 1230.9
+  },
+  {
+   "file": "real_property_damage_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9877,
+   "fused_score": 0.9877,
+   "model_scores": {
+    "forensic": 0.9483,
+    "combined": 0.9933
+   },
+   "ms": 1211.2
+  },
+  {
+   "file": "real_vehicle_collision_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9645,
+   "fused_score": 0.9645,
+   "model_scores": {
+    "forensic": 0.1291,
+    "combined": 0.9958
+   },
+   "ms": 1175.6
+  },
+  {
+   "file": "real_vehicle_collision_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9631,
+   "fused_score": 0.9631,
+   "model_scores": {
+    "forensic": 0.015,
+    "combined": 0.9983
+   },
+   "ms": 1155.9
+  },
+  {
+   "file": "real_vehicle_collision_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9857,
+   "fused_score": 0.9857,
+   "model_scores": {
+    "forensic": 0.5191,
+    "combined": 0.9974
+   },
+   "ms": 1220.7
+  },
+  {
+   "file": "real_vehicle_collision_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9907,
+   "fused_score": 0.9907,
+   "model_scores": {
+    "forensic": 0.3052,
+    "combined": 0.999
+   },
+   "ms": 1222.7
+  },
+  {
+   "file": "real_vehicle_collision_05.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9831,
+   "fused_score": 0.9831,
+   "model_scores": {
+    "forensic": 0.2745,
+    "combined": 0.9979
+   },
+   "ms": 1183.6
+  },
+  {
+   "file": "real_vehicle_collision_06.jpg",
+   "verdict": "suspect",
+   "confidence": 0.986,
+   "fused_score": 0.986,
+   "model_scores": {
+    "forensic": 0.5823,
+    "combined": 0.9972
+   },
+   "ms": 1179.3
+  },
+  {
+   "file": "real_vehicle_collision_07.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9858,
+   "fused_score": 0.9858,
+   "model_scores": {
+    "forensic": 0.1362,
+    "combined": 0.9989
+   },
+   "ms": 1243.4
+  },
+  {
+   "file": "real_vehicle_collision_08.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9815,
+   "fused_score": 0.9815,
+   "model_scores": {
+    "forensic": 0.4803,
+    "combined": 0.9965
+   },
+   "ms": 1177.5
+  },
+  {
+   "file": "real_vehicle_damage_01.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9909,
+   "fused_score": 0.9909,
+   "model_scores": {
+    "forensic": 0.8343,
+    "combined": 0.9975
+   },
+   "ms": 1219.1
+  },
+  {
+   "file": "real_vehicle_damage_02.jpg",
+   "verdict": "suspect",
+   "confidence": 0.979,
+   "fused_score": 0.979,
+   "model_scores": {
+    "forensic": 0.8709,
+    "combined": 0.9905
+   },
+   "ms": 1232.4
+  },
+  {
+   "file": "real_vehicle_damage_03.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9861,
+   "fused_score": 0.9861,
+   "model_scores": {
+    "forensic": 0.7871,
+    "combined": 0.9959
+   },
+   "ms": 1237.2
+  },
+  {
+   "file": "real_vehicle_damage_04.jpg",
+   "verdict": "suspect",
+   "confidence": 0.9807,
+   "fused_score": 0.9807,
+   "model_scores": {
+    "forensic": 0.945,
+    "combined": 0.9876
+   },
+   "ms": 1401.7
+  }
+ ]
+}
